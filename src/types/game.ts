@@ -35,6 +35,7 @@ export interface MapTile {
   resources: string[];
   walkable: boolean;
   claimedBy?: string;
+  name?: string;
 }
 
 export interface WorldMap {

@@ -48,6 +48,7 @@ const Index = () => {
     craftResource,
     createSovereignty,
     updateSovereignty,
+    renameTile,
   } = useGameWorld();
 
   useEffect(() => {
@@ -78,6 +79,12 @@ const Index = () => {
       if (resource) {
         toast.success(`Gathered ${resource.icon} ${resource.name}`);
       }
+    }
+  };
+
+  const handleRenameTile = (name: string) => {
+    if (selectedTile) {
+      renameTile(selectedTile.x, selectedTile.y, name);
     }
   };
 
@@ -144,6 +151,7 @@ const Index = () => {
             onClose={() => selectTile(selectedTile.x, selectedTile.y)}
             onClaim={handleClaim}
             onGather={handleGather}
+            onRename={handleRenameTile}
           />
         </div>
       )}

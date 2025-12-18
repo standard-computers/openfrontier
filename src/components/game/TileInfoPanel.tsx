@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { MapTile, Resource, RARITY_COLORS, TILE_TYPES, calculateTileValue } from '@/types/game';
-import { X, Flag, Package, Coins } from 'lucide-react';
+import { X, Flag, Package, Coins, Pencil, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface TileInfoPanelProps {
@@ -13,6 +14,7 @@ interface TileInfoPanelProps {
   onClose: () => void;
   onClaim: () => void;
   onGather: (resourceId: string) => void;
+  onRename: (name: string) => void;
 }
 
 const CLAIM_RADIUS = 6;
@@ -28,6 +30,7 @@ const TileInfoPanel = ({
   onClose,
   onClaim,
   onGather,
+  onRename,
 }: TileInfoPanelProps) => {
   const tileInfo = TILE_TYPES.find(t => t.type === tile.type);
   const tileResources = tile.resources.map(id => resources.find(r => r.id === id)).filter(Boolean) as Resource[];
@@ -45,6 +48,14 @@ const TileInfoPanel = ({
   );
   const isWithinClaimRange = distance <= CLAIM_RADIUS;
 
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [tileName, setTileName] = useState(tile.name || '');
+
+  const handleSaveName = () => {
+    onRename(tileName);
+    setIsEditingName(false);
+  };
+
   return (
     <div className="game-panel w-80 max-h-[450px] overflow-hidden flex flex-col">
       {/* Header */}
@@ -52,7 +63,34 @@ const TileInfoPanel = ({
         <div className="flex items-center gap-2">
           <div className={cn('w-6 h-6 rounded', tileInfo?.color)} />
           <div>
-            <h3 className="font-medium">{tileInfo?.label} Tile</h3>
+            {isOwnClaim && isEditingName ? (
+              <div className="flex items-center gap-1">
+                <input
+                  type="text"
+                  value={tileName}
+                  onChange={(e) => setTileName(e.target.value)}
+                  placeholder="Name this tile..."
+                  className="bg-secondary/50 border border-border rounded px-2 py-0.5 text-sm w-32"
+                  maxLength={24}
+                  autoFocus
+                  onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
+                />
+                <button onClick={handleSaveName} className="btn btn-ghost p-1">
+                  <Check className="w-4 h-4 text-green-500" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1">
+                <h3 className="font-medium">
+                  {tile.name || `${tileInfo?.label} Tile`}
+                </h3>
+                {isOwnClaim && (
+                  <button onClick={() => setIsEditingName(true)} className="btn btn-ghost p-0.5">
+                    <Pencil className="w-3 h-3 text-muted-foreground" />
+                  </button>
+                )}
+              </div>
+            )}
             <p className="text-xs text-muted-foreground">Position: {position.x}, {position.y}</p>
           </div>
         </div>
