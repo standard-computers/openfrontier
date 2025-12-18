@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 interface TileInfoPanelProps {
   tile: MapTile;
   position: { x: number; y: number };
+  playerPosition: { x: number; y: number };
   resources: Resource[];
   userId: string;
   userColor: string;
@@ -14,9 +15,12 @@ interface TileInfoPanelProps {
   onGather: (resourceId: string) => void;
 }
 
+const CLAIM_RADIUS = 6;
+
 const TileInfoPanel = ({
   tile,
   position,
+  playerPosition,
   resources,
   userId,
   userColor,
@@ -33,6 +37,13 @@ const TileInfoPanel = ({
   
   const tileValue = calculateTileValue(tile, resources);
   const canAfford = userCoins >= tileValue;
+  
+  // Calculate distance from player
+  const distance = Math.max(
+    Math.abs(position.x - playerPosition.x),
+    Math.abs(position.y - playerPosition.y)
+  );
+  const isWithinClaimRange = distance <= CLAIM_RADIUS;
 
   return (
     <div className="game-panel w-80 max-h-[450px] overflow-hidden flex flex-col">
@@ -68,6 +79,12 @@ const TileInfoPanel = ({
             />
             <span className="text-sm">
               {isOwnClaim ? 'You own this tile' : 'Claimed by another player'}
+            </span>
+          </div>
+        ) : !isWithinClaimRange ? (
+          <div className="py-2 px-3 bg-muted rounded text-center">
+            <span className="text-sm text-muted-foreground">
+              Not within claimable distance ({distance} tiles away, max {CLAIM_RADIUS})
             </span>
           </div>
         ) : (
