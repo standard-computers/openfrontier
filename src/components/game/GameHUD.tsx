@@ -37,48 +37,50 @@ const GameHUD = ({ world, resources, zoomPercent, onOpenConfig, onOpenAccount, o
         {/* Empty space for balance */}
         <div></div>
 
-        <div className="flex items-center gap-2 pointer-events-auto">
-          <button 
-            onClick={onOpenCrafting}
-            className="game-panel p-2 hover:bg-muted transition-colors"
-            title="Crafting"
-          >
-            <Hammer className="w-5 h-5" />
-          </button>
+        <div className="flex flex-col items-end gap-2 pointer-events-auto">
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={onOpenCrafting}
+              className="game-panel p-2 hover:bg-muted transition-colors"
+              title="Crafting"
+            >
+              <Hammer className="w-5 h-5" />
+            </button>
 
-          <button 
-            onClick={onOpenAccount} 
-            className="game-panel p-2 hover:bg-muted transition-colors flex items-center gap-2"
-          >
-            <div 
-              className="w-4 h-4 rounded-full"
-              style={{ backgroundColor: world.userColor }}
-            />
-            <User className="w-5 h-5" />
-          </button>
+            <button 
+              onClick={onOpenAccount} 
+              className="game-panel p-2 hover:bg-muted transition-colors flex items-center gap-2"
+            >
+              <div 
+                className="w-4 h-4 rounded-full"
+                style={{ backgroundColor: world.userColor }}
+              />
+              <User className="w-5 h-5" />
+            </button>
 
-          <button onClick={onOpenConfig} className="game-panel p-2 hover:bg-muted transition-colors">
-            <Settings className="w-5 h-5" />
-          </button>
+            <button onClick={onOpenConfig} className="game-panel p-2 hover:bg-muted transition-colors">
+              <Settings className="w-5 h-5" />
+            </button>
+          </div>
 
           {/* Zoom controls */}
-          <div className="flex flex-col gap-1">
-            <button
-              onClick={() => onZoom(4)}
-              className="game-panel p-2 hover:bg-muted transition-colors"
-              title="Zoom in"
-            >
-              <ZoomIn className="w-4 h-4" />
-            </button>
-            <div className="game-panel px-2 py-1 text-xs text-center text-muted-foreground">
-              {zoomPercent}%
-            </div>
+          <div className="flex items-center gap-1">
             <button
               onClick={() => onZoom(-4)}
-              className="game-panel p-2 hover:bg-muted transition-colors"
+              className="game-panel p-1.5 hover:bg-muted transition-colors"
               title="Zoom out"
             >
               <ZoomOut className="w-4 h-4" />
+            </button>
+            <div className="game-panel px-2 py-1 text-xs text-muted-foreground min-w-[48px] text-center">
+              {zoomPercent}%
+            </div>
+            <button
+              onClick={() => onZoom(4)}
+              className="game-panel p-1.5 hover:bg-muted transition-colors"
+              title="Zoom in"
+            >
+              <ZoomIn className="w-4 h-4" />
             </button>
           </div>
         </div>

@@ -127,6 +127,7 @@ const Index = () => {
           <TileInfoPanel
             tile={selectedTileData}
             position={selectedTile}
+            playerPosition={world.playerPosition}
             resources={world.resources}
             userId={world.userId}
             userColor={world.userColor}
