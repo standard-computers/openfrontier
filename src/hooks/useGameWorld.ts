@@ -360,6 +360,24 @@ export const useGameWorld = () => {
     setTimeout(saveWorldData, 500);
   }, [isOwner, saveWorldData]);
 
+  const renameTile = useCallback((x: number, y: number, name: string) => {
+    setWorld(prev => {
+      const tile = prev.map.tiles[y]?.[x];
+      if (!tile || tile.claimedBy !== prev.userId) return prev;
+      
+      const newTiles = prev.map.tiles.map((row, ry) =>
+        row.map((t, rx) =>
+          rx === x && ry === y ? { ...t, name: name.trim() || undefined } : t
+        )
+      );
+      const newMapData = { ...prev.map, tiles: newTiles };
+      
+      setTimeout(() => saveMapData(newMapData), 500);
+      
+      return { ...prev, map: newMapData };
+    });
+  }, [saveMapData]);
+
   const setUserColor = useCallback((color: string) => {
     setWorld(prev => ({ ...prev, userColor: color }));
   }, []);
@@ -474,5 +492,6 @@ export const useGameWorld = () => {
     craftResource,
     createSovereignty,
     updateSovereignty,
+    renameTile,
   };
 };
