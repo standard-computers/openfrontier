@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Resource, RARITY_COLORS } from '@/types/game';
-import { X, Plus, Save, RefreshCw, Map, Package, Hammer } from 'lucide-react';
+import { X, Plus, Save, RefreshCw, Map, Package, Hammer, Copy, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import ResourceEditorModal from './ResourceEditorModal';
@@ -9,6 +9,8 @@ interface WorldConfigProps {
   isOpen: boolean;
   onClose: () => void;
   worldName: string;
+  joinCode?: string;
+  isOwner: boolean;
   resources: Resource[];
   onUpdateWorldName: (name: string) => void;
   onAddResource: (resource: Resource) => void;
@@ -21,6 +23,8 @@ const WorldConfig = ({
   isOpen,
   onClose,
   worldName,
+  joinCode,
+  isOwner,
   resources,
   onUpdateWorldName,
   onAddResource,
@@ -113,6 +117,28 @@ const WorldConfig = ({
             <div className="flex-1 p-4 overflow-auto">
               {activeSection === 'world' && (
                 <div className="space-y-6">
+                  {/* Join Code (owners only) */}
+                  {isOwner && joinCode && (
+                    <div>
+                      <label className="text-sm text-muted-foreground mb-1 block">Join Code</label>
+                      <div className="flex gap-2">
+                        <div className="input-field flex-1 font-mono text-lg tracking-widest text-center">
+                          {joinCode.toUpperCase()}
+                        </div>
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(joinCode.toUpperCase());
+                            toast.success('Join code copied!');
+                          }} 
+                          className="btn"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Share this code with others to let them join your world</p>
+                    </div>
+                  )}
+
                   <div>
                     <label className="text-sm text-muted-foreground mb-1 block">World Name</label>
                     <div className="flex gap-2">
@@ -120,26 +146,37 @@ const WorldConfig = ({
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         className="input-field flex-1"
+                        disabled={!isOwner}
                       />
-                      <button onClick={handleSaveName} className="btn btn-primary">
-                        <Save className="w-4 h-4" />
-                      </button>
+                      {isOwner && (
+                        <button onClick={handleSaveName} className="btn btn-primary">
+                          <Save className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
 
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-medium">World Actions</h3>
-                    <button
-                      onClick={() => { onRespawnResources(); toast.success('Resources respawned!'); }}
-                      className="btn w-full justify-start gap-2"
-                    >
-                      <RefreshCw className="w-4 h-4" /> Respawn All Resources
-                    </button>
-                  </div>
+                  {isOwner && (
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-medium">World Actions</h3>
+                      <button
+                        onClick={() => { onRespawnResources(); toast.success('Resources respawned!'); }}
+                        className="btn w-full justify-start gap-2"
+                      >
+                        <RefreshCw className="w-4 h-4" /> Respawn All Resources
+                      </button>
+                    </div>
+                  )}
+
+                  {!isOwner && (
+                    <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+                      <Lock className="w-4 h-4" />
+                      <span>Only the world owner can modify settings</span>
+                    </div>
+                  )}
 
                   <div className="text-sm text-muted-foreground space-y-1">
                     <p>Resources: {resources.length}</p>
-                    <p>Map Size: 80 × 50 tiles</p>
                   </div>
                 </div>
               )}
@@ -148,17 +185,29 @@ const WorldConfig = ({
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-medium">Resources ({resources.length})</h3>
-                    <button onClick={handleNewResource} className="btn btn-accent text-xs">
-                      <Plus className="w-3 h-3 mr-1" /> New Resource
-                    </button>
+                    {isOwner && (
+                      <button onClick={handleNewResource} className="btn btn-accent text-xs">
+                        <Plus className="w-3 h-3 mr-1" /> New Resource
+                      </button>
+                    )}
                   </div>
+
+                  {!isOwner && (
+                    <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+                      <Lock className="w-4 h-4" />
+                      <span>Only the world owner can modify resources</span>
+                    </div>
+                  )}
 
                   <div className="grid gap-2">
                     {resources.map((resource) => (
-                      <button
+                      <div
                         key={resource.id}
-                        onClick={() => handleEditResource(resource)}
-                        className="w-full flex items-center gap-3 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors text-left"
+                        onClick={() => isOwner && handleEditResource(resource)}
+                        className={cn(
+                          "w-full flex items-center gap-3 p-3 rounded-lg bg-secondary/30 transition-colors text-left",
+                          isOwner && "cursor-pointer hover:bg-secondary/50"
+                        )}
                       >
                         <span className="text-2xl">{resource.icon}</span>
                         <div className="flex-1 min-w-0">
@@ -177,7 +226,7 @@ const WorldConfig = ({
                             )}
                           </div>
                         </div>
-                      </button>
+                      </div>
                     ))}
                   </div>
 
