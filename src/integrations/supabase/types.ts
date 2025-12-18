@@ -102,6 +102,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_world_with_owner: {
+        Args: {
+          _map_data: Json
+          _name: string
+          _player_data: Json
+          _resources: Json
+          _user_id: string
+        }
+        Returns: string
+      }
       get_user_world_ids: { Args: { _user_id: string }; Returns: string[] }
       get_world_by_join_code: {
         Args: { code: string }
