@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { GameWorld, Resource, Position, DEFAULT_RESOURCES, generateMap, createEmptyInventory, seedResources, TileType, TILE_TYPES, USER_COLORS } from '@/types/game';
+import { GameWorld, Resource, DEFAULT_RESOURCES, generateMap, createEmptyInventory, seedResources, USER_COLORS, STARTING_COINS, calculateTileValue } from '@/types/game';
 
-const STORAGE_KEY = 'pixel-world-v3';
+const STORAGE_KEY = 'pixel-world-v4';
 const MAP_WIDTH = 80;
 const MAP_HEIGHT = 50;
 
@@ -26,6 +26,7 @@ const getDefaultWorld = (): GameWorld => {
     playerPosition: { ...map.spawnPoint },
     userId: 'player-1',
     userColor: USER_COLORS[Math.floor(Math.random() * USER_COLORS.length)],
+    coins: STARTING_COINS,
   };
 };
 
@@ -34,7 +35,12 @@ export const useGameWorld = () => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        // Ensure coins exists for older saves
+        if (parsed.coins === undefined) {
+          parsed.coins = STARTING_COINS;
+        }
+        return parsed;
       } catch {
         return getDefaultWorld();
       }
@@ -42,7 +48,7 @@ export const useGameWorld = () => {
     return getDefaultWorld();
   });
 
-  const [selectedTile, setSelectedTile] = useState<Position | null>(null);
+  const [selectedTile, setSelectedTile] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(world));
@@ -66,26 +72,64 @@ export const useGameWorld = () => {
     );
   }, []);
 
-  const claimTile = useCallback((x: number, y: number) => {
+  const claimTile = useCallback((x: number, y: number): { success: boolean; message: string } => {
+    let result = { success: false, message: '' };
+    
     setWorld(prev => {
       const tile = prev.map.tiles[y][x];
-      if (tile.claimedBy) return prev; // Already claimed
+      if (tile.claimedBy) {
+        result = { success: false, message: 'Tile already claimed' };
+        return prev;
+      }
       
+      const tileValue = calculateTileValue(tile, prev.resources);
+      
+      if (prev.coins < tileValue) {
+        result = { success: false, message: `Not enough coins! Need ${tileValue} coins` };
+        return prev;
+      }
+      
+      // Add resources to inventory
+      let newInventory = [...prev.inventory];
+      for (const resourceId of tile.resources) {
+        let slotIndex = newInventory.findIndex(s => s.resourceId === resourceId && s.quantity < 99);
+        if (slotIndex === -1) {
+          slotIndex = newInventory.findIndex(s => s.resourceId === null);
+        }
+        if (slotIndex !== -1) {
+          if (newInventory[slotIndex].resourceId === resourceId) {
+            newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
+          } else {
+            newInventory[slotIndex] = { resourceId, quantity: 1 };
+          }
+        }
+      }
+      
+      // Claim tile and clear resources (they're now in inventory)
       const newTiles = prev.map.tiles.map((row, ry) =>
         row.map((t, rx) =>
-          rx === x && ry === y ? { ...t, claimedBy: prev.userId } : t
+          rx === x && ry === y ? { ...t, claimedBy: prev.userId, resources: [] } : t
         )
       );
       
-      return { ...prev, map: { ...prev.map, tiles: newTiles } };
+      result = { success: true, message: `Claimed for ${tileValue} coins!` };
+      
+      return {
+        ...prev,
+        coins: prev.coins - tileValue,
+        inventory: newInventory,
+        map: { ...prev.map, tiles: newTiles },
+      };
     });
+    
+    return result;
   }, []);
 
   const gatherFromTile = useCallback((x: number, y: number, resourceId: string) => {
     setWorld(prev => {
       const tile = prev.map.tiles[y][x];
       if (!tile.resources.includes(resourceId)) return prev;
-      if (tile.claimedBy && tile.claimedBy !== prev.userId) return prev; // Not your tile
+      if (tile.claimedBy && tile.claimedBy !== prev.userId) return prev;
       
       const newInventory = [...prev.inventory];
       let slotIndex = newInventory.findIndex(s => s.resourceId === resourceId && s.quantity < 99);
@@ -100,7 +144,6 @@ export const useGameWorld = () => {
         newInventory[slotIndex] = { resourceId, quantity: 1 };
       }
       
-      // Remove resource from tile
       const newTiles = prev.map.tiles.map((row, ry) =>
         row.map((t, rx) =>
           rx === x && ry === y
@@ -149,14 +192,31 @@ export const useGameWorld = () => {
         map: newMap,
         playerPosition: { x: spawnX, y: spawnY },
         inventory: createEmptyInventory(),
+        coins: STARTING_COINS,
       };
     });
   }, []);
 
   const respawnResources = useCallback(() => {
     setWorld(prev => {
-      const newTiles = prev.map.tiles.map(row => row.map(t => ({ ...t, resources: [] })));
-      seedResources(newTiles, prev.resources);
+      const newTiles = prev.map.tiles.map(row => 
+        row.map(t => ({ ...t, resources: t.claimedBy ? [] : t.resources }))
+      );
+      // Only reseed unclaimed tiles
+      for (let y = 0; y < newTiles.length; y++) {
+        for (let x = 0; x < newTiles[y].length; x++) {
+          const tile = newTiles[y][x];
+          if (!tile.claimedBy) {
+            tile.resources = [];
+            const validResources = prev.resources.filter(r => r.spawnTiles.includes(tile.type));
+            for (const resource of validResources) {
+              if (Math.random() < resource.spawnChance) {
+                tile.resources.push(resource.id);
+              }
+            }
+          }
+        }
+      }
       return { ...prev, map: { ...prev.map, tiles: newTiles } };
     });
   }, []);

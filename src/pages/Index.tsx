@@ -4,10 +4,13 @@ import GameMap from '@/components/game/GameMap';
 import GameHUD from '@/components/game/GameHUD';
 import TileInfoPanel from '@/components/game/TileInfoPanel';
 import WorldConfig from '@/components/game/WorldConfig';
+import AccountPanel from '@/components/game/AccountPanel';
 import { toast } from 'sonner';
 
 const Index = () => {
   const [configOpen, setConfigOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  
   const {
     world,
     selectedTile,
@@ -30,8 +33,12 @@ const Index = () => {
 
   const handleClaim = () => {
     if (selectedTile) {
-      claimTile(selectedTile.x, selectedTile.y);
-      toast.success('Tile claimed!');
+      const result = claimTile(selectedTile.x, selectedTile.y);
+      if (result.success) {
+        toast.success(result.message);
+      } else {
+        toast.error(result.message);
+      }
     }
   };
 
@@ -44,6 +51,8 @@ const Index = () => {
       }
     }
   };
+
+  const claimedCount = world.map.tiles.flat().filter(t => t.claimedBy === world.userId).length;
 
   return (
     <div className="h-screen w-screen flex bg-background overflow-hidden">
@@ -64,7 +73,7 @@ const Index = () => {
           world={world}
           resources={world.resources}
           onOpenConfig={() => setConfigOpen(true)}
-          onColorChange={setUserColor}
+          onOpenAccount={() => setAccountOpen(true)}
         />
       </div>
 
@@ -77,12 +86,22 @@ const Index = () => {
             resources={world.resources}
             userId={world.userId}
             userColor={world.userColor}
+            userCoins={world.coins}
             onClose={() => selectTile(selectedTile.x, selectedTile.y)}
             onClaim={handleClaim}
             onGather={handleGather}
           />
         </div>
       )}
+
+      <AccountPanel
+        isOpen={accountOpen}
+        onClose={() => setAccountOpen(false)}
+        userColor={world.userColor}
+        coins={world.coins}
+        claimedTiles={claimedCount}
+        onColorChange={setUserColor}
+      />
 
       <WorldConfig
         isOpen={configOpen}
