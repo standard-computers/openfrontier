@@ -108,75 +108,27 @@ export const useWorlds = (userId: string | undefined) => {
   const joinWorld = async (joinCode: string) => {
     if (!userId) throw new Error('Not authenticated');
 
-    // Find world by join code
-    const { data: worldData, error: findError } = await supabase
-      .rpc('get_world_by_join_code', { code: joinCode.toLowerCase() });
+    // Use the database function to join atomically
+    const { data: worldId, error } = await supabase
+      .rpc('join_world_by_code', {
+        _join_code: joinCode.toLowerCase(),
+        _user_id: userId,
+        _user_color: '#3b82f6',
+      });
 
-    if (findError) throw findError;
-    if (!worldData || worldData.length === 0) {
-      throw new Error('World not found. Check the code and try again.');
-    }
-
-    const world = worldData[0];
-
-    // Check if already a member
-    const { data: existingMember } = await supabase
-      .from('world_members')
-      .select('id')
-      .eq('world_id', world.id)
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (existingMember) {
-      throw new Error('You are already a member of this world');
-    }
-
-    // Get world map to find spawn point
-    const { data: fullWorld, error: worldError } = await supabase
-      .from('worlds')
-      .select('map_data')
-      .eq('id', world.id)
-      .single();
-
-    if (worldError) throw worldError;
-
-    const mapData = fullWorld.map_data as { tiles: { claimedBy?: string; walkable: boolean }[][]; width: number; height: number };
-    
-    // Find an unclaimed, walkable spawn point
-    let spawnX = Math.floor(mapData.width / 2);
-    let spawnY = Math.floor(mapData.height / 2);
-    
-    // Try to find an unclaimed tile
-    for (let attempts = 0; attempts < 100; attempts++) {
-      const x = Math.floor(Math.random() * mapData.width);
-      const y = Math.floor(Math.random() * mapData.height);
-      const tile = mapData.tiles[y]?.[x];
-      if (tile && tile.walkable && !tile.claimedBy) {
-        spawnX = x;
-        spawnY = y;
-        break;
+    if (error) {
+      // Parse the error message from the database function
+      if (error.message.includes('World not found')) {
+        throw new Error('World not found. Check the code and try again.');
       }
+      if (error.message.includes('already a member')) {
+        throw new Error('You are already a member of this world');
+      }
+      throw error;
     }
-
-    // Join as player
-    const { error: joinError } = await supabase
-      .from('world_members')
-      .insert([{
-        world_id: world.id,
-        user_id: userId,
-        role: 'player',
-        player_data: JSON.parse(JSON.stringify({
-          position: { x: spawnX, y: spawnY },
-          inventory: [],
-          coins: 500,
-          userColor: '#3b82f6',
-        })) as Json,
-      }]);
-
-    if (joinError) throw joinError;
 
     await fetchWorlds();
-    return world.id;
+    return worldId as string;
   };
 
   const deleteWorld = async (worldId: string) => {

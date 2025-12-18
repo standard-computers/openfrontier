@@ -128,6 +128,10 @@ export type Database = {
         Args: { _user_id: string; _world_id: string }
         Returns: boolean
       }
+      join_world_by_code: {
+        Args: { _join_code: string; _user_color?: string; _user_id: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
