@@ -6,11 +6,11 @@ interface GameMapProps {
   map: WorldMap;
   playerPosition: Position;
   resources: Resource[];
+  selectedTile: Position | null;
+  userColor: string;
+  userId: string;
   onMove: (dx: number, dy: number) => void;
-  onGather: () => void;
-  editMode?: boolean;
-  selectedTool?: TileType | null;
-  onTileClick?: (x: number, y: number) => void;
+  onTileSelect: (x: number, y: number) => void;
 }
 
 const TILE_SIZE = 28;
@@ -19,11 +19,11 @@ const GameMap = ({
   map,
   playerPosition,
   resources,
+  selectedTile,
+  userColor,
+  userId,
   onMove,
-  onGather,
-  editMode = false,
-  selectedTool,
-  onTileClick,
+  onTileSelect,
 }: GameMapProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewportSize, setViewportSize] = useState({ tilesX: 30, tilesY: 20 });
@@ -56,10 +56,8 @@ const GameMap = ({
   }, [playerPosition, map.width, map.height, viewportSize]);
 
   useEffect(() => {
-    if (editMode) return;
-
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'e', ' '].includes(e.key.toLowerCase())) {
+      if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(e.key.toLowerCase())) {
         e.preventDefault();
       }
       switch (e.key.toLowerCase()) {
@@ -79,20 +77,12 @@ const GameMap = ({
         case 'arrowright':
           onMove(1, 0);
           break;
-        case 'e':
-        case ' ':
-          onGather();
-          break;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onMove, onGather, editMode]);
-
-  const getResourceIcon = (resourceId: string) => {
-    return resources.find(r => r.id === resourceId)?.icon || '?';
-  };
+  }, [onMove]);
 
   const visibleTiles = useMemo(() => {
     const tiles: { x: number; y: number; tile: typeof map.tiles[0][0] }[] = [];
@@ -124,6 +114,9 @@ const GameMap = ({
       >
         {visibleTiles.map(({ x, y, tile }) => {
           const isPlayerHere = x === playerPosition.x && y === playerPosition.y;
+          const isSelected = selectedTile?.x === x && selectedTile?.y === y;
+          const isClaimed = !!tile.claimedBy;
+          const isOwnClaim = tile.claimedBy === userId;
           const screenX = x - viewportOffset.x;
           const screenY = y - viewportOffset.y;
 
@@ -131,9 +124,8 @@ const GameMap = ({
             <div
               key={`${x}-${y}`}
               className={cn(
-                'tile text-sm',
+                'tile text-sm cursor-pointer relative',
                 TILE_COLORS[tile.type],
-                editMode && 'cursor-crosshair hover:brightness-125',
                 !tile.walkable && 'brightness-75'
               )}
               style={{
@@ -141,14 +133,22 @@ const GameMap = ({
                 gridRow: screenY + 1,
                 width: TILE_SIZE,
                 height: TILE_SIZE,
+                boxShadow: isSelected 
+                  ? 'inset 0 0 0 3px #fff'
+                  : isClaimed 
+                    ? `inset 0 0 0 2px ${isOwnClaim ? userColor : '#888'}`
+                    : undefined,
               }}
-              onClick={() => editMode && onTileClick?.(x, y)}
+              onClick={() => tile.walkable && onTileSelect(x, y)}
             >
-              {isPlayerHere && !editMode && (
-                <span className="text-xl drop-shadow-lg z-10 animate-bounce">🧑‍🌾</span>
+              {isPlayerHere && (
+                <span className="text-lg drop-shadow-lg z-10">🧑‍🌾</span>
               )}
-              {tile.resource && !isPlayerHere && (
-                <span className="drop-shadow">{getResourceIcon(tile.resource)}</span>
+              {isClaimed && !isPlayerHere && (
+                <div 
+                  className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full"
+                  style={{ backgroundColor: isOwnClaim ? userColor : '#888' }}
+                />
               )}
             </div>
           );
