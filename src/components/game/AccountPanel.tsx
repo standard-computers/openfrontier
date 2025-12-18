@@ -9,6 +9,7 @@ interface AccountPanelProps {
   userColor: string;
   coins: number;
   claimedTiles: number;
+  username: string | null;
   onColorChange: (color: string) => void;
 }
 
@@ -18,6 +19,7 @@ const AccountPanel = ({
   userColor,
   coins,
   claimedTiles,
+  username,
   onColorChange,
 }: AccountPanelProps) => {
   const navigate = useNavigate();
@@ -36,7 +38,7 @@ const AccountPanel = ({
         <div className="flex items-center justify-between p-4 border-b border-border">
           <div className="flex items-center gap-2">
             <User className="w-5 h-5" />
-            <h2 className="font-semibold">Account</h2>
+            <h2 className="font-semibold">{username || 'Player'}</h2>
           </div>
           <button onClick={onClose} className="btn btn-ghost p-1">
             <X className="w-5 h-5" />
