@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Resource, RARITY_COLORS } from '@/types/game';
-import { X, Plus, Save, RefreshCw, Map, Package, Hammer, Copy, Lock } from 'lucide-react';
+import { X, Plus, Save, RefreshCw, Map, Package, Hammer, Copy, Lock, Store } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import ResourceEditorModal from './ResourceEditorModal';
 import ResourceIcon from './ResourceIcon';
+import ResourceMarketplace from './ResourceMarketplace';
 
 interface WorldConfigProps {
   isOpen: boolean;
