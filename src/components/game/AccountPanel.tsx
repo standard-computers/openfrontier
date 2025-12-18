@@ -1,5 +1,6 @@
+import { useNavigate } from 'react-router-dom';
 import { USER_COLORS } from '@/types/game';
-import { X, User, Palette, Coins } from 'lucide-react';
+import { X, User, Palette, Coins, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface AccountPanelProps {
@@ -19,7 +20,14 @@ const AccountPanel = ({
   claimedTiles,
   onColorChange,
 }: AccountPanelProps) => {
+  const navigate = useNavigate();
+
   if (!isOpen) return null;
+
+  const handleLeaveWorld = () => {
+    onClose();
+    navigate('/worlds');
+  };
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
@@ -85,6 +93,15 @@ const AccountPanel = ({
             />
             <span className="text-sm">Your claimed tiles look like this</span>
           </div>
+
+          {/* Leave World */}
+          <button
+            onClick={handleLeaveWorld}
+            className="w-full btn flex items-center justify-center gap-2 border border-border hover:bg-muted"
+          >
+            <LogOut className="w-4 h-4" />
+            Leave World
+          </button>
         </div>
       </div>
     </div>

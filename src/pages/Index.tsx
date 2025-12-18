@@ -112,7 +112,6 @@ const Index = () => {
         onAddResource={addResource}
         onUpdateResource={updateResource}
         onDeleteResource={deleteResource}
-        onRegenerateWorld={regenerateWorld}
         onRespawnResources={respawnResources}
       />
     </div>

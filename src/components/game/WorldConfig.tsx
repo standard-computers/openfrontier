@@ -13,7 +13,6 @@ interface WorldConfigProps {
   onAddResource: (resource: Resource) => void;
   onUpdateResource: (resource: Resource) => void;
   onDeleteResource: (id: string) => void;
-  onRegenerateWorld: () => void;
   onRespawnResources: () => void;
 }
 
@@ -28,7 +27,6 @@ const WorldConfig = ({
   onAddResource,
   onUpdateResource,
   onDeleteResource,
-  onRegenerateWorld,
   onRespawnResources,
 }: WorldConfigProps) => {
   const [activeSection, setActiveSection] = useState<'world' | 'resources'>('world');
@@ -160,12 +158,6 @@ const WorldConfig = ({
                     className="btn w-full justify-start gap-2"
                   >
                     <RefreshCw className="w-4 h-4" /> Respawn All Resources
-                  </button>
-                  <button
-                    onClick={() => { if (confirm('Regenerate entire world? This will reset everything.')) { onRegenerateWorld(); toast.success('World regenerated!'); }}}
-                    className="btn w-full justify-start gap-2 bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    <Map className="w-4 h-4" /> Regenerate World
                   </button>
                 </div>
 
