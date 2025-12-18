@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { GameWorld, Resource, DEFAULT_RESOURCES, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, calculateTileValue } from '@/types/game';
+import { GameWorld, Resource, Sovereignty, DEFAULT_RESOURCES, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, calculateTileValue } from '@/types/game';
 
 const DEFAULT_MAP_WIDTH = 80;
 const DEFAULT_MAP_HEIGHT = 50;
@@ -266,6 +266,28 @@ export const useGameWorld = () => {
     setWorld(prev => ({ ...prev, userColor: color }));
   }, []);
 
+  const createSovereignty = useCallback((name: string, flag: string, motto: string) => {
+    setWorld(prev => ({
+      ...prev,
+      sovereignty: {
+        name,
+        flag,
+        motto,
+        foundedAt: Date.now(),
+      },
+    }));
+  }, []);
+
+  const updateSovereignty = useCallback((updates: Partial<Sovereignty>) => {
+    setWorld(prev => {
+      if (!prev.sovereignty) return prev;
+      return {
+        ...prev,
+        sovereignty: { ...prev.sovereignty, ...updates },
+      };
+    });
+  }, []);
+
   const craftResource = useCallback((resourceId: string, recipeId: string): { success: boolean; message: string } => {
     let result = { success: false, message: '' };
     
@@ -353,5 +375,7 @@ export const useGameWorld = () => {
     updateWorldName,
     setUserColor,
     craftResource,
+    createSovereignty,
+    updateSovereignty,
   };
 };

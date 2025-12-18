@@ -51,6 +51,13 @@ export interface InventorySlot {
   quantity: number;
 }
 
+export interface Sovereignty {
+  name: string;
+  flag: string;
+  motto: string;
+  foundedAt: number;
+}
+
 export interface GameWorld {
   id: string;
   name: string;
@@ -61,6 +68,7 @@ export interface GameWorld {
   userId: string;
   userColor: string;
   coins: number;
+  sovereignty?: Sovereignty;
 }
 
 export const TILE_TYPES: { type: TileType; label: string; walkable: boolean; color: string; baseValue: number }[] = [

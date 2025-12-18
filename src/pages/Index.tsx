@@ -7,7 +7,7 @@ import GameMap from '@/components/game/GameMap';
 import GameHUD from '@/components/game/GameHUD';
 import TileInfoPanel from '@/components/game/TileInfoPanel';
 import WorldConfig from '@/components/game/WorldConfig';
-import AccountPanel from '@/components/game/AccountPanel';
+import SovereigntyPanel from '@/components/game/SovereigntyPanel';
 import TouchControls from '@/components/game/TouchControls';
 import WorldStatsPanel from '@/components/game/WorldStatsPanel';
 import CraftingPanel from '@/components/game/CraftingPanel';
@@ -41,6 +41,8 @@ const Index = () => {
     updateWorldName,
     setUserColor,
     craftResource,
+    createSovereignty,
+    updateSovereignty,
   } = useGameWorld();
 
   useEffect(() => {
@@ -111,6 +113,7 @@ const Index = () => {
           world={world}
           resources={world.resources}
           zoomPercent={zoomPercent}
+          username={username}
           onOpenConfig={() => setConfigOpen(true)}
           onOpenAccount={() => setAccountOpen(true)}
           onOpenStats={() => setStatsOpen(true)}
@@ -139,14 +142,17 @@ const Index = () => {
         </div>
       )}
 
-      <AccountPanel
+      <SovereigntyPanel
         isOpen={accountOpen}
         onClose={() => setAccountOpen(false)}
         userColor={world.userColor}
         coins={world.coins}
         claimedTiles={claimedCount}
         username={username}
+        sovereignty={world.sovereignty}
         onColorChange={setUserColor}
+        onCreateSovereignty={createSovereignty}
+        onUpdateSovereignty={updateSovereignty}
       />
 
       <WorldConfig

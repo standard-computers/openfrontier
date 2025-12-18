@@ -1,10 +1,11 @@
-import { GameWorld, Resource } from '@/types/game';
-import { Settings, User, Coins, ChevronRight, Hammer, ZoomIn, ZoomOut } from 'lucide-react';
+import { GameWorld, Resource, Sovereignty } from '@/types/game';
+import { Settings, User, Coins, ChevronRight, Hammer, ZoomIn, ZoomOut, Crown } from 'lucide-react';
 
 interface GameHUDProps {
   world: GameWorld;
   resources: Resource[];
   zoomPercent: number;
+  username: string | null;
   onOpenConfig: () => void;
   onOpenAccount: () => void;
   onOpenStats: () => void;
@@ -12,7 +13,7 @@ interface GameHUDProps {
   onZoom: (delta: number) => void;
 }
 
-const GameHUD = ({ world, resources, zoomPercent, onOpenConfig, onOpenAccount, onOpenStats, onOpenCrafting, onZoom }: GameHUDProps) => {
+const GameHUD = ({ world, resources, zoomPercent, username, onOpenConfig, onOpenAccount, onOpenStats, onOpenCrafting, onZoom }: GameHUDProps) => {
   const getResource = (id: string | null) => resources.find(r => r.id === id);
 
   const claimedCount = world.map.tiles.flat().filter(t => t.claimedBy === world.userId).length;
@@ -50,12 +51,22 @@ const GameHUD = ({ world, resources, zoomPercent, onOpenConfig, onOpenAccount, o
             <button 
               onClick={onOpenAccount} 
               className="game-panel p-2 hover:bg-muted transition-colors flex items-center gap-2"
+              title={world.sovereignty ? world.sovereignty.name : 'Account'}
             >
-              <div 
-                className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: world.userColor }}
-              />
-              <User className="w-5 h-5" />
+              {world.sovereignty ? (
+                <>
+                  <span className="text-lg">{world.sovereignty.flag}</span>
+                  <span className="text-sm font-medium max-w-[100px] truncate">{world.sovereignty.name}</span>
+                </>
+              ) : (
+                <>
+                  <div 
+                    className="w-4 h-4 rounded-full"
+                    style={{ backgroundColor: world.userColor }}
+                  />
+                  <span className="text-sm max-w-[80px] truncate">{username || 'Player'}</span>
+                </>
+              )}
             </button>
 
             <button onClick={onOpenStats} className="game-panel p-2 hover:bg-muted transition-colors" title="World Stats">
