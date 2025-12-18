@@ -58,23 +58,17 @@ const GameHUD = ({ world, resources, zoomPercent, onOpenConfig, onOpenAccount, o
               <User className="w-5 h-5" />
             </button>
 
-            <button onClick={onOpenConfig} className="game-panel p-2 hover:bg-muted transition-colors">
+            <button onClick={onOpenStats} className="game-panel p-2 hover:bg-muted transition-colors" title="World Stats">
+              <Coins className="w-5 h-5" />
+            </button>
+
+            <button onClick={onOpenConfig} className="game-panel p-2 hover:bg-muted transition-colors" title="Settings">
               <Settings className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Zoom controls */}
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => onZoom(-4)}
-              className="game-panel p-1.5 hover:bg-muted transition-colors"
-              title="Zoom out"
-            >
-              <ZoomOut className="w-4 h-4" />
-            </button>
-            <div className="game-panel px-2 py-1 text-xs text-muted-foreground min-w-[48px] text-center">
-              {zoomPercent}%
-            </div>
+          {/* Zoom controls - vertical */}
+          <div className="flex flex-col items-center gap-1">
             <button
               onClick={() => onZoom(4)}
               className="game-panel p-1.5 hover:bg-muted transition-colors"
@@ -82,14 +76,17 @@ const GameHUD = ({ world, resources, zoomPercent, onOpenConfig, onOpenAccount, o
             >
               <ZoomIn className="w-4 h-4" />
             </button>
+            <div className="game-panel px-2 py-1 text-xs text-muted-foreground min-w-[48px] text-center">
+              {zoomPercent}%
+            </div>
+            <button
+              onClick={() => onZoom(-4)}
+              className="game-panel p-1.5 hover:bg-muted transition-colors"
+              title="Zoom out"
+            >
+              <ZoomOut className="w-4 h-4" />
+            </button>
           </div>
-        </div>
-      </div>
-
-      {/* Instructions */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none" style={{ marginLeft: '60px' }}>
-        <div className="game-panel px-4 py-2 text-xs text-muted-foreground">
-          WASD to move • Click tile to select
         </div>
       </div>
 
