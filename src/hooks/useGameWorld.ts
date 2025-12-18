@@ -194,7 +194,6 @@ export const useGameWorld = () => {
   }, []);
 
   const claimTile = useCallback((x: number, y: number): { success: boolean; message: string } => {
-    // Get current state synchronously to compute result
     const currentWorld = world;
     const tile = currentWorld.map.tiles[y][x];
     
@@ -208,21 +207,7 @@ export const useGameWorld = () => {
       return { success: false, message: `Not enough coins! Need ${tileValue} coins` };
     }
     
-    // Compute new inventory
-    let newInventory = [...currentWorld.inventory];
-    for (const resourceId of tile.resources) {
-      let slotIndex = newInventory.findIndex(s => s.resourceId === resourceId && s.quantity < 99);
-      if (slotIndex === -1) {
-        slotIndex = newInventory.findIndex(s => s.resourceId === null);
-      }
-      if (slotIndex !== -1) {
-        if (newInventory[slotIndex].resourceId === resourceId) {
-          newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
-        } else {
-          newInventory[slotIndex] = { resourceId, quantity: 1 };
-        }
-      }
-    }
+    const tileResources = [...tile.resources];
     
     // Compute new tiles
     const newTiles = currentWorld.map.tiles.map((row, ry) =>
@@ -230,16 +215,31 @@ export const useGameWorld = () => {
         rx === x && ry === y ? { ...t, claimedBy: currentWorld.userId, resources: [] } : t
       )
     );
-    
     const newMapData: WorldMap = { ...currentWorld.map, tiles: newTiles };
     
-    // Apply state update
-    setWorld(prev => ({
-      ...prev,
-      coins: prev.coins - tileValue,
-      inventory: newInventory,
-      map: newMapData,
-    }));
+    // Apply state update - compute inventory inside setWorld for accurate prev state
+    setWorld(prev => {
+      let newInventory = [...prev.inventory];
+      for (const resourceId of tileResources) {
+        let slotIndex = newInventory.findIndex(s => s.resourceId === resourceId && s.quantity < 99);
+        if (slotIndex === -1) {
+          slotIndex = newInventory.findIndex(s => s.resourceId === null);
+        }
+        if (slotIndex !== -1) {
+          if (newInventory[slotIndex].resourceId === resourceId) {
+            newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
+          } else {
+            newInventory[slotIndex] = { resourceId, quantity: 1 };
+          }
+        }
+      }
+      return {
+        ...prev,
+        coins: prev.coins - tileValue,
+        inventory: newInventory,
+        map: newMapData,
+      };
+    });
 
     // Save map changes
     setTimeout(() => saveMapData(newMapData), 500);
@@ -254,19 +254,6 @@ export const useGameWorld = () => {
     if (!tile.resources.includes(resourceId)) return;
     if (tile.claimedBy && tile.claimedBy !== currentWorld.userId) return;
     
-    const newInventory = [...currentWorld.inventory];
-    let slotIndex = newInventory.findIndex(s => s.resourceId === resourceId && s.quantity < 99);
-    if (slotIndex === -1) {
-      slotIndex = newInventory.findIndex(s => s.resourceId === null);
-    }
-    if (slotIndex === -1) return;
-    
-    if (newInventory[slotIndex].resourceId === resourceId) {
-      newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
-    } else {
-      newInventory[slotIndex] = { resourceId, quantity: 1 };
-    }
-    
     const newTiles = currentWorld.map.tiles.map((row, ry) =>
       row.map((t, rx) =>
         rx === x && ry === y
@@ -274,14 +261,29 @@ export const useGameWorld = () => {
           : t
       )
     );
-    
     const newMapData: WorldMap = { ...currentWorld.map, tiles: newTiles };
     
-    setWorld(prev => ({
-      ...prev,
-      inventory: newInventory,
-      map: newMapData,
-    }));
+    // Compute inventory inside setWorld for accurate prev state
+    setWorld(prev => {
+      const newInventory = [...prev.inventory];
+      let slotIndex = newInventory.findIndex(s => s.resourceId === resourceId && s.quantity < 99);
+      if (slotIndex === -1) {
+        slotIndex = newInventory.findIndex(s => s.resourceId === null);
+      }
+      if (slotIndex === -1) return prev; // No empty slot, don't update
+      
+      if (newInventory[slotIndex].resourceId === resourceId) {
+        newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
+      } else {
+        newInventory[slotIndex] = { resourceId, quantity: 1 };
+      }
+      
+      return {
+        ...prev,
+        inventory: newInventory,
+        map: newMapData,
+      };
+    });
 
     setTimeout(() => saveMapData(newMapData), 500);
   }, [world, saveMapData]);
