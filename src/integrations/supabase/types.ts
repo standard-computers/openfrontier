@@ -32,12 +32,83 @@ export type Database = {
         }
         Relationships: []
       }
+      world_members: {
+        Row: {
+          id: string
+          joined_at: string
+          player_data: Json
+          role: string
+          user_id: string
+          world_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          player_data?: Json
+          role?: string
+          user_id: string
+          world_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          player_data?: Json
+          role?: string
+          user_id?: string
+          world_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "world_members_world_id_fkey"
+            columns: ["world_id"]
+            isOneToOne: false
+            referencedRelation: "worlds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      worlds: {
+        Row: {
+          created_at: string
+          id: string
+          join_code: string
+          map_data: Json
+          name: string
+          resources: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          join_code?: string
+          map_data: Json
+          name: string
+          resources: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          join_code?: string
+          map_data?: Json
+          name?: string
+          resources?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_world_by_join_code: {
+        Args: { code: string }
+        Returns: {
+          id: string
+          name: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

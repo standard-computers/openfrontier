@@ -172,6 +172,7 @@ const Index = () => {
         isOpen={configOpen}
         onClose={() => setConfigOpen(false)}
         worldName={world.name}
+        isOwner={true} // TODO: Get from world membership
         resources={world.resources}
         onUpdateWorldName={updateWorldName}
         onAddResource={addResource}
