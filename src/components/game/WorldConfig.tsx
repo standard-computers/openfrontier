@@ -44,6 +44,7 @@ const WorldConfig = ({
     gatherTime: 2,
     spawnTiles: ['grass'],
     spawnChance: 0.1,
+    coinValue: 10,
   });
 
   if (!isOpen) return null;
@@ -71,6 +72,7 @@ const WorldConfig = ({
       gatherTime: 2,
       spawnTiles: ['grass'],
       spawnChance: 0.1,
+      coinValue: 10,
     });
   };
 
@@ -232,7 +234,7 @@ const WorldConfig = ({
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-3 gap-3">
                         <div>
                           <label className="text-xs text-muted-foreground">Rarity</label>
                           <select
@@ -254,6 +256,16 @@ const WorldConfig = ({
                             min={1}
                             value={resourceForm.gatherTime}
                             onChange={(e) => setResourceForm({ ...resourceForm, gatherTime: Number(e.target.value) })}
+                            className="input-field w-full"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-muted-foreground">Coin Value</label>
+                          <input
+                            type="number"
+                            min={1}
+                            value={resourceForm.coinValue}
+                            onChange={(e) => setResourceForm({ ...resourceForm, coinValue: Number(e.target.value) })}
                             className="input-field w-full"
                           />
                         </div>

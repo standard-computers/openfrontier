@@ -1,5 +1,5 @@
-import { MapTile, Resource, RARITY_COLORS, TILE_TYPES } from '@/types/game';
-import { X, Flag, Package } from 'lucide-react';
+import { MapTile, Resource, RARITY_COLORS, TILE_TYPES, calculateTileValue } from '@/types/game';
+import { X, Flag, Package, Coins } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface TileInfoPanelProps {
@@ -8,6 +8,7 @@ interface TileInfoPanelProps {
   resources: Resource[];
   userId: string;
   userColor: string;
+  userCoins: number;
   onClose: () => void;
   onClaim: () => void;
   onGather: (resourceId: string) => void;
@@ -19,6 +20,7 @@ const TileInfoPanel = ({
   resources,
   userId,
   userColor,
+  userCoins,
   onClose,
   onClaim,
   onGather,
@@ -28,9 +30,12 @@ const TileInfoPanel = ({
   const isClaimed = !!tile.claimedBy;
   const isOwnClaim = tile.claimedBy === userId;
   const canGather = !isClaimed || isOwnClaim;
+  
+  const tileValue = calculateTileValue(tile, resources);
+  const canAfford = userCoins >= tileValue;
 
   return (
-    <div className="game-panel w-80 max-h-[400px] overflow-hidden flex flex-col">
+    <div className="game-panel w-80 max-h-[450px] overflow-hidden flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b border-border">
         <div className="flex items-center gap-2">
@@ -45,10 +50,18 @@ const TileInfoPanel = ({
         </button>
       </div>
 
-      {/* Claim Status */}
-      <div className="p-3 border-b border-border">
+      {/* Value & Claim */}
+      <div className="p-3 border-b border-border space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">Land Value</span>
+          <span className="flex items-center gap-1 font-medium text-amber-400">
+            <Coins className="w-4 h-4" />
+            {tileValue}
+          </span>
+        </div>
+        
         {isClaimed ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 py-2">
             <div 
               className="w-4 h-4 rounded-full border-2"
               style={{ borderColor: isOwnClaim ? userColor : '#888', backgroundColor: isOwnClaim ? userColor + '40' : '#88888840' }}
@@ -60,10 +73,14 @@ const TileInfoPanel = ({
         ) : (
           <button 
             onClick={onClaim}
-            className="btn btn-primary w-full flex items-center justify-center gap-2"
+            disabled={!canAfford}
+            className={cn(
+              "btn w-full flex items-center justify-center gap-2",
+              canAfford ? "btn-primary" : "opacity-50 cursor-not-allowed"
+            )}
           >
             <Flag className="w-4 h-4" />
-            Claim This Tile
+            {canAfford ? `Claim for ${tileValue} coins` : `Need ${tileValue} coins`}
           </button>
         )}
       </div>
@@ -72,12 +89,14 @@ const TileInfoPanel = ({
       <div className="flex-1 overflow-auto p-3">
         <div className="flex items-center gap-2 mb-2">
           <Package className="w-4 h-4 text-muted-foreground" />
-          <span className="text-sm font-medium">Available Resources</span>
+          <span className="text-sm font-medium">
+            {isClaimed ? 'Resources (collected)' : 'Available Resources'}
+          </span>
         </div>
         
         {tileResources.length === 0 ? (
           <p className="text-sm text-muted-foreground py-4 text-center">
-            No resources available on this tile
+            {isClaimed ? 'All resources collected' : 'No resources on this tile'}
           </p>
         ) : (
           <div className="space-y-2">
@@ -90,18 +109,21 @@ const TileInfoPanel = ({
                   <span className="text-xl">{resource.icon}</span>
                   <div>
                     <p className="text-sm font-medium">{resource.name}</p>
-                    <p className={cn('text-xs', RARITY_COLORS[resource.rarity])}>{resource.rarity}</p>
+                    <div className="flex items-center gap-2">
+                      <span className={cn('text-xs', RARITY_COLORS[resource.rarity])}>{resource.rarity}</span>
+                      <span className="text-xs text-amber-400 flex items-center gap-0.5">
+                        <Coins className="w-3 h-3" />{resource.coinValue}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                {canGather ? (
+                {!isClaimed && canGather && (
                   <button
                     onClick={() => onGather(resource.id)}
                     className="btn btn-accent text-xs py-1 px-2"
                   >
                     Gather
                   </button>
-                ) : (
-                  <span className="text-xs text-muted-foreground">Not your tile</span>
                 )}
               </div>
             ))}
@@ -110,9 +132,9 @@ const TileInfoPanel = ({
       </div>
 
       {/* Footer hint */}
-      {!canGather && (
+      {!isClaimed && !canAfford && (
         <div className="p-2 bg-destructive/10 text-center">
-          <p className="text-xs text-destructive">Claim this tile to gather resources</p>
+          <p className="text-xs text-destructive">Not enough coins to claim this tile</p>
         </div>
       )}
     </div>
