@@ -1,16 +1,18 @@
 import { GameWorld, Resource } from '@/types/game';
-import { Settings, User, Coins, ChevronRight, Hammer } from 'lucide-react';
+import { Settings, User, Coins, ChevronRight, Hammer, ZoomIn, ZoomOut } from 'lucide-react';
 
 interface GameHUDProps {
   world: GameWorld;
   resources: Resource[];
+  zoomPercent: number;
   onOpenConfig: () => void;
   onOpenAccount: () => void;
   onOpenStats: () => void;
   onOpenCrafting: () => void;
+  onZoom: (delta: number) => void;
 }
 
-const GameHUD = ({ world, resources, onOpenConfig, onOpenAccount, onOpenStats, onOpenCrafting }: GameHUDProps) => {
+const GameHUD = ({ world, resources, zoomPercent, onOpenConfig, onOpenAccount, onOpenStats, onOpenCrafting, onZoom }: GameHUDProps) => {
   const getResource = (id: string | null) => resources.find(r => r.id === id);
 
   const claimedCount = world.map.tiles.flat().filter(t => t.claimedBy === world.userId).length;
@@ -58,6 +60,27 @@ const GameHUD = ({ world, resources, onOpenConfig, onOpenAccount, onOpenStats, o
           <button onClick={onOpenConfig} className="game-panel p-2 hover:bg-muted transition-colors">
             <Settings className="w-5 h-5" />
           </button>
+
+          {/* Zoom controls */}
+          <div className="flex flex-col gap-1">
+            <button
+              onClick={() => onZoom(4)}
+              className="game-panel p-2 hover:bg-muted transition-colors"
+              title="Zoom in"
+            >
+              <ZoomIn className="w-4 h-4" />
+            </button>
+            <div className="game-panel px-2 py-1 text-xs text-center text-muted-foreground">
+              {zoomPercent}%
+            </div>
+            <button
+              onClick={() => onZoom(-4)}
+              className="game-panel p-2 hover:bg-muted transition-colors"
+              title="Zoom out"
+            >
+              <ZoomOut className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameWorld } from '@/hooks/useGameWorld';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,6 +13,10 @@ import WorldStatsPanel from '@/components/game/WorldStatsPanel';
 import CraftingPanel from '@/components/game/CraftingPanel';
 import { toast } from 'sonner';
 
+const MIN_TILE_SIZE = 12;
+const MAX_TILE_SIZE = 48;
+const DEFAULT_TILE_SIZE = 28;
+
 const Index = () => {
   const navigate = useNavigate();
   const { user, loading, username } = useAuth();
@@ -21,6 +25,7 @@ const Index = () => {
   const [accountOpen, setAccountOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
   const [craftingOpen, setCraftingOpen] = useState(false);
+  const [tileSize, setTileSize] = useState(DEFAULT_TILE_SIZE);
   
   const {
     world,
@@ -69,6 +74,12 @@ const Index = () => {
     }
   };
 
+  const handleZoom = useCallback((delta: number) => {
+    setTileSize(prev => Math.max(MIN_TILE_SIZE, Math.min(MAX_TILE_SIZE, prev + delta)));
+  }, []);
+
+  const zoomPercent = Math.round((tileSize / DEFAULT_TILE_SIZE) * 100);
+
   if (loading) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-background">
@@ -90,17 +101,21 @@ const Index = () => {
           selectedTile={selectedTile}
           userColor={world.userColor}
           userId={world.userId}
+          tileSize={tileSize}
           onMove={movePlayer}
           onTileSelect={selectTile}
+          onZoom={handleZoom}
         />
         
         <GameHUD
           world={world}
           resources={world.resources}
+          zoomPercent={zoomPercent}
           onOpenConfig={() => setConfigOpen(true)}
           onOpenAccount={() => setAccountOpen(true)}
           onOpenStats={() => setStatsOpen(true)}
           onOpenCrafting={() => setCraftingOpen(true)}
+          onZoom={handleZoom}
         />
 
         {isTouchDevice && <TouchControls onMove={movePlayer} />}
