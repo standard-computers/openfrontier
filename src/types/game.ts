@@ -5,6 +5,18 @@ export interface Position {
   y: number;
 }
 
+export interface RecipeIngredient {
+  resourceId: string;
+  quantity: number;
+}
+
+export interface Recipe {
+  id: string;
+  name: string;
+  ingredients: RecipeIngredient[];
+  outputQuantity: number;
+}
+
 export interface Resource {
   id: string;
   name: string;
@@ -14,7 +26,8 @@ export interface Resource {
   gatherTime: number;
   spawnTiles: TileType[];
   spawnChance: number;
-  coinValue: number; // Value in coins
+  coinValue: number;
+  recipes?: Recipe[];
 }
 
 export interface MapTile {
@@ -100,6 +113,55 @@ export const DEFAULT_RESOURCES: Resource[] = [
   { id: 'cactus', name: 'Cactus', icon: '🌵', rarity: 'uncommon', description: 'Desert plant', gatherTime: 3, spawnTiles: ['sand'], spawnChance: 0.25, coinValue: 18 },
   { id: 'shell', name: 'Shell', icon: '🐚', rarity: 'common', description: 'Sea shell', gatherTime: 1, spawnTiles: ['sand'], spawnChance: 0.3, coinValue: 8 },
   { id: 'flower', name: 'Flower', icon: '🌸', rarity: 'common', description: 'Pretty flower', gatherTime: 1, spawnTiles: ['grass'], spawnChance: 0.2, coinValue: 4 },
+  // Craftable resources
+  { 
+    id: 'iron-bar', 
+    name: 'Iron Bar', 
+    icon: '🔩', 
+    rarity: 'uncommon', 
+    description: 'Smelted iron', 
+    gatherTime: 0, 
+    spawnTiles: [], 
+    spawnChance: 0, 
+    coinValue: 60,
+    recipes: [{ id: 'iron-bar-1', name: 'Smelt Iron', ingredients: [{ resourceId: 'iron', quantity: 2 }, { resourceId: 'coal', quantity: 1 }], outputQuantity: 1 }]
+  },
+  { 
+    id: 'gold-bar', 
+    name: 'Gold Bar', 
+    icon: '🥇', 
+    rarity: 'rare', 
+    description: 'Smelted gold', 
+    gatherTime: 0, 
+    spawnTiles: [], 
+    spawnChance: 0, 
+    coinValue: 250,
+    recipes: [{ id: 'gold-bar-1', name: 'Smelt Gold', ingredients: [{ resourceId: 'gold', quantity: 2 }, { resourceId: 'coal', quantity: 2 }], outputQuantity: 1 }]
+  },
+  { 
+    id: 'plank', 
+    name: 'Plank', 
+    icon: '🪵', 
+    rarity: 'common', 
+    description: 'Processed wood', 
+    gatherTime: 0, 
+    spawnTiles: [], 
+    spawnChance: 0, 
+    coinValue: 12,
+    recipes: [{ id: 'plank-1', name: 'Cut Planks', ingredients: [{ resourceId: 'wood', quantity: 2 }], outputQuantity: 2 }]
+  },
+  { 
+    id: 'rope', 
+    name: 'Rope', 
+    icon: '🪢', 
+    rarity: 'common', 
+    description: 'Woven rope', 
+    gatherTime: 0, 
+    spawnTiles: [], 
+    spawnChance: 0, 
+    coinValue: 15,
+    recipes: [{ id: 'rope-1', name: 'Weave Rope', ingredients: [{ resourceId: 'fiber', quantity: 3 }], outputQuantity: 1 }]
+  },
 ];
 
 export const calculateTileValue = (tile: MapTile, resources: Resource[]): number => {
