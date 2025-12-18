@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { GameWorld, Resource, Sovereignty, DEFAULT_RESOURCES, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, calculateTileValue, WorldMap } from '@/types/game';
+import { GameWorld, Resource, Sovereignty, DEFAULT_RESOURCES, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap } from '@/types/game';
 import type { Json } from '@/integrations/supabase/types';
 
 const getDefaultWorld = (): GameWorld => {
@@ -18,6 +18,7 @@ const getDefaultWorld = (): GameWorld => {
     userColor: USER_COLORS[Math.floor(Math.random() * USER_COLORS.length)],
     coins: STARTING_COINS,
     createdAt: new Date().toISOString(),
+    health: STARTING_HEALTH,
   };
 };
 
@@ -94,6 +95,7 @@ export const useGameWorld = () => {
           coins?: number;
           userColor?: string;
           sovereignty?: Sovereignty;
+          health?: number;
         };
 
         const mapData = worldData.map_data as unknown as WorldMap;
@@ -124,6 +126,7 @@ export const useGameWorld = () => {
           coins: playerData.coins ?? STARTING_COINS,
           sovereignty: playerData.sovereignty,
           createdAt: worldData.created_at,
+          health: playerData.health ?? STARTING_HEALTH,
         });
       } catch (error) {
         console.error('Error loading world:', error);
@@ -149,6 +152,7 @@ export const useGameWorld = () => {
         coins: world.coins,
         userColor: world.userColor,
         sovereignty: world.sovereignty,
+        health: world.health,
       };
 
       await supabase
@@ -160,7 +164,47 @@ export const useGameWorld = () => {
 
     const timeoutId = setTimeout(savePlayerData, 1000);
     return () => clearTimeout(timeoutId);
-  }, [dbWorldId, world.playerPosition, world.inventory, world.coins, world.userColor, world.sovereignty, loading]);
+  }, [dbWorldId, world.playerPosition, world.inventory, world.coins, world.userColor, world.sovereignty, world.health, loading]);
+
+  // Health decay: -5 health per world day (1 real hour)
+  useEffect(() => {
+    if (!world.createdAt || loading) return;
+
+    const checkHealthDecay = () => {
+      const createdAt = new Date(world.createdAt).getTime();
+      const now = Date.now();
+      const elapsedHours = (now - createdAt) / 3600000;
+      
+      // Calculate expected health based on time passed (starting at 80, -5 per hour)
+      // Also factor in non-consumable healthGain resources in inventory
+      const passiveHealthGain = world.inventory.reduce((sum, slot) => {
+        if (!slot.resourceId) return sum;
+        const resource = world.resources.find(r => r.id === slot.resourceId);
+        if (resource && !resource.consumable && resource.healthGain) {
+          return sum + (resource.healthGain * slot.quantity);
+        }
+        return sum;
+      }, 0);
+      
+      const decayAmount = Math.floor(elapsedHours) * HEALTH_DECAY_PER_DAY;
+      const passiveGain = Math.floor(elapsedHours) * passiveHealthGain;
+      const expectedHealth = Math.max(0, Math.min(MAX_HEALTH, STARTING_HEALTH - decayAmount + passiveGain));
+      
+      // Only update if there's a meaningful difference (to avoid constant updates)
+      setWorld(prev => {
+        // We recalc here based on stored health to just apply hourly decay
+        const newHealth = Math.max(0, prev.health - HEALTH_DECAY_PER_DAY + passiveHealthGain);
+        if (Math.floor(prev.health) !== Math.floor(newHealth)) {
+          return { ...prev, health: Math.max(0, Math.min(MAX_HEALTH, newHealth)) };
+        }
+        return prev;
+      });
+    };
+
+    // Check every real hour
+    const interval = setInterval(checkHealthDecay, 3600000);
+    return () => clearInterval(interval);
+  }, [world.createdAt, world.resources, world.inventory, loading]);
 
   // Save world map data - all members can save map changes (for tile claiming)
   const saveMapData = useCallback(async (mapData?: WorldMap) => {
@@ -473,6 +517,64 @@ export const useGameWorld = () => {
     return result;
   }, []);
 
+  const consumeResource = useCallback((resourceId: string): { success: boolean; message: string } => {
+    let result = { success: false, message: '' };
+    
+    setWorld(prev => {
+      const resource = prev.resources.find(r => r.id === resourceId);
+      if (!resource) {
+        result = { success: false, message: 'Resource not found' };
+        return prev;
+      }
+      
+      if (!resource.consumable) {
+        result = { success: false, message: 'This item cannot be consumed' };
+        return prev;
+      }
+      
+      // Check if player has the resource
+      const slotIndex = prev.inventory.findIndex(s => s.resourceId === resourceId && s.quantity > 0);
+      if (slotIndex === -1) {
+        result = { success: false, message: 'You don\'t have this item' };
+        return prev;
+      }
+      
+      // Consume one item
+      const newInventory = [...prev.inventory];
+      newInventory[slotIndex] = { 
+        ...newInventory[slotIndex], 
+        quantity: newInventory[slotIndex].quantity - 1 
+      };
+      if (newInventory[slotIndex].quantity === 0) {
+        newInventory[slotIndex] = { resourceId: null, quantity: 0 };
+      }
+      
+      // Apply health gain
+      const healthGain = resource.healthGain || 0;
+      const newHealth = Math.min(MAX_HEALTH, prev.health + healthGain);
+      
+      result = { 
+        success: true, 
+        message: healthGain > 0 
+          ? `Consumed ${resource.name}! +${healthGain} health` 
+          : `Consumed ${resource.name}!` 
+      };
+      
+      return { ...prev, inventory: newInventory, health: newHealth };
+    });
+    
+    return result;
+  }, []);
+
+  const takeDamage = useCallback((amount: number): { success: boolean; health: number } => {
+    let newHealth = 0;
+    setWorld(prev => {
+      newHealth = Math.max(0, prev.health - amount);
+      return { ...prev, health: newHealth };
+    });
+    return { success: true, health: newHealth };
+  }, []);
+
   return {
     world,
     selectedTile,
@@ -493,5 +595,7 @@ export const useGameWorld = () => {
     createSovereignty,
     updateSovereignty,
     renameTile,
+    consumeResource,
+    takeDamage,
   };
 };

@@ -270,6 +270,70 @@ const ResourceEditorModal = ({
                   placeholder="Brief description"
                 />
               </div>
+
+              {/* Health & Damage Properties */}
+              <div className="border-t border-border pt-4 mt-4">
+                <h4 className="text-sm font-medium mb-3 text-muted-foreground">Health & Damage Properties</h4>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="consumable"
+                      checked={form.consumable || false}
+                      onChange={(e) => setForm({ ...form, consumable: e.target.checked })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="consumable" className="text-sm">Consumable</label>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="canInflictDamage"
+                      checked={form.canInflictDamage || false}
+                      onChange={(e) => setForm({ ...form, canInflictDamage: e.target.checked })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="canInflictDamage" className="text-sm">Inflict Damage</label>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mt-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">
+                      Health Gain {form.consumable ? '(on consume)' : '(per day)'}
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={form.healthGain || 0}
+                      onChange={(e) => setForm({ ...form, healthGain: Math.max(0, parseInt(e.target.value) || 0) })}
+                      className="input-field w-full"
+                    />
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      {form.consumable 
+                        ? 'Health gained when consumed' 
+                        : 'Health gained every world day while in inventory'}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Damage Amount</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={form.damage || 0}
+                      onChange={(e) => setForm({ ...form, damage: Math.max(0, parseInt(e.target.value) || 0) })}
+                      className="input-field w-full"
+                      disabled={!form.canInflictDamage}
+                    />
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      Damage dealt when triggered
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { GameWorld, Resource, Sovereignty } from '@/types/game';
-import { Settings, User, Coins, ChevronRight, Hammer, ZoomIn, ZoomOut, Crown, Clock } from 'lucide-react';
+import { GameWorld, Resource, Sovereignty, MAX_HEALTH } from '@/types/game';
+import { Settings, User, Coins, ChevronRight, Hammer, ZoomIn, ZoomOut, Crown, Clock, Heart } from 'lucide-react';
 
 interface GameHUDProps {
   world: GameWorld;
@@ -135,9 +135,15 @@ const GameHUD = ({ world, resources, zoomPercent, username, onOpenConfig, onOpen
         </div>
       </div>
 
-      {/* Inventory bar with coins */}
+      {/* Inventory bar with coins and health */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 game-panel p-2 pointer-events-auto">
         <div className="flex items-center gap-2">
+          {/* Health */}
+          <div className="flex items-center gap-1 px-3 py-1 bg-red-500/20 rounded">
+            <Heart className="w-4 h-4 text-red-500" />
+            <span className="font-bold text-red-500 text-sm">{Math.floor(world.health)}/{MAX_HEALTH}</span>
+          </div>
+
           {/* Coins */}
           <div className="flex items-center gap-1 px-3 py-1 bg-amber-400/20 rounded">
             <Coins className="w-4 h-4 text-amber-400" />
