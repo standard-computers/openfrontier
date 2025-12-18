@@ -1,14 +1,15 @@
 import { GameWorld, Resource } from '@/types/game';
-import { Settings, User, Coins } from 'lucide-react';
+import { Settings, User, Coins, ChevronRight } from 'lucide-react';
 
 interface GameHUDProps {
   world: GameWorld;
   resources: Resource[];
   onOpenConfig: () => void;
   onOpenAccount: () => void;
+  onOpenStats: () => void;
 }
 
-const GameHUD = ({ world, resources, onOpenConfig, onOpenAccount }: GameHUDProps) => {
+const GameHUD = ({ world, resources, onOpenConfig, onOpenAccount, onOpenStats }: GameHUDProps) => {
   const getResource = (id: string | null) => resources.find(r => r.id === id);
 
   const claimedCount = world.map.tiles.flat().filter(t => t.claimedBy === world.userId).length;
@@ -17,12 +18,18 @@ const GameHUD = ({ world, resources, onOpenConfig, onOpenAccount }: GameHUDProps
     <>
       {/* Top bar */}
       <div className="absolute top-4 left-4 right-4 flex items-start justify-between pointer-events-none">
-        <div className="game-panel px-4 py-3 pointer-events-auto">
-          <h1 className="font-semibold text-foreground">{world.name}</h1>
+        <button 
+          onClick={onOpenStats}
+          className="game-panel px-4 py-3 pointer-events-auto hover:bg-muted/50 transition-colors text-left"
+        >
+          <div className="flex items-center gap-2">
+            <h1 className="font-semibold text-foreground">{world.name}</h1>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </div>
           <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
             <span>Pos: {world.playerPosition.x}, {world.playerPosition.y}</span>
           </div>
-        </div>
+        </button>
 
         {/* Empty space for balance */}
         <div></div>

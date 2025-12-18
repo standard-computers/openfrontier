@@ -9,6 +9,7 @@ import TileInfoPanel from '@/components/game/TileInfoPanel';
 import WorldConfig from '@/components/game/WorldConfig';
 import AccountPanel from '@/components/game/AccountPanel';
 import TouchControls from '@/components/game/TouchControls';
+import WorldStatsPanel from '@/components/game/WorldStatsPanel';
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -17,6 +18,7 @@ const Index = () => {
   const isTouchDevice = useTouchDevice();
   const [configOpen, setConfigOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
   
   const {
     world,
@@ -94,6 +96,7 @@ const Index = () => {
           resources={world.resources}
           onOpenConfig={() => setConfigOpen(true)}
           onOpenAccount={() => setAccountOpen(true)}
+          onOpenStats={() => setStatsOpen(true)}
         />
 
         {isTouchDevice && <TouchControls onMove={movePlayer} />}
@@ -136,6 +139,13 @@ const Index = () => {
         onUpdateResource={updateResource}
         onDeleteResource={deleteResource}
         onRespawnResources={respawnResources}
+      />
+
+      <WorldStatsPanel
+        isOpen={statsOpen}
+        onClose={() => setStatsOpen(false)}
+        world={world}
+        resources={world.resources}
       />
     </div>
   );
