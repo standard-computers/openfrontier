@@ -1,6 +1,7 @@
-import { useEffect, useRef, useMemo, useState } from 'react';
+import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import { WorldMap, Position, Resource, TILE_COLORS, TileType } from '@/types/game';
 import { cn } from '@/lib/utils';
+import { ZoomIn, ZoomOut } from 'lucide-react';
 
 interface GameMapProps {
   map: WorldMap;
@@ -13,7 +14,9 @@ interface GameMapProps {
   onTileSelect: (x: number, y: number) => void;
 }
 
-const TILE_SIZE = 28;
+const MIN_TILE_SIZE = 12;
+const MAX_TILE_SIZE = 48;
+const DEFAULT_TILE_SIZE = 28;
 
 const GameMap = ({
   map,
@@ -26,22 +29,35 @@ const GameMap = ({
   onTileSelect,
 }: GameMapProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [tileSize, setTileSize] = useState(DEFAULT_TILE_SIZE);
   const [viewportSize, setViewportSize] = useState({ tilesX: 30, tilesY: 20 });
 
+  const updateViewport = useCallback(() => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      setViewportSize({
+        tilesX: Math.ceil(rect.width / tileSize) + 1,
+        tilesY: Math.ceil(rect.height / tileSize) + 1,
+      });
+    }
+  }, [tileSize]);
+
   useEffect(() => {
-    const updateSize = () => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        setViewportSize({
-          tilesX: Math.floor(rect.width / TILE_SIZE),
-          tilesY: Math.floor(rect.height / TILE_SIZE),
-        });
-      }
-    };
-    updateSize();
-    window.addEventListener('resize', updateSize);
-    return () => window.removeEventListener('resize', updateSize);
+    updateViewport();
+    window.addEventListener('resize', updateViewport);
+    return () => window.removeEventListener('resize', updateViewport);
+  }, [updateViewport]);
+
+  const handleZoom = useCallback((delta: number) => {
+    setTileSize(prev => Math.max(MIN_TILE_SIZE, Math.min(MAX_TILE_SIZE, prev + delta)));
   }, []);
+
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      handleZoom(e.deltaY > 0 ? -4 : 4);
+    }
+  }, [handleZoom]);
 
   const viewportOffset = useMemo(() => {
     const offsetX = Math.max(0, Math.min(
@@ -99,17 +115,41 @@ const GameMap = ({
     return tiles;
   }, [map, viewportOffset, viewportSize]);
 
+  const zoomPercent = Math.round((tileSize / DEFAULT_TILE_SIZE) * 100);
+
   return (
     <div
       ref={containerRef}
       className="w-full h-full overflow-hidden relative"
       tabIndex={0}
+      onWheel={handleWheel}
     >
+      {/* Zoom controls */}
+      <div className="absolute top-4 right-4 z-20 flex flex-col gap-1">
+        <button
+          onClick={() => handleZoom(4)}
+          className="game-panel p-2 hover:bg-muted transition-colors"
+          title="Zoom in"
+        >
+          <ZoomIn className="w-4 h-4" />
+        </button>
+        <div className="game-panel px-2 py-1 text-xs text-center text-muted-foreground">
+          {zoomPercent}%
+        </div>
+        <button
+          onClick={() => handleZoom(-4)}
+          className="game-panel p-2 hover:bg-muted transition-colors"
+          title="Zoom out"
+        >
+          <ZoomOut className="w-4 h-4" />
+        </button>
+      </div>
+
       <div
         className="absolute inset-0 grid"
         style={{
-          gridTemplateColumns: `repeat(${viewportSize.tilesX}, ${TILE_SIZE}px)`,
-          gridTemplateRows: `repeat(${viewportSize.tilesY}, ${TILE_SIZE}px)`,
+          gridTemplateColumns: `repeat(${viewportSize.tilesX}, ${tileSize}px)`,
+          gridTemplateRows: `repeat(${viewportSize.tilesY}, ${tileSize}px)`,
         }}
       >
         {visibleTiles.map(({ x, y, tile }) => {
@@ -124,15 +164,16 @@ const GameMap = ({
             <div
               key={`${x}-${y}`}
               className={cn(
-                'tile text-sm cursor-pointer relative',
+                'tile cursor-pointer relative',
                 TILE_COLORS[tile.type],
                 !tile.walkable && 'brightness-75'
               )}
               style={{
                 gridColumn: screenX + 1,
                 gridRow: screenY + 1,
-                width: TILE_SIZE,
-                height: TILE_SIZE,
+                width: tileSize,
+                height: tileSize,
+                fontSize: Math.max(10, tileSize * 0.5),
                 boxShadow: isSelected 
                   ? 'inset 0 0 0 3px #fff'
                   : isClaimed 
@@ -142,12 +183,16 @@ const GameMap = ({
               onClick={() => tile.walkable && onTileSelect(x, y)}
             >
               {isPlayerHere && (
-                <span className="text-lg drop-shadow-lg z-10">🧑‍🌾</span>
+                <span className="drop-shadow-lg z-10" style={{ fontSize: Math.max(12, tileSize * 0.65) }}>🧑‍🌾</span>
               )}
               {isClaimed && !isPlayerHere && (
                 <div 
-                  className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full"
-                  style={{ backgroundColor: isOwnClaim ? userColor : '#888' }}
+                  className="absolute top-0.5 right-0.5 rounded-full"
+                  style={{ 
+                    backgroundColor: isOwnClaim ? userColor : '#888',
+                    width: Math.max(4, tileSize * 0.15),
+                    height: Math.max(4, tileSize * 0.15),
+                  }}
                 />
               )}
             </div>

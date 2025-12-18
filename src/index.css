@@ -40,6 +40,12 @@
     --tile-stone: 220 8% 45%;
     --tile-dirt: 30 30% 30%;
     --tile-forest: 140 40% 25%;
+    --tile-snow: 210 20% 90%;
+    --tile-ice: 190 60% 75%;
+    --tile-swamp: 80 40% 28%;
+    --tile-lava: 15 80% 50%;
+    --tile-mountain: 220 10% 35%;
+    --tile-jungle: 150 50% 22%;
   }
 }
 
@@ -70,6 +76,12 @@
   .tile-stone { background: hsl(var(--tile-stone)); }
   .tile-dirt { background: hsl(var(--tile-dirt)); }
   .tile-forest { background: hsl(var(--tile-forest)); }
+  .tile-snow { background: hsl(var(--tile-snow)); }
+  .tile-ice { background: hsl(var(--tile-ice)); }
+  .tile-swamp { background: hsl(var(--tile-swamp)); }
+  .tile-lava { background: hsl(var(--tile-lava)); }
+  .tile-mountain { background: hsl(var(--tile-mountain)); }
+  .tile-jungle { background: hsl(var(--tile-jungle)); }
 
   .btn {
     @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded transition-colors;
