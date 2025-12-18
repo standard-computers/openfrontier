@@ -8,6 +8,8 @@ import { useAuth } from '@/hooks/useAuth';
 interface SavedWorld {
   id: string;
   name: string;
+  width: number;
+  height: number;
   createdAt: number;
 }
 
@@ -16,6 +18,8 @@ const WorldsDashboard = () => {
   const { user, loading, username, signOut } = useAuth();
   const [worlds, setWorlds] = useState<SavedWorld[]>([]);
   const [newWorldName, setNewWorldName] = useState('');
+  const [newWorldWidth, setNewWorldWidth] = useState(80);
+  const [newWorldHeight, setNewWorldHeight] = useState(50);
   const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
@@ -45,13 +49,15 @@ const WorldsDashboard = () => {
     const newWorld: SavedWorld = {
       id: `world-${Date.now()}`,
       name: newWorldName.trim(),
+      width: newWorldWidth,
+      height: newWorldHeight,
       createdAt: Date.now(),
     };
 
     saveWorlds([...worlds, newWorld]);
     localStorage.setItem('currentWorldId', newWorld.id);
     localStorage.removeItem('gameWorld');
-    toast.success('World created!');
+    toast.success(`World created! (${newWorldWidth}×${newWorldHeight} tiles)`);
     navigate('/');
   };
 
@@ -112,11 +118,38 @@ const WorldsDashboard = () => {
                 autoFocus
                 onKeyDown={(e) => e.key === 'Enter' && handleCreateWorld()}
               />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Width</label>
+                  <input
+                    type="number"
+                    value={newWorldWidth}
+                    onChange={(e) => setNewWorldWidth(Math.max(10, Math.min(500, parseInt(e.target.value) || 80)))}
+                    min={10}
+                    max={500}
+                    className="input-field w-full"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Height</label>
+                  <input
+                    type="number"
+                    value={newWorldHeight}
+                    onChange={(e) => setNewWorldHeight(Math.max(10, Math.min(500, parseInt(e.target.value) || 50)))}
+                    min={10}
+                    max={500}
+                    className="input-field w-full"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Total tiles: {(newWorldWidth * newWorldHeight).toLocaleString()} (10-500 per dimension)
+              </p>
               <div className="flex gap-2">
                 <button onClick={handleCreateWorld} className="btn btn-primary flex-1">
-                  <Plus className="w-4 h-4 mr-2" /> Create World
+                  <Plus className="w-4 h-4" /> Create World
                 </button>
-                <button onClick={() => { setIsCreating(false); setNewWorldName(''); }} className="btn">
+                <button onClick={() => { setIsCreating(false); setNewWorldName(''); setNewWorldWidth(80); setNewWorldHeight(50); }} className="btn">
                   Cancel
                 </button>
               </div>
@@ -148,7 +181,7 @@ const WorldsDashboard = () => {
                 <div className="flex-1">
                   <h3 className="font-semibold text-foreground">{world.name}</h3>
                   <p className="text-xs text-muted-foreground">
-                    Created {new Date(world.createdAt).toLocaleDateString()}
+                    {world.width || 80}×{world.height || 50} tiles • Created {new Date(world.createdAt).toLocaleDateString()}
                   </p>
                 </div>
                 <button
@@ -158,7 +191,7 @@ const WorldsDashboard = () => {
                   <Trash2 className="w-4 h-4" />
                 </button>
                 <div className="btn btn-primary px-4">
-                  <Play className="w-4 h-4 mr-1" /> Enter
+                  <Play className="w-4 h-4" /> Enter
                 </div>
               </div>
             ))}
