@@ -1,5 +1,6 @@
+import { useState, useEffect } from 'react';
 import { GameWorld, Resource, Sovereignty } from '@/types/game';
-import { Settings, User, Coins, ChevronRight, Hammer, ZoomIn, ZoomOut, Crown } from 'lucide-react';
+import { Settings, User, Coins, ChevronRight, Hammer, ZoomIn, ZoomOut, Crown, Clock } from 'lucide-react';
 
 interface GameHUDProps {
   world: GameWorld;
@@ -16,6 +17,29 @@ interface GameHUDProps {
 
 const GameHUD = ({ world, resources, zoomPercent, username, onOpenConfig, onOpenAccount, onOpenSovereignty, onOpenStats, onOpenCrafting, onZoom }: GameHUDProps) => {
   const getResource = (id: string | null) => resources.find(r => r.id === id);
+  const [worldTime, setWorldTime] = useState({ days: 0, hours: 0 });
+
+  // Calculate world time: 1 real hour = 1 game day
+  useEffect(() => {
+    const calculateWorldTime = () => {
+      const createdAt = new Date(world.createdAt).getTime();
+      const now = Date.now();
+      const elapsedMs = now - createdAt;
+      
+      // 1 real hour = 1 game day = 3600000ms
+      // So game days = elapsedMs / 3600000
+      const totalGameHours = (elapsedMs / 3600000) * 24;
+      const days = Math.floor(totalGameHours / 24);
+      const hours = Math.floor(totalGameHours % 24);
+      
+      setWorldTime({ days, hours });
+    };
+
+    calculateWorldTime();
+    // Update every real minute (= 0.4 game hours)
+    const interval = setInterval(calculateWorldTime, 60000);
+    return () => clearInterval(interval);
+  }, [world.createdAt]);
 
   const claimedCount = world.map.tiles.flat().filter(t => t.claimedBy === world.userId).length;
 
@@ -32,6 +56,10 @@ const GameHUD = ({ world, resources, zoomPercent, username, onOpenConfig, onOpen
             <ChevronRight className="w-4 h-4 text-muted-foreground" />
           </div>
           <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              Day {worldTime.days}, {worldTime.hours}:00
+            </span>
             <span>Pos: {world.playerPosition.x}, {world.playerPosition.y}</span>
           </div>
         </button>
