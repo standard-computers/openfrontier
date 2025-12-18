@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import '@fontsource/press-start-2p';
-
 @layer base {
   :root {
     --background: 220 20% 10%;
@@ -15,16 +13,16 @@
     --popover: 220 18% 12%;
     --popover-foreground: 60 30% 96%;
 
-    --primary: 140 60% 50%;
+    --primary: 140 50% 45%;
     --primary-foreground: 220 20% 10%;
 
-    --secondary: 220 15% 22%;
+    --secondary: 220 15% 20%;
     --secondary-foreground: 60 30% 96%;
 
     --muted: 220 15% 18%;
     --muted-foreground: 220 10% 55%;
 
-    --accent: 45 90% 55%;
+    --accent: 45 85% 55%;
     --accent-foreground: 220 20% 10%;
 
     --destructive: 0 70% 55%;
@@ -32,39 +30,16 @@
 
     --border: 220 15% 25%;
     --input: 220 18% 18%;
-    --ring: 140 60% 50%;
+    --ring: 140 50% 45%;
 
-    --radius: 4px;
+    --radius: 6px;
 
-    /* Game-specific */
-    --tile-size: 32px;
-    --map-grass: 120 35% 35%;
-    --map-water: 200 70% 45%;
-    --map-sand: 40 50% 65%;
-    --map-stone: 220 8% 45%;
-    --map-dirt: 30 30% 30%;
-  }
-
-  .dark {
-    --background: 220 20% 6%;
-    --foreground: 60 30% 96%;
-    --card: 220 18% 10%;
-    --card-foreground: 60 30% 96%;
-    --popover: 220 18% 8%;
-    --popover-foreground: 60 30% 96%;
-    --primary: 140 60% 50%;
-    --primary-foreground: 220 20% 10%;
-    --secondary: 220 15% 18%;
-    --secondary-foreground: 60 30% 96%;
-    --muted: 220 15% 14%;
-    --muted-foreground: 220 10% 50%;
-    --accent: 45 90% 55%;
-    --accent-foreground: 220 20% 10%;
-    --destructive: 0 70% 50%;
-    --destructive-foreground: 60 30% 96%;
-    --border: 220 15% 20%;
-    --input: 220 18% 14%;
-    --ring: 140 60% 50%;
+    --tile-grass: 120 35% 35%;
+    --tile-water: 200 70% 45%;
+    --tile-sand: 40 50% 65%;
+    --tile-stone: 220 8% 45%;
+    --tile-dirt: 30 30% 30%;
+    --tile-forest: 140 40% 25%;
   }
 }
 
@@ -74,79 +49,52 @@
   }
 
   body {
-    @apply bg-background text-foreground;
-    font-family: 'Press Start 2P', cursive;
-    image-rendering: pixelated;
-    overflow: hidden;
+    @apply bg-background text-foreground antialiased;
+    font-family: system-ui, -apple-system, sans-serif;
   }
 }
 
 @layer components {
-  .pixel-panel {
-    @apply bg-card border-2 border-border;
-    box-shadow: 
-      4px 4px 0 0 hsl(220 20% 5%),
-      inset 1px 1px 0 0 hsl(220 15% 30%);
-  }
-
-  .pixel-btn {
-    @apply px-4 py-2 font-pixel text-[10px] uppercase tracking-wider transition-all;
-    @apply bg-secondary text-secondary-foreground border-2 border-border;
-    box-shadow: 3px 3px 0 0 hsl(220 20% 5%);
-  }
-
-  .pixel-btn:hover {
-    @apply brightness-110;
-  }
-
-  .pixel-btn:active {
-    box-shadow: none;
-    transform: translate(3px, 3px);
-  }
-
-  .pixel-btn-primary {
-    @apply bg-primary text-primary-foreground;
-  }
-
-  .pixel-btn-accent {
-    @apply bg-accent text-accent-foreground;
+  .game-panel {
+    @apply bg-card border border-border rounded-lg shadow-lg;
   }
 
   .tile {
-    @apply w-8 h-8 flex items-center justify-center text-base select-none;
+    @apply flex items-center justify-center select-none transition-all;
     image-rendering: pixelated;
   }
 
-  .tile-grass { background: hsl(var(--map-grass)); }
-  .tile-water { background: hsl(var(--map-water)); }
-  .tile-sand { background: hsl(var(--map-sand)); }
-  .tile-stone { background: hsl(var(--map-stone)); }
-  .tile-dirt { background: hsl(var(--map-dirt)); }
+  .tile-grass { background: hsl(var(--tile-grass)); }
+  .tile-water { background: hsl(var(--tile-water)); }
+  .tile-sand { background: hsl(var(--tile-sand)); }
+  .tile-stone { background: hsl(var(--tile-stone)); }
+  .tile-dirt { background: hsl(var(--tile-dirt)); }
+  .tile-forest { background: hsl(var(--tile-forest)); }
 
-  .inventory-slot {
-    @apply w-10 h-10 bg-input border border-border flex items-center justify-center;
-    @apply hover:bg-secondary transition-colors cursor-pointer text-lg;
+  .btn {
+    @apply px-3 py-1.5 text-sm font-medium rounded transition-colors;
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
   }
 
-  .toolbar-btn {
-    @apply w-10 h-10 flex items-center justify-center bg-secondary border border-border;
-    @apply hover:bg-muted transition-colors cursor-pointer;
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90;
   }
 
-  .toolbar-btn.active {
-    @apply bg-primary text-primary-foreground border-primary;
+  .btn-accent {
+    @apply bg-accent text-accent-foreground hover:bg-accent/90;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent hover:bg-muted;
+  }
+
+  .input-field {
+    @apply px-3 py-2 text-sm bg-input border border-border rounded;
+    @apply focus:outline-none focus:ring-2 focus:ring-ring;
   }
 }
 
 @layer utilities {
-  .font-pixel {
-    font-family: 'Press Start 2P', cursive;
-  }
-
-  .text-shadow-pixel {
-    text-shadow: 2px 2px 0 hsl(220 20% 5%);
-  }
-
   .animate-bob {
     animation: bob 1s ease-in-out infinite;
   }

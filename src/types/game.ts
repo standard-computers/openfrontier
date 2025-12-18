@@ -1,4 +1,4 @@
-export type TileType = 'grass' | 'water' | 'sand' | 'stone' | 'dirt';
+export type TileType = 'grass' | 'water' | 'sand' | 'stone' | 'dirt' | 'forest';
 
 export interface Position {
   x: number;
@@ -12,25 +12,8 @@ export interface Resource {
   rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
   description: string;
   gatherTime: number;
-}
-
-export interface PlacedResource {
-  resourceId: string;
-  position: Position;
-}
-
-export interface RecipeIngredient {
-  resourceId: string;
-  quantity: number;
-}
-
-export interface Recipe {
-  id: string;
-  name: string;
-  outputResourceId: string;
-  outputQuantity: number;
-  ingredients: RecipeIngredient[];
-  craftTime: number;
+  spawnTiles: TileType[]; // Which tile types this resource can spawn on
+  spawnChance: number; // 0-1 probability
 }
 
 export interface MapTile {
@@ -56,13 +39,20 @@ export interface InventorySlot {
 export interface GameWorld {
   id: string;
   name: string;
-  maps: WorldMap[];
+  map: WorldMap;
   resources: Resource[];
-  recipes: Recipe[];
-  currentMapId: string;
   inventory: InventorySlot[];
   playerPosition: Position;
 }
+
+export const TILE_TYPES: { type: TileType; label: string; walkable: boolean; color: string }[] = [
+  { type: 'grass', label: 'Grass', walkable: true, color: 'bg-green-600' },
+  { type: 'forest', label: 'Forest', walkable: true, color: 'bg-green-900' },
+  { type: 'dirt', label: 'Dirt', walkable: true, color: 'bg-amber-800' },
+  { type: 'sand', label: 'Sand', walkable: true, color: 'bg-yellow-500' },
+  { type: 'stone', label: 'Stone', walkable: true, color: 'bg-gray-500' },
+  { type: 'water', label: 'Water', walkable: false, color: 'bg-blue-500' },
+];
 
 export const TILE_COLORS: Record<TileType, string> = {
   grass: 'tile-grass',
@@ -70,49 +60,86 @@ export const TILE_COLORS: Record<TileType, string> = {
   sand: 'tile-sand',
   stone: 'tile-stone',
   dirt: 'tile-dirt',
+  forest: 'tile-forest',
 };
 
 export const RARITY_COLORS: Record<Resource['rarity'], string> = {
-  common: 'text-foreground',
+  common: 'text-gray-300',
   uncommon: 'text-green-400',
   rare: 'text-blue-400',
   epic: 'text-purple-400',
-  legendary: 'text-accent',
+  legendary: 'text-amber-400',
 };
 
 export const DEFAULT_RESOURCES: Resource[] = [
-  { id: 'wood', name: 'Wood', icon: '🪵', rarity: 'common', description: 'Basic building material', gatherTime: 2 },
-  { id: 'stone', name: 'Stone', icon: '🪨', rarity: 'common', description: 'Hard construction material', gatherTime: 3 },
-  { id: 'iron', name: 'Iron Ore', icon: '⛏️', rarity: 'uncommon', description: 'Raw iron for smelting', gatherTime: 5 },
-  { id: 'gold', name: 'Gold Ore', icon: '✨', rarity: 'rare', description: 'Precious golden ore', gatherTime: 8 },
-  { id: 'coal', name: 'Coal', icon: '⚫', rarity: 'common', description: 'Fuel for smelting', gatherTime: 2 },
-  { id: 'copper', name: 'Copper Ore', icon: '🔶', rarity: 'uncommon', description: 'Soft metal ore', gatherTime: 4 },
-  { id: 'fiber', name: 'Fiber', icon: '🌿', rarity: 'common', description: 'Plant fibers', gatherTime: 1 },
-  { id: 'fish', name: 'Fish', icon: '🐟', rarity: 'common', description: 'Fresh catch', gatherTime: 3 },
-  { id: 'crystal', name: 'Crystal', icon: '💎', rarity: 'epic', description: 'Magical crystal', gatherTime: 10 },
-  { id: 'mushroom', name: 'Mushroom', icon: '🍄', rarity: 'uncommon', description: 'Forest fungus', gatherTime: 2 },
+  { id: 'wood', name: 'Wood', icon: '🪵', rarity: 'common', description: 'Basic building material', gatherTime: 2, spawnTiles: ['forest', 'grass'], spawnChance: 0.15 },
+  { id: 'stone', name: 'Stone', icon: '🪨', rarity: 'common', description: 'Hard construction material', gatherTime: 3, spawnTiles: ['stone', 'dirt'], spawnChance: 0.2 },
+  { id: 'iron', name: 'Iron Ore', icon: '⛏️', rarity: 'uncommon', description: 'Raw iron for smelting', gatherTime: 5, spawnTiles: ['stone'], spawnChance: 0.08 },
+  { id: 'gold', name: 'Gold Ore', icon: '✨', rarity: 'rare', description: 'Precious golden ore', gatherTime: 8, spawnTiles: ['stone'], spawnChance: 0.03 },
+  { id: 'coal', name: 'Coal', icon: '⚫', rarity: 'common', description: 'Fuel for smelting', gatherTime: 2, spawnTiles: ['stone', 'dirt'], spawnChance: 0.12 },
+  { id: 'fiber', name: 'Fiber', icon: '🌿', rarity: 'common', description: 'Plant fibers', gatherTime: 1, spawnTiles: ['grass', 'forest'], spawnChance: 0.1 },
+  { id: 'fish', name: 'Fish', icon: '🐟', rarity: 'common', description: 'Fresh catch', gatherTime: 3, spawnTiles: ['sand'], spawnChance: 0.15 },
+  { id: 'crystal', name: 'Crystal', icon: '💎', rarity: 'epic', description: 'Magical crystal', gatherTime: 10, spawnTiles: ['stone'], spawnChance: 0.01 },
+  { id: 'mushroom', name: 'Mushroom', icon: '🍄', rarity: 'uncommon', description: 'Forest fungus', gatherTime: 2, spawnTiles: ['forest', 'dirt'], spawnChance: 0.08 },
+  { id: 'cactus', name: 'Cactus', icon: '🌵', rarity: 'uncommon', description: 'Desert plant', gatherTime: 3, spawnTiles: ['sand'], spawnChance: 0.1 },
+  { id: 'shell', name: 'Shell', icon: '🐚', rarity: 'common', description: 'Sea shell', gatherTime: 1, spawnTiles: ['sand'], spawnChance: 0.12 },
+  { id: 'flower', name: 'Flower', icon: '🌸', rarity: 'common', description: 'Pretty flower', gatherTime: 1, spawnTiles: ['grass'], spawnChance: 0.08 },
 ];
 
-export const DEFAULT_RECIPES: Recipe[] = [
-  { id: 'plank', name: 'Wooden Plank', outputResourceId: 'plank', outputQuantity: 4, ingredients: [{ resourceId: 'wood', quantity: 1 }], craftTime: 2 },
-  { id: 'iron-bar', name: 'Iron Bar', outputResourceId: 'iron-bar', outputQuantity: 1, ingredients: [{ resourceId: 'iron', quantity: 2 }, { resourceId: 'coal', quantity: 1 }], craftTime: 5 },
-];
-
-export const createEmptyMap = (width: number, height: number, name: string): WorldMap => {
+export const generateMap = (width: number, height: number, resources: Resource[]): WorldMap => {
   const tiles: MapTile[][] = [];
+  
+  // Generate terrain with some noise-like patterns
   for (let y = 0; y < height; y++) {
     const row: MapTile[] = [];
     for (let x = 0; x < width; x++) {
-      row.push({ type: 'grass', walkable: true });
+      const noise = Math.sin(x * 0.1) * Math.cos(y * 0.1) + Math.random() * 0.5;
+      let type: TileType = 'grass';
+      
+      if (noise < -0.3) type = 'water';
+      else if (noise < -0.1) type = 'sand';
+      else if (noise < 0.2) type = 'grass';
+      else if (noise < 0.5) type = 'forest';
+      else if (noise < 0.7) type = 'dirt';
+      else type = 'stone';
+      
+      const tileInfo = TILE_TYPES.find(t => t.type === type)!;
+      row.push({ type, walkable: tileInfo.walkable, resource: undefined });
     }
     tiles.push(row);
   }
+  
+  // Seed resources based on tile types
+  seedResources(tiles, resources);
+  
   return {
-    id: `map-${Date.now()}`,
-    name,
+    id: 'main-map',
+    name: 'World',
     width,
     height,
     tiles,
     spawnPoint: { x: Math.floor(width / 2), y: Math.floor(height / 2) },
   };
 };
+
+export const seedResources = (tiles: MapTile[][], resources: Resource[]) => {
+  for (let y = 0; y < tiles.length; y++) {
+    for (let x = 0; x < tiles[y].length; x++) {
+      const tile = tiles[y][x];
+      if (!tile.walkable) continue;
+      
+      // Find resources that can spawn on this tile type
+      const validResources = resources.filter(r => r.spawnTiles.includes(tile.type));
+      
+      for (const resource of validResources) {
+        if (Math.random() < resource.spawnChance) {
+          tile.resource = resource.id;
+          break; // Only one resource per tile
+        }
+      }
+    }
+  }
+};
+
+export const createEmptyInventory = (size: number = 30): InventorySlot[] =>
+  Array.from({ length: size }, () => ({ resourceId: null, quantity: 0 }));
