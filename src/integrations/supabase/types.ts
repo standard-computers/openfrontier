@@ -102,12 +102,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_world_ids: { Args: { _user_id: string }; Returns: string[] }
       get_world_by_join_code: {
         Args: { code: string }
         Returns: {
           id: string
           name: string
         }[]
+      }
+      is_world_member: {
+        Args: { _user_id: string; _world_id: string }
+        Returns: boolean
+      }
+      is_world_owner: {
+        Args: { _user_id: string; _world_id: string }
+        Returns: boolean
       }
     }
     Enums: {
