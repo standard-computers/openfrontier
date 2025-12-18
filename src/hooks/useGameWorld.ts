@@ -1,11 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { GameWorld, Resource, DEFAULT_RESOURCES, generateMap, createEmptyInventory, seedResources, USER_COLORS, STARTING_COINS, calculateTileValue } from '@/types/game';
+import { GameWorld, Resource, DEFAULT_RESOURCES, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, calculateTileValue } from '@/types/game';
 
-const STORAGE_KEY = 'pixel-world-v4';
 const MAP_WIDTH = 80;
 const MAP_HEIGHT = 50;
 
-const getDefaultWorld = (): GameWorld => {
+const getStorageKey = () => {
+  const worldId = localStorage.getItem('currentWorldId');
+  return worldId ? `gameWorld-${worldId}` : 'gameWorld-default';
+};
+
+const getDefaultWorld = (worldName?: string): GameWorld => {
   const resources = [...DEFAULT_RESOURCES];
   const map = generateMap(MAP_WIDTH, MAP_HEIGHT, resources);
   
@@ -17,9 +21,22 @@ const getDefaultWorld = (): GameWorld => {
   }
   map.spawnPoint = { x: spawnX, y: spawnY };
   
+  const worldId = localStorage.getItem('currentWorldId') || 'world-default';
+  
+  // Try to get world name from savedWorlds
+  let name = worldName || 'My World';
+  try {
+    const savedWorlds = localStorage.getItem('savedWorlds');
+    if (savedWorlds) {
+      const worlds = JSON.parse(savedWorlds);
+      const found = worlds.find((w: { id: string; name: string }) => w.id === worldId);
+      if (found) name = found.name;
+    }
+  } catch {}
+  
   return {
-    id: 'world-1',
-    name: 'My World',
+    id: worldId,
+    name,
     map,
     resources,
     inventory: createEmptyInventory(),
@@ -32,11 +49,11 @@ const getDefaultWorld = (): GameWorld => {
 
 export const useGameWorld = () => {
   const [world, setWorld] = useState<GameWorld>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const storageKey = getStorageKey();
+    const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Ensure coins exists for older saves
         if (parsed.coins === undefined) {
           parsed.coins = STARTING_COINS;
         }
@@ -51,7 +68,8 @@ export const useGameWorld = () => {
   const [selectedTile, setSelectedTile] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(world));
+    const storageKey = getStorageKey();
+    localStorage.setItem(storageKey, JSON.stringify(world));
   }, [world]);
 
   const movePlayer = useCallback((dx: number, dy: number) => {

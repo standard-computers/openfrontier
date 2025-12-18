@@ -2,16 +2,19 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameWorld } from '@/hooks/useGameWorld';
 import { useAuth } from '@/hooks/useAuth';
+import { useTouchDevice } from '@/hooks/useTouchDevice';
 import GameMap from '@/components/game/GameMap';
 import GameHUD from '@/components/game/GameHUD';
 import TileInfoPanel from '@/components/game/TileInfoPanel';
 import WorldConfig from '@/components/game/WorldConfig';
 import AccountPanel from '@/components/game/AccountPanel';
+import TouchControls from '@/components/game/TouchControls';
 import { toast } from 'sonner';
 
 const Index = () => {
   const navigate = useNavigate();
   const { user, loading, username } = useAuth();
+  const isTouchDevice = useTouchDevice();
   const [configOpen, setConfigOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   
@@ -92,6 +95,8 @@ const Index = () => {
           onOpenConfig={() => setConfigOpen(true)}
           onOpenAccount={() => setAccountOpen(true)}
         />
+
+        {isTouchDevice && <TouchControls onMove={movePlayer} />}
       </div>
 
       {/* Tile info panel */}
