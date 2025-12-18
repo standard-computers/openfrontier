@@ -69,6 +69,7 @@ export interface GameWorld {
   userColor: string;
   coins: number;
   sovereignty?: Sovereignty;
+  createdAt: string;
 }
 
 export const TILE_TYPES: { type: TileType; label: string; walkable: boolean; color: string; baseValue: number }[] = [

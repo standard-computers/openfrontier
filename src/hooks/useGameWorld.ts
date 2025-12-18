@@ -17,6 +17,7 @@ const getDefaultWorld = (): GameWorld => {
     userId: 'player-1',
     userColor: USER_COLORS[Math.floor(Math.random() * USER_COLORS.length)],
     coins: STARTING_COINS,
+    createdAt: new Date().toISOString(),
   };
 };
 
@@ -122,6 +123,7 @@ export const useGameWorld = () => {
           userColor: playerData.userColor || USER_COLORS[0],
           coins: playerData.coins ?? STARTING_COINS,
           sovereignty: playerData.sovereignty,
+          createdAt: worldData.created_at,
         });
       } catch (error) {
         console.error('Error loading world:', error);
