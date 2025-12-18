@@ -194,106 +194,97 @@ export const useGameWorld = () => {
   }, []);
 
   const claimTile = useCallback((x: number, y: number): { success: boolean; message: string } => {
-    let result = { success: false, message: '' };
-    let newMapData: WorldMap | null = null;
+    // Get current state synchronously to compute result
+    const currentWorld = world;
+    const tile = currentWorld.map.tiles[y][x];
     
-    setWorld(prev => {
-      const tile = prev.map.tiles[y][x];
-      if (tile.claimedBy) {
-        result = { success: false, message: 'Tile already claimed' };
-        return prev;
-      }
-      
-      const tileValue = calculateTileValue(tile, prev.resources);
-      
-      if (prev.coins < tileValue) {
-        result = { success: false, message: `Not enough coins! Need ${tileValue} coins` };
-        return prev;
-      }
-      
-      let newInventory = [...prev.inventory];
-      for (const resourceId of tile.resources) {
-        let slotIndex = newInventory.findIndex(s => s.resourceId === resourceId && s.quantity < 99);
-        if (slotIndex === -1) {
-          slotIndex = newInventory.findIndex(s => s.resourceId === null);
-        }
-        if (slotIndex !== -1) {
-          if (newInventory[slotIndex].resourceId === resourceId) {
-            newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
-          } else {
-            newInventory[slotIndex] = { resourceId, quantity: 1 };
-          }
-        }
-      }
-      
-      const newTiles = prev.map.tiles.map((row, ry) =>
-        row.map((t, rx) =>
-          rx === x && ry === y ? { ...t, claimedBy: prev.userId, resources: [] } : t
-        )
-      );
-      
-      newMapData = { ...prev.map, tiles: newTiles };
-      result = { success: true, message: `Claimed for ${tileValue} coins!` };
-      
-      return {
-        ...prev,
-        coins: prev.coins - tileValue,
-        inventory: newInventory,
-        map: newMapData,
-      };
-    });
-
-    // Save map changes with the new map data directly
-    if (result.success && newMapData) {
-      setTimeout(() => saveMapData(newMapData!), 500);
+    if (tile.claimedBy) {
+      return { success: false, message: 'Tile already claimed' };
     }
     
-    return result;
-  }, [saveMapData]);
-
-  const gatherFromTile = useCallback((x: number, y: number, resourceId: string) => {
-    let newMapData: WorldMap | null = null;
+    const tileValue = calculateTileValue(tile, currentWorld.resources);
     
-    setWorld(prev => {
-      const tile = prev.map.tiles[y][x];
-      if (!tile.resources.includes(resourceId)) return prev;
-      if (tile.claimedBy && tile.claimedBy !== prev.userId) return prev;
-      
-      const newInventory = [...prev.inventory];
+    if (currentWorld.coins < tileValue) {
+      return { success: false, message: `Not enough coins! Need ${tileValue} coins` };
+    }
+    
+    // Compute new inventory
+    let newInventory = [...currentWorld.inventory];
+    for (const resourceId of tile.resources) {
       let slotIndex = newInventory.findIndex(s => s.resourceId === resourceId && s.quantity < 99);
       if (slotIndex === -1) {
         slotIndex = newInventory.findIndex(s => s.resourceId === null);
       }
-      if (slotIndex === -1) return prev;
-      
-      if (newInventory[slotIndex].resourceId === resourceId) {
-        newInventory[slotIndex].quantity++;
-      } else {
-        newInventory[slotIndex] = { resourceId, quantity: 1 };
+      if (slotIndex !== -1) {
+        if (newInventory[slotIndex].resourceId === resourceId) {
+          newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
+        } else {
+          newInventory[slotIndex] = { resourceId, quantity: 1 };
+        }
       }
-      
-      const newTiles = prev.map.tiles.map((row, ry) =>
-        row.map((t, rx) =>
-          rx === x && ry === y
-            ? { ...t, resources: t.resources.filter(r => r !== resourceId) }
-            : t
-        )
-      );
-      
-      newMapData = { ...prev.map, tiles: newTiles };
-      
-      return {
-        ...prev,
-        inventory: newInventory,
-        map: newMapData,
-      };
-    });
-
-    // Save map changes with the new map data directly
-    if (newMapData) {
-      setTimeout(() => saveMapData(newMapData!), 500);
     }
-  }, [saveMapData]);
+    
+    // Compute new tiles
+    const newTiles = currentWorld.map.tiles.map((row, ry) =>
+      row.map((t, rx) =>
+        rx === x && ry === y ? { ...t, claimedBy: currentWorld.userId, resources: [] } : t
+      )
+    );
+    
+    const newMapData: WorldMap = { ...currentWorld.map, tiles: newTiles };
+    
+    // Apply state update
+    setWorld(prev => ({
+      ...prev,
+      coins: prev.coins - tileValue,
+      inventory: newInventory,
+      map: newMapData,
+    }));
+
+    // Save map changes
+    setTimeout(() => saveMapData(newMapData), 500);
+    
+    return { success: true, message: `Claimed for ${tileValue} coins!` };
+  }, [world, saveMapData]);
+
+  const gatherFromTile = useCallback((x: number, y: number, resourceId: string) => {
+    const currentWorld = world;
+    const tile = currentWorld.map.tiles[y][x];
+    
+    if (!tile.resources.includes(resourceId)) return;
+    if (tile.claimedBy && tile.claimedBy !== currentWorld.userId) return;
+    
+    const newInventory = [...currentWorld.inventory];
+    let slotIndex = newInventory.findIndex(s => s.resourceId === resourceId && s.quantity < 99);
+    if (slotIndex === -1) {
+      slotIndex = newInventory.findIndex(s => s.resourceId === null);
+    }
+    if (slotIndex === -1) return;
+    
+    if (newInventory[slotIndex].resourceId === resourceId) {
+      newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
+    } else {
+      newInventory[slotIndex] = { resourceId, quantity: 1 };
+    }
+    
+    const newTiles = currentWorld.map.tiles.map((row, ry) =>
+      row.map((t, rx) =>
+        rx === x && ry === y
+          ? { ...t, resources: t.resources.filter(r => r !== resourceId) }
+          : t
+      )
+    );
+    
+    const newMapData: WorldMap = { ...currentWorld.map, tiles: newTiles };
+    
+    setWorld(prev => ({
+      ...prev,
+      inventory: newInventory,
+      map: newMapData,
+    }));
+
+    setTimeout(() => saveMapData(newMapData), 500);
+  }, [world, saveMapData]);
 
   const addResource = useCallback((resource: Resource) => {
     if (!isOwner) return;
@@ -321,34 +312,32 @@ export const useGameWorld = () => {
 
   const respawnResources = useCallback(() => {
     if (!isOwner) return;
-    let newMapData: WorldMap | null = null;
     
-    setWorld(prev => {
-      const newTiles = prev.map.tiles.map(row => 
-        row.map(t => ({ ...t, resources: t.claimedBy ? [] : t.resources }))
-      );
-      for (let y = 0; y < newTiles.length; y++) {
-        for (let x = 0; x < newTiles[y].length; x++) {
-          const tile = newTiles[y][x];
-          if (!tile.claimedBy) {
-            tile.resources = [];
-            const validResources = prev.resources.filter(r => r.spawnTiles.includes(tile.type));
-            for (const resource of validResources) {
-              if (Math.random() < resource.spawnChance) {
-                tile.resources.push(resource.id);
-              }
+    const currentWorld = world;
+    const newTiles = currentWorld.map.tiles.map(row => 
+      row.map(t => ({ ...t, resources: t.claimedBy ? [] : [] }))
+    );
+    
+    for (let y = 0; y < newTiles.length; y++) {
+      for (let x = 0; x < newTiles[y].length; x++) {
+        const tile = newTiles[y][x];
+        if (!tile.claimedBy) {
+          const validResources = currentWorld.resources.filter(r => r.spawnTiles.includes(tile.type));
+          for (const resource of validResources) {
+            if (Math.random() < resource.spawnChance) {
+              tile.resources.push(resource.id);
             }
           }
         }
       }
-      newMapData = { ...prev.map, tiles: newTiles };
-      return { ...prev, map: newMapData };
-    });
-    
-    if (newMapData) {
-      setTimeout(() => saveMapData(newMapData!), 500);
     }
-  }, [isOwner, saveMapData]);
+    
+    const newMapData: WorldMap = { ...currentWorld.map, tiles: newTiles };
+    
+    setWorld(prev => ({ ...prev, map: newMapData }));
+    
+    setTimeout(() => saveMapData(newMapData), 500);
+  }, [isOwner, world, saveMapData]);
 
   const updateWorldName = useCallback((name: string) => {
     if (!isOwner) return;
