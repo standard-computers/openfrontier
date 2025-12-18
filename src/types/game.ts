@@ -21,6 +21,7 @@ export interface Resource {
   id: string;
   name: string;
   icon: string;
+  iconType?: 'emoji' | 'image'; // 'emoji' (default) or 'image' (URL)
   rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
   description: string;
   gatherTime: number;

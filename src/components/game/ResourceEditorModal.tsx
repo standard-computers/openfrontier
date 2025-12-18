@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Resource, Recipe, RecipeIngredient, TileType, TILE_TYPES, RARITY_COLORS } from '@/types/game';
-import { X, Save, Trash2, Plus, ChevronRight } from 'lucide-react';
+import { X, Save, Trash2, Plus, ChevronRight, Upload, Smile, Image } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import ResourceIcon from './ResourceIcon';
 
 interface ResourceEditorModalProps {
   resource: Resource;
@@ -13,7 +15,7 @@ interface ResourceEditorModalProps {
   onClose: () => void;
 }
 
-const ICONS = ['🪵', '🪨', '⛏️', '✨', '💎', '🔶', '🌿', '💧', '🔥', '❄️', '⚡', '🍎', '🌾', '🐟', '🥚', '🧵', '⚙️', '💀', '🍄', '🌸', '🦴', '🪶', '🌵', '🐚', '🍯', '🧲', '🔩', '🥇', '🪢'];
+const ICONS = ['🪵', '🪨', '⛏️', '✨', '💎', '🔶', '🌿', '💧', '🔥', '❄️', '⚡', '🍎', '🌾', '🐟', '🥚', '🧵', '⚙️', '💀', '🍄', '🌸', '🦴', '🪶', '🌵', '🐚', '🍯', '🧲', '🔩', '🥇', '🪢', '🧊', '🖤', '💛', '🌱', '🐸', '🪴', '🥭', '⚫', '🌺', '🍇', '🥕', '🧀', '🍖', '🪙', '💰', '📦', '🎁', '⭐', '🌟', '💫', '🔮', '🧪', '⚗️', '🏺', '🗡️', '🛡️', '🏹', '🪓', '⚒️', '🔧', '🗝️', '🔑'];
 
 const ResourceEditorModal = ({
   resource,
@@ -24,9 +26,12 @@ const ResourceEditorModal = ({
   onClose,
 }: ResourceEditorModalProps) => {
   const [activeTab, setActiveTab] = useState<'general' | 'recipes'>('general');
-  const [form, setForm] = useState<Resource>({ ...resource });
+  const [iconMode, setIconMode] = useState<'emoji' | 'image'>(resource.iconType === 'image' ? 'image' : 'emoji');
+  const [form, setForm] = useState<Resource>({ ...resource, iconType: resource.iconType || 'emoji' });
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [isNewRecipe, setIsNewRecipe] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getResource = (id: string) => allResources.find(r => r.id === id);
 
@@ -35,6 +40,48 @@ const ResourceEditorModal = ({
       ? form.spawnTiles.filter(t => t !== tileType)
       : [...form.spawnTiles, tileType];
     setForm({ ...form, spawnTiles: tiles });
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image must be less than 2MB');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${form.id}-${Date.now()}.${fileExt}`;
+      
+      const { data, error } = await supabase.storage
+        .from('resource-icons')
+        .upload(fileName, file, { upsert: true });
+
+      if (error) throw error;
+
+      const { data: urlData } = supabase.storage
+        .from('resource-icons')
+        .getPublicUrl(data.path);
+
+      setForm({ ...form, icon: urlData.publicUrl, iconType: 'image' });
+      toast.success('Icon uploaded!');
+    } catch (err: any) {
+      toast.error('Upload failed: ' + err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const selectEmoji = (emoji: string) => {
+    setForm({ ...form, icon: emoji, iconType: 'emoji' });
   };
 
   const handleSave = () => {
@@ -124,7 +171,7 @@ const ResourceEditorModal = ({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
           <div className="flex items-center gap-2">
-            <span className="text-xl">{form.icon}</span>
+            <ResourceIcon icon={form.icon} iconType={form.iconType} size="lg" />
             <h2 className="font-semibold">{isNew ? 'New Resource' : form.name}</h2>
           </div>
           <button onClick={onClose} className="btn btn-ghost p-1">
@@ -174,20 +221,70 @@ const ResourceEditorModal = ({
 
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Icon</label>
-                <div className="flex flex-wrap gap-1">
-                  {ICONS.map((icon) => (
-                    <button
-                      key={icon}
-                      onClick={() => setForm({ ...form, icon })}
-                      className={cn(
-                        'w-8 h-8 flex items-center justify-center rounded hover:bg-muted',
-                        form.icon === icon && 'bg-primary'
-                      )}
-                    >
-                      {icon}
-                    </button>
-                  ))}
+                
+                {/* Icon Type Tabs */}
+                <div className="flex gap-1 mb-2">
+                  <button
+                    onClick={() => setIconMode('emoji')}
+                    className={cn(
+                      'flex items-center gap-1 px-3 py-1.5 text-xs rounded transition-colors',
+                      iconMode === 'emoji' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
+                    )}
+                  >
+                    <Smile className="w-3 h-3" /> Emoji
+                  </button>
+                  <button
+                    onClick={() => setIconMode('image')}
+                    className={cn(
+                      'flex items-center gap-1 px-3 py-1.5 text-xs rounded transition-colors',
+                      iconMode === 'image' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
+                    )}
+                  >
+                    <Image className="w-3 h-3" /> Upload Image
+                  </button>
                 </div>
+
+                {iconMode === 'emoji' ? (
+                  <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto p-1 bg-secondary/30 rounded">
+                    {ICONS.map((icon) => (
+                      <button
+                        key={icon}
+                        onClick={() => selectEmoji(icon)}
+                        className={cn(
+                          'w-8 h-8 flex items-center justify-center rounded hover:bg-muted transition-colors',
+                          form.icon === icon && form.iconType !== 'image' && 'bg-primary'
+                        )}
+                      >
+                        {icon}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="btn w-full flex items-center justify-center gap-2"
+                    >
+                      <Upload className="w-4 h-4" />
+                      {uploading ? 'Uploading...' : 'Choose Image'}
+                    </button>
+                    {form.iconType === 'image' && form.icon.startsWith('http') && (
+                      <div className="flex items-center gap-2 p-2 bg-secondary/30 rounded">
+                        <img src={form.icon} alt="Preview" className="w-10 h-10 object-cover rounded" />
+                        <span className="text-xs text-muted-foreground flex-1 truncate">{form.icon}</span>
+                      </div>
+                    )}
+                    <p className="text-[10px] text-muted-foreground">Max 2MB. PNG, JPG, or GIF.</p>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -418,13 +515,13 @@ const ResourceEditorModal = ({
                           return (
                             <span key={i} className="flex items-center gap-1">
                               {i > 0 && <span className="text-muted-foreground">+</span>}
-                              <span>{r?.icon}</span>
+                              {r && <ResourceIcon icon={r.icon} iconType={r.iconType} size="sm" />}
                               <span className="text-sm">×{ing.quantity}</span>
                             </span>
                           );
                         })}
                         <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                        <span>{form.icon}</span>
+                        <ResourceIcon icon={form.icon} iconType={form.iconType} size="sm" />
                         <span className="text-sm">×{editingRecipe.outputQuantity}</span>
                       </div>
                     </div>
@@ -476,13 +573,13 @@ const ResourceEditorModal = ({
                               return (
                                 <span key={i} className="flex items-center gap-0.5 text-xs">
                                   {i > 0 && <span className="text-muted-foreground mx-1">+</span>}
-                                  <span>{r?.icon}</span>
+                                  {r && <ResourceIcon icon={r.icon} iconType={r.iconType} size="sm" />}
                                   <span className="text-muted-foreground">×{ing.quantity}</span>
                                 </span>
                               );
                             })}
                             <ChevronRight className="w-3 h-3 text-muted-foreground mx-1" />
-                            <span>{form.icon}</span>
+                            <ResourceIcon icon={form.icon} iconType={form.iconType} size="sm" />
                             <span className="text-xs text-muted-foreground">×{recipe.outputQuantity}</span>
                           </div>
                         </div>

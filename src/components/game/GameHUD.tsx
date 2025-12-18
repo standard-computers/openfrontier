@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { GameWorld, Resource, Sovereignty, MAX_HEALTH } from '@/types/game';
 import { Settings, User, Coins, ChevronRight, Hammer, ZoomIn, ZoomOut, Crown, Clock, Heart } from 'lucide-react';
+import ResourceIcon from './ResourceIcon';
 
 interface GameHUDProps {
   world: GameWorld;
@@ -164,7 +165,7 @@ const GameHUD = ({ world, resources, zoomPercent, username, onOpenConfig, onOpen
                 >
                   {resource && (
                     <>
-                      <span>{resource.icon}</span>
+                      <ResourceIcon icon={resource.icon} iconType={resource.iconType} size="md" />
                       {slot.quantity > 1 && (
                         <span className="absolute bottom-0 right-0.5 text-[10px] font-medium bg-card px-0.5 rounded">
                           {slot.quantity}

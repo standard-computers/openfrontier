@@ -3,6 +3,7 @@ import { X, Globe, Users, Map, Flag, Package, Coins, Crown } from 'lucide-react'
 import { GameWorld, Resource, TILE_TYPES, calculateTileValue, RARITY_COLORS } from '@/types/game';
 import { WorldMember } from '@/hooks/useGameWorld';
 import { cn } from '@/lib/utils';
+import ResourceIcon from './ResourceIcon';
 
 interface WorldStatsPanelProps {
   isOpen: boolean;
@@ -178,7 +179,7 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members }: WorldSt
                     .sort((a, b) => (resourceCounts[b.id] || 0) - (resourceCounts[a.id] || 0))
                     .map(resource => (
                       <div key={resource.id} className="bg-secondary/30 rounded p-2 flex items-center gap-2">
-                        <span className="text-lg">{resource.icon}</span>
+                        <ResourceIcon icon={resource.icon} iconType={resource.iconType} size="md" />
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium truncate">{resource.name}</div>
                           <div className={`text-xs ${RARITY_COLORS[resource.rarity]}`}>{resource.rarity}</div>

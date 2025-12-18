@@ -3,6 +3,7 @@ import { X, Hammer, ChevronRight } from 'lucide-react';
 import { Resource, Recipe, InventorySlot, RARITY_COLORS } from '@/types/game';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import ResourceIcon from './ResourceIcon';
 
 interface CraftingPanelProps {
   isOpen: boolean;
@@ -67,7 +68,7 @@ const CraftingPanel = ({ isOpen, onClose, resources, inventory, onCraft }: Craft
                 <div key={resource.id} className="bg-secondary/30 rounded-lg overflow-hidden">
                   {/* Resource header */}
                   <div className="flex items-center gap-3 p-3 border-b border-border/50">
-                    <span className="text-2xl">{resource.icon}</span>
+                    <ResourceIcon icon={resource.icon} iconType={resource.iconType} size="lg" />
                     <div className="flex-1">
                       <div className="font-medium">{resource.name}</div>
                       <div className={cn('text-xs', RARITY_COLORS[resource.rarity])}>{resource.rarity}</div>
@@ -105,14 +106,14 @@ const CraftingPanel = ({ isOpen, onClose, resources, inventory, onCraft }: Craft
                                     )}
                                   >
                                     {i > 0 && <span className="text-muted-foreground mr-1">+</span>}
-                                    <span>{r?.icon}</span>
+                                    {r && <ResourceIcon icon={r.icon} iconType={r.iconType} size="sm" />}
                                     <span>{owned}/{ing.quantity}</span>
                                   </span>
                                 );
                               })}
                               <ChevronRight className="w-3 h-3 text-muted-foreground mx-1" />
                               <span className="flex items-center gap-0.5 text-xs bg-primary/20 px-1.5 py-0.5 rounded">
-                                <span>{resource.icon}</span>
+                                <ResourceIcon icon={resource.icon} iconType={resource.iconType} size="sm" />
                                 <span>×{recipe.outputQuantity}</span>
                               </span>
                             </div>
