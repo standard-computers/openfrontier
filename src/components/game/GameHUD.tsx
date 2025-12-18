@@ -8,12 +8,13 @@ interface GameHUDProps {
   username: string | null;
   onOpenConfig: () => void;
   onOpenAccount: () => void;
+  onOpenSovereignty: () => void;
   onOpenStats: () => void;
   onOpenCrafting: () => void;
   onZoom: (delta: number) => void;
 }
 
-const GameHUD = ({ world, resources, zoomPercent, username, onOpenConfig, onOpenAccount, onOpenStats, onOpenCrafting, onZoom }: GameHUDProps) => {
+const GameHUD = ({ world, resources, zoomPercent, username, onOpenConfig, onOpenAccount, onOpenSovereignty, onOpenStats, onOpenCrafting, onZoom }: GameHUDProps) => {
   const getResource = (id: string | null) => resources.find(r => r.id === id);
 
   const claimedCount = world.map.tiles.flat().filter(t => t.claimedBy === world.userId).length;
@@ -51,7 +52,19 @@ const GameHUD = ({ world, resources, zoomPercent, username, onOpenConfig, onOpen
             <button 
               onClick={onOpenAccount} 
               className="game-panel p-2 hover:bg-muted transition-colors flex items-center gap-2"
-              title={world.sovereignty ? world.sovereignty.name : 'Account'}
+              title="Account"
+            >
+              <div 
+                className="w-4 h-4 rounded-full"
+                style={{ backgroundColor: world.userColor }}
+              />
+              <User className="w-5 h-5" />
+            </button>
+
+            <button 
+              onClick={onOpenSovereignty} 
+              className="game-panel p-2 hover:bg-muted transition-colors flex items-center gap-2"
+              title={world.sovereignty ? world.sovereignty.name : 'Sovereignty'}
             >
               {world.sovereignty ? (
                 <>
@@ -60,17 +73,10 @@ const GameHUD = ({ world, resources, zoomPercent, username, onOpenConfig, onOpen
                 </>
               ) : (
                 <>
-                  <div 
-                    className="w-4 h-4 rounded-full"
-                    style={{ backgroundColor: world.userColor }}
-                  />
-                  <span className="text-sm max-w-[80px] truncate">{username || 'Player'}</span>
+                  <Crown className="w-5 h-5 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground max-w-[80px] truncate">{username || 'Player'}</span>
                 </>
               )}
-            </button>
-
-            <button onClick={onOpenStats} className="game-panel p-2 hover:bg-muted transition-colors" title="World Stats">
-              <Coins className="w-5 h-5" />
             </button>
 
             <button onClick={onOpenConfig} className="game-panel p-2 hover:bg-muted transition-colors" title="Settings">

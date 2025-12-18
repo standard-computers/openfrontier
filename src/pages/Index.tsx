@@ -7,6 +7,7 @@ import GameMap from '@/components/game/GameMap';
 import GameHUD from '@/components/game/GameHUD';
 import TileInfoPanel from '@/components/game/TileInfoPanel';
 import WorldConfig from '@/components/game/WorldConfig';
+import AccountPanel from '@/components/game/AccountPanel';
 import SovereigntyPanel from '@/components/game/SovereigntyPanel';
 import TouchControls from '@/components/game/TouchControls';
 import WorldStatsPanel from '@/components/game/WorldStatsPanel';
@@ -23,6 +24,7 @@ const Index = () => {
   const isTouchDevice = useTouchDevice();
   const [configOpen, setConfigOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [sovereigntyOpen, setSovereigntyOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
   const [craftingOpen, setCraftingOpen] = useState(false);
   const [tileSize, setTileSize] = useState(DEFAULT_TILE_SIZE);
@@ -116,6 +118,7 @@ const Index = () => {
           username={username}
           onOpenConfig={() => setConfigOpen(true)}
           onOpenAccount={() => setAccountOpen(true)}
+          onOpenSovereignty={() => setSovereigntyOpen(true)}
           onOpenStats={() => setStatsOpen(true)}
           onOpenCrafting={() => setCraftingOpen(true)}
           onZoom={handleZoom}
@@ -142,9 +145,19 @@ const Index = () => {
         </div>
       )}
 
-      <SovereigntyPanel
+      <AccountPanel
         isOpen={accountOpen}
         onClose={() => setAccountOpen(false)}
+        userColor={world.userColor}
+        coins={world.coins}
+        claimedTiles={claimedCount}
+        username={username}
+        onColorChange={setUserColor}
+      />
+
+      <SovereigntyPanel
+        isOpen={sovereigntyOpen}
+        onClose={() => setSovereigntyOpen(false)}
         userColor={world.userColor}
         coins={world.coins}
         claimedTiles={claimedCount}
