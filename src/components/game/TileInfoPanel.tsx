@@ -3,6 +3,7 @@ import { MapTile, Resource, RARITY_COLORS, TILE_TYPES, calculateTileValue } from
 import { X, Flag, Package, Coins, Pencil, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ResourceIcon from './ResourceIcon';
+import { WorldMember } from '@/hooks/useGameWorld';
 
 interface TileInfoPanelProps {
   tile: MapTile;
@@ -12,10 +13,12 @@ interface TileInfoPanelProps {
   userId: string;
   userColor: string;
   userCoins: number;
+  members: WorldMember[];
   onClose: () => void;
   onClaim: () => void;
   onGather: (resourceId: string) => void;
   onRename: (name: string) => void;
+  onViewUser: (member: WorldMember) => void;
 }
 
 const CLAIM_RADIUS = 6;
@@ -28,10 +31,12 @@ const TileInfoPanel = ({
   userId,
   userColor,
   userCoins,
+  members,
   onClose,
   onClaim,
   onGather,
   onRename,
+  onViewUser,
 }: TileInfoPanelProps) => {
   const tileInfo = TILE_TYPES.find(t => t.type === tile.type);
   const tileResources = tile.resources.map(id => resources.find(r => r.id === id)).filter(Boolean) as Resource[];
@@ -116,9 +121,23 @@ const TileInfoPanel = ({
               className="w-4 h-4 rounded-full border-2"
               style={{ borderColor: isOwnClaim ? userColor : '#888', backgroundColor: isOwnClaim ? userColor + '40' : '#88888840' }}
             />
-            <span className="text-sm">
-              {isOwnClaim ? 'You own this tile' : 'Claimed by another player'}
-            </span>
+            {isOwnClaim ? (
+              <span className="text-sm">You own this tile</span>
+            ) : (
+              (() => {
+                const owner = members.find(m => m.userId === tile.claimedBy);
+                return owner ? (
+                  <button
+                    onClick={() => onViewUser(owner)}
+                    className="text-sm text-primary hover:underline cursor-pointer"
+                  >
+                    Owned by {owner.username}
+                  </button>
+                ) : (
+                  <span className="text-sm">Claimed by another player</span>
+                );
+              })()
+            )}
           </div>
         ) : !isWithinClaimRange ? (
           <div className="py-2 px-3 bg-muted rounded text-center">
