@@ -71,24 +71,15 @@ export const useGameWorld = () => {
 
         if (memberError) throw memberError;
 
-        // Fetch all members with their profiles
+        // Fetch all members using the security definer function
         const { data: allMembers, error: membersError } = await supabase
-          .from('world_members')
-          .select('id, user_id, role, joined_at')
-          .eq('world_id', worldId);
+          .rpc('get_world_members', { _world_id: worldId });
 
         if (!membersError && allMembers) {
-          // Get usernames for all members
-          const memberIds = allMembers.map(m => m.user_id);
-          const { data: profiles } = await supabase
-            .from('profiles')
-            .select('id, username')
-            .in('id', memberIds);
-
-          const membersWithNames: WorldMember[] = allMembers.map(m => ({
+          const membersWithNames: WorldMember[] = allMembers.map((m: any) => ({
             id: m.id,
             userId: m.user_id,
-            username: profiles?.find(p => p.id === m.user_id)?.username || 'Unknown',
+            username: m.username || 'Unknown',
             role: m.role as 'owner' | 'player',
             joinedAt: m.joined_at,
           }));
@@ -158,7 +149,19 @@ export const useGameWorld = () => {
     return () => clearTimeout(timeoutId);
   }, [dbWorldId, world.playerPosition, world.inventory, world.coins, world.userColor, world.sovereignty, loading]);
 
-  // Save world data (map, resources) - only for owners
+  // Save world map data - all members can save map changes (for tile claiming)
+  const saveMapData = useCallback(async () => {
+    if (!dbWorldId) return;
+
+    await supabase
+      .from('worlds')
+      .update({
+        map_data: JSON.parse(JSON.stringify(world.map)) as Json,
+      })
+      .eq('id', dbWorldId);
+  }, [dbWorldId, world.map]);
+
+  // Save world data (name, resources) - only for owners
   const saveWorldData = useCallback(async () => {
     if (!dbWorldId || !isOwner) return;
 
@@ -166,11 +169,10 @@ export const useGameWorld = () => {
       .from('worlds')
       .update({
         name: world.name,
-        map_data: JSON.parse(JSON.stringify(world.map)) as Json,
         resources: JSON.parse(JSON.stringify(world.resources)) as Json,
       })
       .eq('id', dbWorldId);
-  }, [dbWorldId, isOwner, world.name, world.map, world.resources]);
+  }, [dbWorldId, isOwner, world.name, world.resources]);
 
   const movePlayer = useCallback((dx: number, dy: number) => {
     setWorld(prev => {
@@ -238,13 +240,13 @@ export const useGameWorld = () => {
       };
     });
 
-    // Save map changes for owner
-    if (result.success && isOwner) {
-      setTimeout(saveWorldData, 500);
+    // Save map changes for all members who claim tiles
+    if (result.success) {
+      setTimeout(saveMapData, 500);
     }
     
     return result;
-  }, [isOwner, saveWorldData]);
+  }, [saveMapData]);
 
   const gatherFromTile = useCallback((x: number, y: number, resourceId: string) => {
     setWorld(prev => {
@@ -280,10 +282,9 @@ export const useGameWorld = () => {
       };
     });
 
-    if (isOwner) {
-      setTimeout(saveWorldData, 500);
-    }
-  }, [isOwner, saveWorldData]);
+    // Save map changes for all members
+    setTimeout(saveMapData, 500);
+  }, [saveMapData]);
 
   const addResource = useCallback((resource: Resource) => {
     if (!isOwner) return;
@@ -331,8 +332,8 @@ export const useGameWorld = () => {
       }
       return { ...prev, map: { ...prev.map, tiles: newTiles } };
     });
-    setTimeout(saveWorldData, 500);
-  }, [isOwner, saveWorldData]);
+    setTimeout(saveMapData, 500);
+  }, [isOwner, saveMapData]);
 
   const updateWorldName = useCallback((name: string) => {
     if (!isOwner) return;

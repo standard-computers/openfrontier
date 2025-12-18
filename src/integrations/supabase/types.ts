@@ -120,6 +120,16 @@ export type Database = {
           name: string
         }[]
       }
+      get_world_members: {
+        Args: { _world_id: string }
+        Returns: {
+          id: string
+          joined_at: string
+          role: string
+          user_id: string
+          username: string
+        }[]
+      }
       is_world_member: {
         Args: { _user_id: string; _world_id: string }
         Returns: boolean
