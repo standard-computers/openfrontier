@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Globe, Trash2, Play } from 'lucide-react';
+import { Plus, Globe, Trash2, Play, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 
 interface SavedWorld {
   id: string;
@@ -12,9 +13,16 @@ interface SavedWorld {
 
 const WorldsDashboard = () => {
   const navigate = useNavigate();
+  const { user, loading, username, signOut } = useAuth();
   const [worlds, setWorlds] = useState<SavedWorld[]>([]);
   const [newWorldName, setNewWorldName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/auth');
+    }
+  }, [user, loading, navigate]);
 
   useEffect(() => {
     const saved = localStorage.getItem('savedWorlds');
@@ -42,7 +50,7 @@ const WorldsDashboard = () => {
 
     saveWorlds([...worlds, newWorld]);
     localStorage.setItem('currentWorldId', newWorld.id);
-    localStorage.removeItem('gameWorld'); // Clear existing world data to generate new
+    localStorage.removeItem('gameWorld');
     toast.success('World created!');
     navigate('/');
   };
@@ -61,12 +69,34 @@ const WorldsDashboard = () => {
     }
   };
 
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Your Worlds</h1>
-          <p className="text-muted-foreground">Create or enter a world to start exploring</p>
+        {/* Header with user info */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="text-center flex-1">
+            <h1 className="text-3xl font-bold text-foreground mb-2">Your Worlds</h1>
+            <p className="text-muted-foreground">Welcome, <span className="text-primary font-medium">{username || 'Player'}</span></p>
+          </div>
+          <button
+            onClick={handleSignOut}
+            className="btn flex items-center gap-2 text-sm"
+          >
+            <LogOut className="w-4 h-4" /> Sign Out
+          </button>
         </div>
 
         {/* Create new world */}

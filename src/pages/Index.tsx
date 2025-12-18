@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useGameWorld } from '@/hooks/useGameWorld';
+import { useAuth } from '@/hooks/useAuth';
 import GameMap from '@/components/game/GameMap';
 import GameHUD from '@/components/game/GameHUD';
 import TileInfoPanel from '@/components/game/TileInfoPanel';
@@ -8,6 +10,8 @@ import AccountPanel from '@/components/game/AccountPanel';
 import { toast } from 'sonner';
 
 const Index = () => {
+  const navigate = useNavigate();
+  const { user, loading, username } = useAuth();
   const [configOpen, setConfigOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   
@@ -21,11 +25,16 @@ const Index = () => {
     addResource,
     updateResource,
     deleteResource,
-    regenerateWorld,
     respawnResources,
     updateWorldName,
     setUserColor,
   } = useGameWorld();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/auth');
+    }
+  }, [user, loading, navigate]);
 
   const selectedTileData = selectedTile 
     ? world.map.tiles[selectedTile.y]?.[selectedTile.x] 
@@ -51,6 +60,14 @@ const Index = () => {
       }
     }
   };
+
+  if (loading) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-background">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
 
   const claimedCount = world.map.tiles.flat().filter(t => t.claimedBy === world.userId).length;
 
@@ -100,6 +117,7 @@ const Index = () => {
         userColor={world.userColor}
         coins={world.coins}
         claimedTiles={claimedCount}
+        username={username}
         onColorChange={setUserColor}
       />
 
