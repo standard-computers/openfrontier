@@ -100,12 +100,23 @@ export const useGameWorld = () => {
 
         setDbWorldId(worldId);
         setIsOwner(membershipData.role === 'owner');
+        // Normalize inventory to ensure proper structure (null vs undefined)
+        const loadedInventory = playerData.inventory || createEmptyInventory();
+        const normalizedInventory = loadedInventory.map(slot => ({
+          resourceId: slot.resourceId ?? null,
+          quantity: slot.quantity ?? 0
+        }));
+        // Ensure we have at least 30 slots
+        while (normalizedInventory.length < 30) {
+          normalizedInventory.push({ resourceId: null, quantity: 0 });
+        }
+
         setWorld({
           id: worldId,
           name: worldData.name,
           map: mapData,
           resources: resources,
-          inventory: playerData.inventory || createEmptyInventory(),
+          inventory: normalizedInventory,
           playerPosition: playerData.position || mapData.spawnPoint || { x: 0, y: 0 },
           userId: user.id,
           userColor: playerData.userColor || USER_COLORS[0],
@@ -223,7 +234,7 @@ export const useGameWorld = () => {
       for (const resourceId of tileResources) {
         let slotIndex = newInventory.findIndex(s => s.resourceId === resourceId && s.quantity < 99);
         if (slotIndex === -1) {
-          slotIndex = newInventory.findIndex(s => s.resourceId === null);
+          slotIndex = newInventory.findIndex(s => !s.resourceId);
         }
         if (slotIndex !== -1) {
           if (newInventory[slotIndex].resourceId === resourceId) {
@@ -268,7 +279,7 @@ export const useGameWorld = () => {
       const newInventory = [...prev.inventory];
       let slotIndex = newInventory.findIndex(s => s.resourceId === resourceId && s.quantity < 99);
       if (slotIndex === -1) {
-        slotIndex = newInventory.findIndex(s => s.resourceId === null);
+        slotIndex = newInventory.findIndex(s => !s.resourceId);
       }
       if (slotIndex === -1) return prev; // No empty slot, don't update
       
