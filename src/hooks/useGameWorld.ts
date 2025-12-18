@@ -150,13 +150,14 @@ export const useGameWorld = () => {
   }, [dbWorldId, world.playerPosition, world.inventory, world.coins, world.userColor, world.sovereignty, loading]);
 
   // Save world map data - all members can save map changes (for tile claiming)
-  const saveMapData = useCallback(async () => {
+  const saveMapData = useCallback(async (mapData?: WorldMap) => {
     if (!dbWorldId) return;
+    const dataToSave = mapData || world.map;
 
     await supabase
       .from('worlds')
       .update({
-        map_data: JSON.parse(JSON.stringify(world.map)) as Json,
+        map_data: JSON.parse(JSON.stringify(dataToSave)) as Json,
       })
       .eq('id', dbWorldId);
   }, [dbWorldId, world.map]);
@@ -194,6 +195,7 @@ export const useGameWorld = () => {
 
   const claimTile = useCallback((x: number, y: number): { success: boolean; message: string } => {
     let result = { success: false, message: '' };
+    let newMapData: WorldMap | null = null;
     
     setWorld(prev => {
       const tile = prev.map.tiles[y][x];
@@ -230,25 +232,28 @@ export const useGameWorld = () => {
         )
       );
       
+      newMapData = { ...prev.map, tiles: newTiles };
       result = { success: true, message: `Claimed for ${tileValue} coins!` };
       
       return {
         ...prev,
         coins: prev.coins - tileValue,
         inventory: newInventory,
-        map: { ...prev.map, tiles: newTiles },
+        map: newMapData,
       };
     });
 
-    // Save map changes for all members who claim tiles
-    if (result.success) {
-      setTimeout(saveMapData, 500);
+    // Save map changes with the new map data directly
+    if (result.success && newMapData) {
+      setTimeout(() => saveMapData(newMapData!), 500);
     }
     
     return result;
   }, [saveMapData]);
 
   const gatherFromTile = useCallback((x: number, y: number, resourceId: string) => {
+    let newMapData: WorldMap | null = null;
+    
     setWorld(prev => {
       const tile = prev.map.tiles[y][x];
       if (!tile.resources.includes(resourceId)) return prev;
@@ -275,15 +280,19 @@ export const useGameWorld = () => {
         )
       );
       
+      newMapData = { ...prev.map, tiles: newTiles };
+      
       return {
         ...prev,
         inventory: newInventory,
-        map: { ...prev.map, tiles: newTiles },
+        map: newMapData,
       };
     });
 
-    // Save map changes for all members
-    setTimeout(saveMapData, 500);
+    // Save map changes with the new map data directly
+    if (newMapData) {
+      setTimeout(() => saveMapData(newMapData!), 500);
+    }
   }, [saveMapData]);
 
   const addResource = useCallback((resource: Resource) => {
@@ -312,6 +321,8 @@ export const useGameWorld = () => {
 
   const respawnResources = useCallback(() => {
     if (!isOwner) return;
+    let newMapData: WorldMap | null = null;
+    
     setWorld(prev => {
       const newTiles = prev.map.tiles.map(row => 
         row.map(t => ({ ...t, resources: t.claimedBy ? [] : t.resources }))
@@ -330,9 +341,13 @@ export const useGameWorld = () => {
           }
         }
       }
-      return { ...prev, map: { ...prev.map, tiles: newTiles } };
+      newMapData = { ...prev.map, tiles: newTiles };
+      return { ...prev, map: newMapData };
     });
-    setTimeout(saveMapData, 500);
+    
+    if (newMapData) {
+      setTimeout(() => saveMapData(newMapData!), 500);
+    }
   }, [isOwner, saveMapData]);
 
   const updateWorldName = useCallback((name: string) => {
