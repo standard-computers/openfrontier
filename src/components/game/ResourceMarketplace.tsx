@@ -56,12 +56,12 @@ const ResourceMarketplace = ({
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('resource_marketplace')
+        .from('resource_marketplace' as any)
         .select('*')
         .order('downloads', { ascending: false });
 
       if (error) throw error;
-      setResources(data || []);
+      setResources((data as unknown as MarketplaceResource[]) || []);
     } catch (error) {
       console.error('Failed to fetch marketplace resources:', error);
       toast.error('Failed to load marketplace');
@@ -99,7 +99,7 @@ const ResourceMarketplace = ({
 
     // Increment download count
     await supabase
-      .from('resource_marketplace')
+      .from('resource_marketplace' as any)
       .update({ downloads: (marketResource.downloads || 0) + 1 })
       .eq('id', marketResource.id);
 
@@ -113,7 +113,7 @@ const ResourceMarketplace = ({
     }
 
     try {
-      const { error } = await supabase.from('resource_marketplace').insert({
+      const { error } = await supabase.from('resource_marketplace' as any).insert({
         name: resource.name,
         icon: resource.icon,
         icon_type: resource.iconType || 'emoji',

@@ -14,6 +14,7 @@ interface WorldConfigProps {
   joinCode?: string;
   isOwner: boolean;
   resources: Resource[];
+  userId?: string;
   onUpdateWorldName: (name: string) => void;
   onAddResource: (resource: Resource) => void;
   onUpdateResource: (resource: Resource) => void;
@@ -28,6 +29,7 @@ const WorldConfig = ({
   joinCode,
   isOwner,
   resources,
+  userId,
   onUpdateWorldName,
   onAddResource,
   onUpdateResource,
@@ -38,6 +40,7 @@ const WorldConfig = ({
   const [name, setName] = useState(worldName);
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
   const [isNewResource, setIsNewResource] = useState(false);
+  const [marketplaceOpen, setMarketplaceOpen] = useState(false);
 
   if (!isOpen) return null;
 
@@ -185,12 +188,17 @@ const WorldConfig = ({
 
               {activeSection === 'resources' && (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
                     <h3 className="text-sm font-medium">Resources ({resources.length})</h3>
                     {isOwner && (
-                      <button onClick={handleNewResource} className="btn btn-accent text-xs">
-                        <Plus className="w-3 h-3 mr-1" /> New Resource
-                      </button>
+                      <div className="flex gap-2">
+                        <button onClick={() => setMarketplaceOpen(true)} className="btn text-xs">
+                          <Store className="w-3 h-3 mr-1" /> Marketplace
+                        </button>
+                        <button onClick={handleNewResource} className="btn btn-accent text-xs">
+                          <Plus className="w-3 h-3 mr-1" /> New Resource
+                        </button>
+                      </div>
                     )}
                   </div>
 
@@ -256,6 +264,14 @@ const WorldConfig = ({
           onClose={() => { setEditingResource(null); setIsNewResource(false); }}
         />
       )}
+
+      <ResourceMarketplace
+        isOpen={marketplaceOpen}
+        onClose={() => setMarketplaceOpen(false)}
+        onAddResource={onAddResource}
+        existingResources={resources}
+        userId={userId}
+      />
     </>
   );
 };
