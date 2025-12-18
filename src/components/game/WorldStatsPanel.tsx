@@ -11,11 +11,12 @@ interface WorldStatsPanelProps {
   world: GameWorld;
   resources: Resource[];
   members: WorldMember[];
+  onViewUser: (member: WorldMember) => void;
 }
 
 type TabType = 'overview' | 'players' | 'terrain' | 'resources';
 
-const WorldStatsPanel = ({ isOpen, onClose, world, resources, members }: WorldStatsPanelProps) => {
+const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUser }: WorldStatsPanelProps) => {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
 
   if (!isOpen) return null;
@@ -117,8 +118,12 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members }: WorldSt
           {activeTab === 'players' && (
             <div className="space-y-2">
               {members.length > 0 ? (
-                members.map(member => (
-                  <div key={member.id} className="bg-secondary/30 rounded-lg p-3 flex items-center gap-3">
+              members.map(member => (
+                  <button
+                    key={member.id}
+                    onClick={() => onViewUser(member)}
+                    className="w-full bg-secondary/30 rounded-lg p-3 flex items-center gap-3 hover:bg-secondary/50 transition-colors text-left"
+                  >
                     <div className={cn(
                       "w-10 h-10 rounded-full flex items-center justify-center",
                       member.role === 'owner' ? "bg-amber-500/20" : "bg-primary/20"
@@ -141,7 +146,7 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members }: WorldSt
                     <div className="text-xs text-muted-foreground">
                       Joined {new Date(member.joinedAt).toLocaleDateString()}
                     </div>
-                  </div>
+                  </button>
                 ))
               ) : (
                 <div className="text-center text-muted-foreground py-8">
