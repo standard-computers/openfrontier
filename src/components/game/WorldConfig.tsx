@@ -4,6 +4,7 @@ import { X, Plus, Save, RefreshCw, Map, Package, Hammer, Copy, Lock } from 'luci
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import ResourceEditorModal from './ResourceEditorModal';
+import ResourceIcon from './ResourceIcon';
 
 interface WorldConfigProps {
   isOpen: boolean;
@@ -209,7 +210,7 @@ const WorldConfig = ({
                           isOwner && "cursor-pointer hover:bg-secondary/50"
                         )}
                       >
-                        <span className="text-2xl">{resource.icon}</span>
+                        <ResourceIcon icon={resource.icon} iconType={resource.iconType} size="lg" />
                         <div className="flex-1 min-w-0">
                           <div className="font-medium">{resource.name}</div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { MapTile, Resource, RARITY_COLORS, TILE_TYPES, calculateTileValue } from '@/types/game';
 import { X, Flag, Package, Coins, Pencil, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import ResourceIcon from './ResourceIcon';
 
 interface TileInfoPanelProps {
   tile: MapTile;
@@ -161,7 +162,7 @@ const TileInfoPanel = ({
                 className="flex items-center justify-between p-2 bg-secondary/50 rounded"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">{resource.icon}</span>
+                  <ResourceIcon icon={resource.icon} iconType={resource.iconType} size="lg" />
                   <div>
                     <p className="text-sm font-medium">{resource.name}</p>
                     <div className="flex items-center gap-2">
