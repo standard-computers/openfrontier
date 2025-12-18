@@ -28,6 +28,10 @@ export interface Resource {
   spawnChance: number;
   coinValue: number;
   recipes?: Recipe[];
+  consumable?: boolean;
+  healthGain?: number;
+  canInflictDamage?: boolean;
+  damage?: number;
 }
 
 export interface MapTile {
@@ -71,6 +75,7 @@ export interface GameWorld {
   coins: number;
   sovereignty?: Sovereignty;
   createdAt: string;
+  health: number;
 }
 
 export const TILE_TYPES: { type: TileType; label: string; walkable: boolean; color: string; baseValue: number }[] = [
@@ -276,3 +281,6 @@ export const createEmptyInventory = (size: number = 30): InventorySlot[] =>
   Array.from({ length: size }, () => ({ resourceId: null, quantity: 0 }));
 
 export const STARTING_COINS = 500;
+export const STARTING_HEALTH = 80;
+export const MAX_HEALTH = 100;
+export const HEALTH_DECAY_PER_DAY = 5;
