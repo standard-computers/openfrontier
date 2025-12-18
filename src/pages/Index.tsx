@@ -1,73 +1,111 @@
 import { useState } from 'react';
-import { useWorldData } from '@/hooks/useWorldData';
-import GameHeader from '@/components/game/GameHeader';
-import WorldDashboard from '@/components/game/WorldDashboard';
-import ResourceEditor from '@/components/game/ResourceEditor';
-import RecipeEditor from '@/components/game/RecipeEditor';
-import WorldSettings from '@/components/game/WorldSettings';
+import { useGameWorld } from '@/hooks/useGameWorld';
+import Sidebar from '@/components/game/Sidebar';
+import GameMap from '@/components/game/GameMap';
+import MapEditor from '@/components/game/MapEditor';
+import ResourceManager from '@/components/game/ResourceManager';
+import GameSettings from '@/components/game/GameSettings';
+import { toast } from 'sonner';
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('play');
   const {
-    worldData,
+    world,
+    currentMap,
+    movePlayer,
+    gatherResource,
+    updateTile,
+    addMap,
+    switchMap,
     updateWorldName,
+    updateMapName,
+    deleteMap,
     addResource,
     updateResource,
     deleteResource,
-    addRecipe,
-    updateRecipe,
-    deleteRecipe,
-    exportWorld,
     resetWorld,
-  } = useWorldData();
+  } = useGameWorld();
+
+  const handleGather = () => {
+    const tile = currentMap.tiles[world.playerPosition.y][world.playerPosition.x];
+    if (tile.resource) {
+      const resource = world.resources.find(r => r.id === tile.resource);
+      gatherResource();
+      if (resource) {
+        toast.success(`Gathered ${resource.icon} ${resource.name}!`);
+      }
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
-        <GameHeader
-          worldName={worldData.name}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
+    <div className="h-screen flex bg-background overflow-hidden">
+      <Sidebar
+        world={world}
+        resources={world.resources}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
 
-        <main className="animate-fade-in">
-          {activeTab === 'dashboard' && (
-            <WorldDashboard
-              resources={worldData.resources}
-              recipes={worldData.recipes}
-              inventory={worldData.inventory}
+      <main className="flex-1 p-6 overflow-auto">
+        {activeTab === 'play' && (
+          <div className="flex flex-col items-center justify-center h-full gap-4">
+            <GameMap
+              map={currentMap}
+              playerPosition={world.playerPosition}
+              resources={world.resources}
+              onMove={movePlayer}
+              onGather={handleGather}
             />
-          )}
+            
+            {/* Current tile info */}
+            {(() => {
+              const tile = currentMap.tiles[world.playerPosition.y]?.[world.playerPosition.x];
+              const resource = tile?.resource ? world.resources.find(r => r.id === tile.resource) : null;
+              return resource ? (
+                <div className="pixel-panel p-3 text-center">
+                  <p className="text-[10px] font-pixel text-accent">
+                    {resource.icon} {resource.name}
+                  </p>
+                  <p className="text-[8px] font-pixel text-muted-foreground">
+                    Press E to gather
+                  </p>
+                </div>
+              ) : null;
+            })()}
+          </div>
+        )}
 
-          {activeTab === 'resources' && (
-            <ResourceEditor
-              resources={worldData.resources}
-              onAddResource={addResource}
-              onUpdateResource={updateResource}
-              onDeleteResource={deleteResource}
-            />
-          )}
+        {activeTab === 'edit' && (
+          <MapEditor
+            maps={world.maps}
+            currentMapId={world.currentMapId}
+            resources={world.resources}
+            playerPosition={world.playerPosition}
+            onTileUpdate={updateTile}
+            onAddMap={addMap}
+            onSwitchMap={switchMap}
+            onUpdateMapName={updateMapName}
+            onDeleteMap={deleteMap}
+          />
+        )}
 
-          {activeTab === 'recipes' && (
-            <RecipeEditor
-              recipes={worldData.recipes}
-              resources={worldData.resources}
-              onAddRecipe={addRecipe}
-              onUpdateRecipe={updateRecipe}
-              onDeleteRecipe={deleteRecipe}
-            />
-          )}
+        {activeTab === 'resources' && (
+          <ResourceManager
+            resources={world.resources}
+            onAddResource={addResource}
+            onUpdateResource={updateResource}
+            onDeleteResource={deleteResource}
+          />
+        )}
 
-          {activeTab === 'settings' && (
-            <WorldSettings
-              worldName={worldData.name}
-              onWorldNameChange={updateWorldName}
-              onExportWorld={exportWorld}
-              onResetWorld={resetWorld}
-            />
-          )}
-        </main>
-      </div>
+        {activeTab === 'settings' && (
+          <GameSettings
+            world={world}
+            onUpdateName={updateWorldName}
+            onReset={resetWorld}
+          />
+        )}
+      </main>
     </div>
   );
 };

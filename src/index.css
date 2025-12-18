@@ -4,73 +4,67 @@
 
 @import '@fontsource/press-start-2p';
 
-/* 16-bit Game Design System */
-
 @layer base {
   :root {
-    --background: 45 30% 12%;
-    --foreground: 45 60% 90%;
+    --background: 220 20% 10%;
+    --foreground: 60 30% 96%;
 
-    --card: 45 25% 18%;
-    --card-foreground: 45 60% 90%;
+    --card: 220 18% 14%;
+    --card-foreground: 60 30% 96%;
 
-    --popover: 45 25% 15%;
-    --popover-foreground: 45 60% 90%;
+    --popover: 220 18% 12%;
+    --popover-foreground: 60 30% 96%;
 
-    --primary: 90 45% 45%;
-    --primary-foreground: 45 30% 10%;
+    --primary: 140 60% 50%;
+    --primary-foreground: 220 20% 10%;
 
-    --secondary: 30 50% 35%;
-    --secondary-foreground: 45 60% 90%;
+    --secondary: 220 15% 22%;
+    --secondary-foreground: 60 30% 96%;
 
-    --muted: 45 20% 25%;
-    --muted-foreground: 45 30% 60%;
+    --muted: 220 15% 18%;
+    --muted-foreground: 220 10% 55%;
 
-    --accent: 45 70% 55%;
-    --accent-foreground: 45 30% 10%;
+    --accent: 45 90% 55%;
+    --accent-foreground: 220 20% 10%;
 
-    --destructive: 0 65% 50%;
-    --destructive-foreground: 45 60% 95%;
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 60 30% 96%;
 
-    --border: 45 30% 30%;
-    --input: 45 25% 22%;
-    --ring: 90 45% 45%;
+    --border: 220 15% 25%;
+    --input: 220 18% 18%;
+    --ring: 140 60% 50%;
 
-    --radius: 0px;
+    --radius: 4px;
 
-    /* Custom game colors */
-    --game-wood: 30 40% 30%;
-    --game-stone: 220 10% 45%;
-    --game-gold: 45 80% 50%;
-    --game-water: 200 60% 50%;
-    --game-grass: 120 40% 35%;
-    --game-pixel-shadow: 45 30% 8%;
-    
-    /* Gradients */
-    --gradient-earth: linear-gradient(180deg, hsl(45 30% 18%) 0%, hsl(45 25% 12%) 100%);
-    --gradient-gold: linear-gradient(180deg, hsl(45 80% 60%) 0%, hsl(45 70% 45%) 100%);
+    /* Game-specific */
+    --tile-size: 32px;
+    --map-grass: 120 35% 35%;
+    --map-water: 200 70% 45%;
+    --map-sand: 40 50% 65%;
+    --map-stone: 220 8% 45%;
+    --map-dirt: 30 30% 30%;
   }
 
   .dark {
-    --background: 45 30% 8%;
-    --foreground: 45 60% 90%;
-    --card: 45 25% 12%;
-    --card-foreground: 45 60% 90%;
-    --popover: 45 25% 10%;
-    --popover-foreground: 45 60% 90%;
-    --primary: 90 45% 45%;
-    --primary-foreground: 45 30% 10%;
-    --secondary: 30 50% 30%;
-    --secondary-foreground: 45 60% 90%;
-    --muted: 45 20% 20%;
-    --muted-foreground: 45 30% 55%;
-    --accent: 45 70% 55%;
-    --accent-foreground: 45 30% 10%;
-    --destructive: 0 65% 45%;
-    --destructive-foreground: 45 60% 95%;
-    --border: 45 30% 25%;
-    --input: 45 25% 18%;
-    --ring: 90 45% 45%;
+    --background: 220 20% 6%;
+    --foreground: 60 30% 96%;
+    --card: 220 18% 10%;
+    --card-foreground: 60 30% 96%;
+    --popover: 220 18% 8%;
+    --popover-foreground: 60 30% 96%;
+    --primary: 140 60% 50%;
+    --primary-foreground: 220 20% 10%;
+    --secondary: 220 15% 18%;
+    --secondary-foreground: 60 30% 96%;
+    --muted: 220 15% 14%;
+    --muted-foreground: 220 10% 50%;
+    --accent: 45 90% 55%;
+    --accent-foreground: 220 20% 10%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 60 30% 96%;
+    --border: 220 15% 20%;
+    --input: 220 18% 14%;
+    --ring: 140 60% 50%;
   }
 }
 
@@ -83,64 +77,82 @@
     @apply bg-background text-foreground;
     font-family: 'Press Start 2P', cursive;
     image-rendering: pixelated;
+    overflow: hidden;
   }
 }
 
 @layer components {
-  .pixel-border {
+  .pixel-panel {
+    @apply bg-card border-2 border-border;
     box-shadow: 
-      4px 0 0 0 hsl(var(--border)),
-      -4px 0 0 0 hsl(var(--border)),
-      0 4px 0 0 hsl(var(--border)),
-      0 -4px 0 0 hsl(var(--border)),
-      4px 4px 0 0 hsl(var(--game-pixel-shadow)),
-      4px -4px 0 0 hsl(var(--border)),
-      -4px 4px 0 0 hsl(var(--border)),
-      -4px -4px 0 0 hsl(var(--border));
+      4px 4px 0 0 hsl(220 20% 5%),
+      inset 1px 1px 0 0 hsl(220 15% 30%);
   }
 
-  .pixel-button {
-    @apply relative transition-transform active:translate-y-1;
-    box-shadow: 
-      0 4px 0 0 hsl(var(--game-pixel-shadow)),
-      4px 4px 0 0 hsl(var(--game-pixel-shadow));
+  .pixel-btn {
+    @apply px-4 py-2 font-pixel text-[10px] uppercase tracking-wider transition-all;
+    @apply bg-secondary text-secondary-foreground border-2 border-border;
+    box-shadow: 3px 3px 0 0 hsl(220 20% 5%);
   }
 
-  .pixel-button:active {
+  .pixel-btn:hover {
+    @apply brightness-110;
+  }
+
+  .pixel-btn:active {
     box-shadow: none;
+    transform: translate(3px, 3px);
   }
 
-  .game-panel {
-    background: var(--gradient-earth);
-    @apply pixel-border;
+  .pixel-btn-primary {
+    @apply bg-primary text-primary-foreground;
   }
 
-  .resource-slot {
-    @apply w-16 h-16 flex items-center justify-center bg-input pixel-border cursor-pointer
-           hover:bg-muted transition-colors;
+  .pixel-btn-accent {
+    @apply bg-accent text-accent-foreground;
   }
 
-  .pixel-text-shadow {
-    text-shadow: 2px 2px 0 hsl(var(--game-pixel-shadow));
+  .tile {
+    @apply w-8 h-8 flex items-center justify-center text-base select-none;
+    image-rendering: pixelated;
+  }
+
+  .tile-grass { background: hsl(var(--map-grass)); }
+  .tile-water { background: hsl(var(--map-water)); }
+  .tile-sand { background: hsl(var(--map-sand)); }
+  .tile-stone { background: hsl(var(--map-stone)); }
+  .tile-dirt { background: hsl(var(--map-dirt)); }
+
+  .inventory-slot {
+    @apply w-10 h-10 bg-input border border-border flex items-center justify-center;
+    @apply hover:bg-secondary transition-colors cursor-pointer text-lg;
+  }
+
+  .toolbar-btn {
+    @apply w-10 h-10 flex items-center justify-center bg-secondary border border-border;
+    @apply hover:bg-muted transition-colors cursor-pointer;
+  }
+
+  .toolbar-btn.active {
+    @apply bg-primary text-primary-foreground border-primary;
   }
 }
 
 @layer utilities {
-  .animate-bounce-pixel {
-    animation: bounce-pixel 0.5s steps(3) infinite;
+  .font-pixel {
+    font-family: 'Press Start 2P', cursive;
   }
 
-  @keyframes bounce-pixel {
+  .text-shadow-pixel {
+    text-shadow: 2px 2px 0 hsl(220 20% 5%);
+  }
+
+  .animate-bob {
+    animation: bob 1s ease-in-out infinite;
+  }
+
+  @keyframes bob {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-4px); }
-  }
-
-  .animate-pulse-glow {
-    animation: pulse-glow 2s ease-in-out infinite;
-  }
-
-  @keyframes pulse-glow {
-    0%, 100% { filter: brightness(1); }
-    50% { filter: brightness(1.2); }
+    50% { transform: translateY(-3px); }
   }
 }
