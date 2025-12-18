@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Resource, TileType, TILE_TYPES, RARITY_COLORS } from '@/types/game';
-import { X, Plus, Save, Trash2, RefreshCw, Map, Package, Settings, ChevronDown, ChevronRight } from 'lucide-react';
+import { X, Plus, Save, Trash2, RefreshCw, Map, Package, Hammer } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import RecipeEditor from './RecipeEditor';
 
 interface WorldConfigProps {
   isOpen: boolean;
@@ -33,6 +34,7 @@ const WorldConfig = ({
   const [name, setName] = useState(worldName);
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
   const [isNewResource, setIsNewResource] = useState(false);
+  const [recipeEditorResource, setRecipeEditorResource] = useState<Resource | null>(null);
   const [resourceForm, setResourceForm] = useState<Resource>({
     id: '',
     name: '',
@@ -309,9 +311,18 @@ const WorldConfig = ({
                           <Save className="w-4 h-4 mr-1" /> Save
                         </button>
                         {!isNewResource && (
-                          <button onClick={handleDeleteResource} className="btn bg-destructive text-destructive-foreground">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <>
+                            <button 
+                              onClick={() => setRecipeEditorResource(selectedResource)}
+                              className="btn"
+                              title="Edit Recipes"
+                            >
+                              <Hammer className="w-4 h-4" />
+                            </button>
+                            <button onClick={handleDeleteResource} className="btn bg-destructive text-destructive-foreground">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
                         )}
                       </div>
                     </>
@@ -326,6 +337,22 @@ const WorldConfig = ({
           </div>
         </div>
       </div>
+
+      {recipeEditorResource && (
+        <RecipeEditor
+          resource={recipeEditorResource}
+          allResources={resources}
+          onSave={(updated) => {
+            onUpdateResource(updated);
+            setRecipeEditorResource(null);
+            if (selectedResource?.id === updated.id) {
+              setSelectedResource(updated);
+              setResourceForm(updated);
+            }
+          }}
+          onClose={() => setRecipeEditorResource(null)}
+        />
+      )}
     </div>
   );
 };

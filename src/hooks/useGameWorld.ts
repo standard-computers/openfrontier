@@ -247,6 +247,78 @@ export const useGameWorld = () => {
     setWorld(prev => ({ ...prev, userColor: color }));
   }, []);
 
+  const craftResource = useCallback((resourceId: string, recipeId: string): { success: boolean; message: string } => {
+    let result = { success: false, message: '' };
+    
+    setWorld(prev => {
+      const resource = prev.resources.find(r => r.id === resourceId);
+      if (!resource || !resource.recipes) {
+        result = { success: false, message: 'Resource not found' };
+        return prev;
+      }
+
+      const recipe = resource.recipes.find(r => r.id === recipeId);
+      if (!recipe) {
+        result = { success: false, message: 'Recipe not found' };
+        return prev;
+      }
+
+      // Check if we have all ingredients
+      const inventoryCounts: Record<string, number> = {};
+      prev.inventory.forEach(slot => {
+        if (slot.resourceId) {
+          inventoryCounts[slot.resourceId] = (inventoryCounts[slot.resourceId] || 0) + slot.quantity;
+        }
+      });
+
+      for (const ingredient of recipe.ingredients) {
+        if ((inventoryCounts[ingredient.resourceId] || 0) < ingredient.quantity) {
+          const ingResource = prev.resources.find(r => r.id === ingredient.resourceId);
+          result = { success: false, message: `Not enough ${ingResource?.name || ingredient.resourceId}` };
+          return prev;
+        }
+      }
+
+      // Remove ingredients from inventory
+      let newInventory = [...prev.inventory];
+      for (const ingredient of recipe.ingredients) {
+        let remaining = ingredient.quantity;
+        for (let i = 0; i < newInventory.length && remaining > 0; i++) {
+          if (newInventory[i].resourceId === ingredient.resourceId) {
+            const take = Math.min(newInventory[i].quantity, remaining);
+            newInventory[i] = { ...newInventory[i], quantity: newInventory[i].quantity - take };
+            remaining -= take;
+            if (newInventory[i].quantity === 0) {
+              newInventory[i] = { resourceId: null, quantity: 0 };
+            }
+          }
+        }
+      }
+
+      // Add crafted resource to inventory
+      let outputRemaining = recipe.outputQuantity;
+      for (let i = 0; i < newInventory.length && outputRemaining > 0; i++) {
+        if (newInventory[i].resourceId === resourceId && newInventory[i].quantity < 99) {
+          const add = Math.min(99 - newInventory[i].quantity, outputRemaining);
+          newInventory[i] = { ...newInventory[i], quantity: newInventory[i].quantity + add };
+          outputRemaining -= add;
+        }
+      }
+      for (let i = 0; i < newInventory.length && outputRemaining > 0; i++) {
+        if (newInventory[i].resourceId === null) {
+          const add = Math.min(99, outputRemaining);
+          newInventory[i] = { resourceId, quantity: add };
+          outputRemaining -= add;
+        }
+      }
+
+      result = { success: true, message: `Crafted ${recipe.outputQuantity}x ${resource.name}!` };
+      return { ...prev, inventory: newInventory };
+    });
+
+    return result;
+  }, []);
+
   return {
     world,
     selectedTile,
@@ -261,5 +333,6 @@ export const useGameWorld = () => {
     respawnResources,
     updateWorldName,
     setUserColor,
+    craftResource,
   };
 };

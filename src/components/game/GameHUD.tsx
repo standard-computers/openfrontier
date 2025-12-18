@@ -1,5 +1,5 @@
 import { GameWorld, Resource } from '@/types/game';
-import { Settings, User, Coins, ChevronRight } from 'lucide-react';
+import { Settings, User, Coins, ChevronRight, Hammer } from 'lucide-react';
 
 interface GameHUDProps {
   world: GameWorld;
@@ -7,9 +7,10 @@ interface GameHUDProps {
   onOpenConfig: () => void;
   onOpenAccount: () => void;
   onOpenStats: () => void;
+  onOpenCrafting: () => void;
 }
 
-const GameHUD = ({ world, resources, onOpenConfig, onOpenAccount, onOpenStats }: GameHUDProps) => {
+const GameHUD = ({ world, resources, onOpenConfig, onOpenAccount, onOpenStats, onOpenCrafting }: GameHUDProps) => {
   const getResource = (id: string | null) => resources.find(r => r.id === id);
 
   const claimedCount = world.map.tiles.flat().filter(t => t.claimedBy === world.userId).length;
@@ -35,6 +36,14 @@ const GameHUD = ({ world, resources, onOpenConfig, onOpenAccount, onOpenStats }:
         <div></div>
 
         <div className="flex items-center gap-2 pointer-events-auto">
+          <button 
+            onClick={onOpenCrafting}
+            className="game-panel p-2 hover:bg-muted transition-colors"
+            title="Crafting"
+          >
+            <Hammer className="w-5 h-5" />
+          </button>
+
           <button 
             onClick={onOpenAccount} 
             className="game-panel p-2 hover:bg-muted transition-colors flex items-center gap-2"

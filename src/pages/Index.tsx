@@ -10,6 +10,7 @@ import WorldConfig from '@/components/game/WorldConfig';
 import AccountPanel from '@/components/game/AccountPanel';
 import TouchControls from '@/components/game/TouchControls';
 import WorldStatsPanel from '@/components/game/WorldStatsPanel';
+import CraftingPanel from '@/components/game/CraftingPanel';
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -19,6 +20,7 @@ const Index = () => {
   const [configOpen, setConfigOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
+  const [craftingOpen, setCraftingOpen] = useState(false);
   
   const {
     world,
@@ -33,6 +35,7 @@ const Index = () => {
     respawnResources,
     updateWorldName,
     setUserColor,
+    craftResource,
   } = useGameWorld();
 
   useEffect(() => {
@@ -97,6 +100,7 @@ const Index = () => {
           onOpenConfig={() => setConfigOpen(true)}
           onOpenAccount={() => setAccountOpen(true)}
           onOpenStats={() => setStatsOpen(true)}
+          onOpenCrafting={() => setCraftingOpen(true)}
         />
 
         {isTouchDevice && <TouchControls onMove={movePlayer} />}
@@ -146,6 +150,14 @@ const Index = () => {
         onClose={() => setStatsOpen(false)}
         world={world}
         resources={world.resources}
+      />
+
+      <CraftingPanel
+        isOpen={craftingOpen}
+        onClose={() => setCraftingOpen(false)}
+        resources={world.resources}
+        inventory={world.inventory}
+        onCraft={craftResource}
       />
     </div>
   );
