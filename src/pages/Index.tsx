@@ -191,8 +191,10 @@ const Index = () => {
         isOpen={configOpen}
         onClose={() => setConfigOpen(false)}
         worldName={world.name}
+        joinCode={world.joinCode}
         isOwner={isOwner}
         resources={world.resources}
+        userId={world.userId}
         onUpdateWorldName={updateWorldName}
         onAddResource={addResource}
         onUpdateResource={updateResource}

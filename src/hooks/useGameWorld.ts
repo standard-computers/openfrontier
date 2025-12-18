@@ -127,6 +127,7 @@ export const useGameWorld = () => {
           sovereignty: playerData.sovereignty,
           createdAt: worldData.created_at,
           health: playerData.health ?? STARTING_HEALTH,
+          joinCode: worldData.join_code,
         });
       } catch (error) {
         console.error('Error loading world:', error);
