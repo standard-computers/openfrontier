@@ -1,23 +1,41 @@
 import { useState, useEffect, useCallback } from 'react';
 import { GameWorld, Resource, DEFAULT_RESOURCES, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, calculateTileValue } from '@/types/game';
 
-const MAP_WIDTH = 80;
-const MAP_HEIGHT = 50;
+const DEFAULT_MAP_WIDTH = 80;
+const DEFAULT_MAP_HEIGHT = 50;
 
 const getStorageKey = () => {
   const worldId = localStorage.getItem('currentWorldId');
   return worldId ? `gameWorld-${worldId}` : 'gameWorld-default';
 };
 
+const getWorldDimensions = (): { width: number; height: number } => {
+  const worldId = localStorage.getItem('currentWorldId');
+  if (worldId) {
+    try {
+      const savedWorlds = localStorage.getItem('savedWorlds');
+      if (savedWorlds) {
+        const worlds = JSON.parse(savedWorlds);
+        const found = worlds.find((w: { id: string; width?: number; height?: number }) => w.id === worldId);
+        if (found && found.width && found.height) {
+          return { width: found.width, height: found.height };
+        }
+      }
+    } catch {}
+  }
+  return { width: DEFAULT_MAP_WIDTH, height: DEFAULT_MAP_HEIGHT };
+};
+
 const getDefaultWorld = (worldName?: string): GameWorld => {
   const resources = [...DEFAULT_RESOURCES];
-  const map = generateMap(MAP_WIDTH, MAP_HEIGHT, resources);
+  const { width, height } = getWorldDimensions();
+  const map = generateMap(width, height, resources);
   
   let spawnX = map.spawnPoint.x;
   let spawnY = map.spawnPoint.y;
   while (!map.tiles[spawnY][spawnX].walkable) {
-    spawnX = Math.floor(Math.random() * MAP_WIDTH);
-    spawnY = Math.floor(Math.random() * MAP_HEIGHT);
+    spawnX = Math.floor(Math.random() * width);
+    spawnY = Math.floor(Math.random() * height);
   }
   map.spawnPoint = { x: spawnX, y: spawnY };
   
@@ -198,12 +216,13 @@ export const useGameWorld = () => {
 
   const regenerateWorld = useCallback(() => {
     setWorld(prev => {
-      const newMap = generateMap(MAP_WIDTH, MAP_HEIGHT, prev.resources);
+      const { width, height } = getWorldDimensions();
+      const newMap = generateMap(width, height, prev.resources);
       let spawnX = newMap.spawnPoint.x;
       let spawnY = newMap.spawnPoint.y;
       while (!newMap.tiles[spawnY][spawnX].walkable) {
-        spawnX = Math.floor(Math.random() * MAP_WIDTH);
-        spawnY = Math.floor(Math.random() * MAP_HEIGHT);
+        spawnX = Math.floor(Math.random() * width);
+        spawnY = Math.floor(Math.random() * height);
       }
       return {
         ...prev,
