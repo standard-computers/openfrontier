@@ -77,6 +77,7 @@ export interface GameWorld {
   sovereignty?: Sovereignty;
   createdAt: string;
   health: number;
+  joinCode?: string;
 }
 
 export const TILE_TYPES: { type: TileType; label: string; walkable: boolean; color: string; baseValue: number }[] = [
