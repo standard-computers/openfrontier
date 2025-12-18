@@ -1,60 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { GameWorld, Resource, Sovereignty, DEFAULT_RESOURCES, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, calculateTileValue } from '@/types/game';
+import { supabase } from '@/integrations/supabase/client';
+import { GameWorld, Resource, Sovereignty, DEFAULT_RESOURCES, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, calculateTileValue, WorldMap } from '@/types/game';
+import type { Json } from '@/integrations/supabase/types';
 
-const DEFAULT_MAP_WIDTH = 80;
-const DEFAULT_MAP_HEIGHT = 50;
-
-const getStorageKey = () => {
-  const worldId = localStorage.getItem('currentWorldId');
-  return worldId ? `gameWorld-${worldId}` : 'gameWorld-default';
-};
-
-const getWorldDimensions = (): { width: number; height: number } => {
-  const worldId = localStorage.getItem('currentWorldId');
-  if (worldId) {
-    try {
-      const savedWorlds = localStorage.getItem('savedWorlds');
-      if (savedWorlds) {
-        const worlds = JSON.parse(savedWorlds);
-        const found = worlds.find((w: { id: string; width?: number; height?: number }) => w.id === worldId);
-        if (found && found.width && found.height) {
-          return { width: found.width, height: found.height };
-        }
-      }
-    } catch {}
-  }
-  return { width: DEFAULT_MAP_WIDTH, height: DEFAULT_MAP_HEIGHT };
-};
-
-const getDefaultWorld = (worldName?: string): GameWorld => {
+const getDefaultWorld = (): GameWorld => {
   const resources = [...DEFAULT_RESOURCES];
-  const { width, height } = getWorldDimensions();
-  const map = generateMap(width, height, resources);
-  
-  let spawnX = map.spawnPoint.x;
-  let spawnY = map.spawnPoint.y;
-  while (!map.tiles[spawnY][spawnX].walkable) {
-    spawnX = Math.floor(Math.random() * width);
-    spawnY = Math.floor(Math.random() * height);
-  }
-  map.spawnPoint = { x: spawnX, y: spawnY };
-  
-  const worldId = localStorage.getItem('currentWorldId') || 'world-default';
-  
-  // Try to get world name from savedWorlds
-  let name = worldName || 'My World';
-  try {
-    const savedWorlds = localStorage.getItem('savedWorlds');
-    if (savedWorlds) {
-      const worlds = JSON.parse(savedWorlds);
-      const found = worlds.find((w: { id: string; name: string }) => w.id === worldId);
-      if (found) name = found.name;
-    }
-  } catch {}
+  const map = generateMap(80, 50, resources);
   
   return {
-    id: worldId,
-    name,
+    id: 'world-default',
+    name: 'My World',
     map,
     resources,
     inventory: createEmptyInventory(),
@@ -65,30 +20,157 @@ const getDefaultWorld = (worldName?: string): GameWorld => {
   };
 };
 
+export interface WorldMember {
+  id: string;
+  userId: string;
+  username: string;
+  role: 'owner' | 'player';
+  joinedAt: string;
+}
+
 export const useGameWorld = () => {
-  const [world, setWorld] = useState<GameWorld>(() => {
-    const storageKey = getStorageKey();
-    const saved = localStorage.getItem(storageKey);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.coins === undefined) {
-          parsed.coins = STARTING_COINS;
-        }
-        return parsed;
-      } catch {
-        return getDefaultWorld();
-      }
-    }
-    return getDefaultWorld();
-  });
-
+  const [world, setWorld] = useState<GameWorld>(getDefaultWorld);
   const [selectedTile, setSelectedTile] = useState<{ x: number; y: number } | null>(null);
+  const [isOwner, setIsOwner] = useState(false);
+  const [members, setMembers] = useState<WorldMember[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dbWorldId, setDbWorldId] = useState<string | null>(null);
 
+  // Load world from database
   useEffect(() => {
-    const storageKey = getStorageKey();
-    localStorage.setItem(storageKey, JSON.stringify(world));
-  }, [world]);
+    const loadWorld = async () => {
+      const worldId = localStorage.getItem('currentWorldId');
+      if (!worldId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setLoading(false);
+          return;
+        }
+
+        // Fetch world data
+        const { data: worldData, error: worldError } = await supabase
+          .from('worlds')
+          .select('*')
+          .eq('id', worldId)
+          .single();
+
+        if (worldError) throw worldError;
+
+        // Fetch membership data
+        const { data: membershipData, error: memberError } = await supabase
+          .from('world_members')
+          .select('*')
+          .eq('world_id', worldId)
+          .eq('user_id', user.id)
+          .single();
+
+        if (memberError) throw memberError;
+
+        // Fetch all members with their profiles
+        const { data: allMembers, error: membersError } = await supabase
+          .from('world_members')
+          .select('id, user_id, role, joined_at')
+          .eq('world_id', worldId);
+
+        if (!membersError && allMembers) {
+          // Get usernames for all members
+          const memberIds = allMembers.map(m => m.user_id);
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, username')
+            .in('id', memberIds);
+
+          const membersWithNames: WorldMember[] = allMembers.map(m => ({
+            id: m.id,
+            userId: m.user_id,
+            username: profiles?.find(p => p.id === m.user_id)?.username || 'Unknown',
+            role: m.role as 'owner' | 'player',
+            joinedAt: m.joined_at,
+          }));
+
+          setMembers(membersWithNames);
+        }
+
+        const playerData = membershipData.player_data as unknown as {
+          position?: { x: number; y: number };
+          inventory?: { resourceId: string | null; quantity: number }[];
+          coins?: number;
+          userColor?: string;
+          sovereignty?: Sovereignty;
+        };
+
+        const mapData = worldData.map_data as unknown as WorldMap;
+        const resources = worldData.resources as unknown as Resource[];
+
+        setDbWorldId(worldId);
+        setIsOwner(membershipData.role === 'owner');
+        setWorld({
+          id: worldId,
+          name: worldData.name,
+          map: mapData,
+          resources: resources,
+          inventory: playerData.inventory || createEmptyInventory(),
+          playerPosition: playerData.position || mapData.spawnPoint || { x: 0, y: 0 },
+          userId: user.id,
+          userColor: playerData.userColor || USER_COLORS[0],
+          coins: playerData.coins ?? STARTING_COINS,
+          sovereignty: playerData.sovereignty,
+        });
+      } catch (error) {
+        console.error('Error loading world:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadWorld();
+  }, []);
+
+  // Save player data to database when it changes
+  useEffect(() => {
+    if (!dbWorldId || loading) return;
+
+    const savePlayerData = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const playerData = {
+        position: world.playerPosition,
+        inventory: world.inventory,
+        coins: world.coins,
+        userColor: world.userColor,
+        sovereignty: world.sovereignty,
+      };
+
+      await supabase
+        .from('world_members')
+        .update({ player_data: JSON.parse(JSON.stringify(playerData)) as Json })
+        .eq('world_id', dbWorldId)
+        .eq('user_id', user.id);
+    };
+
+    const timeoutId = setTimeout(savePlayerData, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [dbWorldId, world.playerPosition, world.inventory, world.coins, world.userColor, world.sovereignty, loading]);
+
+  // Save world data (map, resources) - only for owners
+  const saveWorldData = useCallback(async () => {
+    if (!dbWorldId || !isOwner) return;
+
+    await supabase
+      .from('worlds')
+      .update({
+        name: world.name,
+        map_data: JSON.parse(JSON.stringify(world.map)) as Json,
+        resources: JSON.parse(JSON.stringify(world.resources)) as Json,
+      })
+      .eq('id', dbWorldId);
+  }, [dbWorldId, isOwner, world.name, world.map, world.resources]);
 
   const movePlayer = useCallback((dx: number, dy: number) => {
     setWorld(prev => {
@@ -125,7 +207,6 @@ export const useGameWorld = () => {
         return prev;
       }
       
-      // Add resources to inventory
       let newInventory = [...prev.inventory];
       for (const resourceId of tile.resources) {
         let slotIndex = newInventory.findIndex(s => s.resourceId === resourceId && s.quantity < 99);
@@ -141,7 +222,6 @@ export const useGameWorld = () => {
         }
       }
       
-      // Claim tile and clear resources (they're now in inventory)
       const newTiles = prev.map.tiles.map((row, ry) =>
         row.map((t, rx) =>
           rx === x && ry === y ? { ...t, claimedBy: prev.userId, resources: [] } : t
@@ -157,9 +237,14 @@ export const useGameWorld = () => {
         map: { ...prev.map, tiles: newTiles },
       };
     });
+
+    // Save map changes for owner
+    if (result.success && isOwner) {
+      setTimeout(saveWorldData, 500);
+    }
     
     return result;
-  }, []);
+  }, [isOwner, saveWorldData]);
 
   const gatherFromTile = useCallback((x: number, y: number, resourceId: string) => {
     setWorld(prev => {
@@ -194,52 +279,42 @@ export const useGameWorld = () => {
         map: { ...prev.map, tiles: newTiles },
       };
     });
-  }, []);
+
+    if (isOwner) {
+      setTimeout(saveWorldData, 500);
+    }
+  }, [isOwner, saveWorldData]);
 
   const addResource = useCallback((resource: Resource) => {
+    if (!isOwner) return;
     setWorld(prev => ({ ...prev, resources: [...prev.resources, resource] }));
-  }, []);
+    setTimeout(saveWorldData, 500);
+  }, [isOwner, saveWorldData]);
 
   const updateResource = useCallback((resource: Resource) => {
+    if (!isOwner) return;
     setWorld(prev => ({
       ...prev,
       resources: prev.resources.map(r => r.id === resource.id ? resource : r),
     }));
-  }, []);
+    setTimeout(saveWorldData, 500);
+  }, [isOwner, saveWorldData]);
 
   const deleteResource = useCallback((id: string) => {
+    if (!isOwner) return;
     setWorld(prev => ({
       ...prev,
       resources: prev.resources.filter(r => r.id !== id),
     }));
-  }, []);
-
-  const regenerateWorld = useCallback(() => {
-    setWorld(prev => {
-      const { width, height } = getWorldDimensions();
-      const newMap = generateMap(width, height, prev.resources);
-      let spawnX = newMap.spawnPoint.x;
-      let spawnY = newMap.spawnPoint.y;
-      while (!newMap.tiles[spawnY][spawnX].walkable) {
-        spawnX = Math.floor(Math.random() * width);
-        spawnY = Math.floor(Math.random() * height);
-      }
-      return {
-        ...prev,
-        map: newMap,
-        playerPosition: { x: spawnX, y: spawnY },
-        inventory: createEmptyInventory(),
-        coins: STARTING_COINS,
-      };
-    });
-  }, []);
+    setTimeout(saveWorldData, 500);
+  }, [isOwner, saveWorldData]);
 
   const respawnResources = useCallback(() => {
+    if (!isOwner) return;
     setWorld(prev => {
       const newTiles = prev.map.tiles.map(row => 
         row.map(t => ({ ...t, resources: t.claimedBy ? [] : t.resources }))
       );
-      // Only reseed unclaimed tiles
       for (let y = 0; y < newTiles.length; y++) {
         for (let x = 0; x < newTiles[y].length; x++) {
           const tile = newTiles[y][x];
@@ -256,11 +331,14 @@ export const useGameWorld = () => {
       }
       return { ...prev, map: { ...prev.map, tiles: newTiles } };
     });
-  }, []);
+    setTimeout(saveWorldData, 500);
+  }, [isOwner, saveWorldData]);
 
   const updateWorldName = useCallback((name: string) => {
+    if (!isOwner) return;
     setWorld(prev => ({ ...prev, name }));
-  }, []);
+    setTimeout(saveWorldData, 500);
+  }, [isOwner, saveWorldData]);
 
   const setUserColor = useCallback((color: string) => {
     setWorld(prev => ({ ...prev, userColor: color }));
@@ -304,7 +382,6 @@ export const useGameWorld = () => {
         return prev;
       }
 
-      // Check if we have all ingredients
       const inventoryCounts: Record<string, number> = {};
       prev.inventory.forEach(slot => {
         if (slot.resourceId) {
@@ -320,7 +397,6 @@ export const useGameWorld = () => {
         }
       }
 
-      // Remove ingredients from inventory
       let newInventory = [...prev.inventory];
       for (const ingredient of recipe.ingredients) {
         let remaining = ingredient.quantity;
@@ -336,7 +412,6 @@ export const useGameWorld = () => {
         }
       }
 
-      // Add crafted resource to inventory
       let outputRemaining = recipe.outputQuantity;
       for (let i = 0; i < newInventory.length && outputRemaining > 0; i++) {
         if (newInventory[i].resourceId === resourceId && newInventory[i].quantity < 99) {
@@ -363,6 +438,9 @@ export const useGameWorld = () => {
   return {
     world,
     selectedTile,
+    isOwner,
+    members,
+    loading,
     movePlayer,
     selectTile,
     claimTile,
@@ -370,7 +448,6 @@ export const useGameWorld = () => {
     addResource,
     updateResource,
     deleteResource,
-    regenerateWorld,
     respawnResources,
     updateWorldName,
     setUserColor,
