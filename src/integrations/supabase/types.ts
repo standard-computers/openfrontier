@@ -32,6 +32,51 @@ export type Database = {
         }
         Relationships: []
       }
+      resource_marketplace: {
+        Row: {
+          base_value: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          download_count: number
+          icon: string
+          id: string
+          name: string
+          rarity: string
+          recipe: Json | null
+          spawn_chance: number
+          spawn_tiles: string[]
+        }
+        Insert: {
+          base_value?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          download_count?: number
+          icon?: string
+          id?: string
+          name: string
+          rarity?: string
+          recipe?: Json | null
+          spawn_chance?: number
+          spawn_tiles?: string[]
+        }
+        Update: {
+          base_value?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          download_count?: number
+          icon?: string
+          id?: string
+          name?: string
+          rarity?: string
+          recipe?: Json | null
+          spawn_chance?: number
+          spawn_tiles?: string[]
+        }
+        Relationships: []
+      }
       world_members: {
         Row: {
           id: string
