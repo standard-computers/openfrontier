@@ -12,8 +12,8 @@ const WorldsDashboard = () => {
   const { worlds, loading: worldsLoading, createWorld, joinWorld, deleteWorld, leaveWorld } = useWorlds(user?.id);
   
   const [newWorldName, setNewWorldName] = useState('');
-  const [newWorldWidth, setNewWorldWidth] = useState(80);
-  const [newWorldHeight, setNewWorldHeight] = useState(50);
+  const [newWorldWidth, setNewWorldWidth] = useState('500');
+  const [newWorldHeight, setNewWorldHeight] = useState('500');
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [joinCode, setJoinCode] = useState('');
@@ -31,11 +31,14 @@ const WorldsDashboard = () => {
       return;
     }
 
+    const width = Math.max(12, parseInt(newWorldWidth) || 500);
+    const height = Math.max(12, parseInt(newWorldHeight) || 500);
+    
     setIsSubmitting(true);
     try {
-      const worldId = await createWorld(newWorldName.trim(), newWorldWidth, newWorldHeight);
+      const worldId = await createWorld(newWorldName.trim(), width, height);
       localStorage.setItem('currentWorldId', worldId);
-      toast.success(`World created! (${newWorldWidth}×${newWorldHeight} tiles)`);
+      toast.success(`World created! (${width}×${height} tiles)`);
       navigate('/');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to create world');
@@ -163,30 +166,36 @@ const WorldsDashboard = () => {
             />
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Width</label>
+                <label className="text-xs text-muted-foreground mb-1 block">Width (min 12)</label>
                 <input
                   type="number"
                   value={newWorldWidth}
-                  onChange={(e) => setNewWorldWidth(Math.max(10, Math.min(500, parseInt(e.target.value) || 80)))}
-                  min={10}
-                  max={500}
+                  onChange={(e) => setNewWorldWidth(e.target.value)}
+                  onBlur={(e) => {
+                    const val = parseInt(e.target.value);
+                    if (!val || val < 12) setNewWorldWidth('12');
+                  }}
+                  min={12}
                   className="input-field w-full"
                 />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Height</label>
+                <label className="text-xs text-muted-foreground mb-1 block">Height (min 12)</label>
                 <input
                   type="number"
                   value={newWorldHeight}
-                  onChange={(e) => setNewWorldHeight(Math.max(10, Math.min(500, parseInt(e.target.value) || 50)))}
-                  min={10}
-                  max={500}
+                  onChange={(e) => setNewWorldHeight(e.target.value)}
+                  onBlur={(e) => {
+                    const val = parseInt(e.target.value);
+                    if (!val || val < 12) setNewWorldHeight('12');
+                  }}
+                  min={12}
                   className="input-field w-full"
                 />
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
-              Total tiles: {(newWorldWidth * newWorldHeight).toLocaleString()}
+              Total tiles: {((parseInt(newWorldWidth) || 500) * (parseInt(newWorldHeight) || 500)).toLocaleString()}
             </p>
             <div className="flex gap-2">
               <button 
