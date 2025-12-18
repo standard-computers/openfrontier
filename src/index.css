@@ -66,22 +66,213 @@
   }
 
   .tile {
-    @apply flex items-center justify-center select-none transition-all;
+    @apply flex items-center justify-center select-none;
     image-rendering: pixelated;
+    position: relative;
   }
 
-  .tile-grass { background: hsl(var(--tile-grass)); }
-  .tile-water { background: hsl(var(--tile-water)); }
-  .tile-sand { background: hsl(var(--tile-sand)); }
-  .tile-stone { background: hsl(var(--tile-stone)); }
-  .tile-dirt { background: hsl(var(--tile-dirt)); }
-  .tile-forest { background: hsl(var(--tile-forest)); }
-  .tile-snow { background: hsl(var(--tile-snow)); }
-  .tile-ice { background: hsl(var(--tile-ice)); }
-  .tile-swamp { background: hsl(var(--tile-swamp)); }
-  .tile-lava { background: hsl(var(--tile-lava)); }
-  .tile-mountain { background: hsl(var(--tile-mountain)); }
-  .tile-jungle { background: hsl(var(--tile-jungle)); }
+  /* 16-bit pixel textures using CSS patterns */
+  .tile-grass {
+    background: 
+      repeating-linear-gradient(
+        0deg,
+        hsl(120 40% 32%) 0px, hsl(120 40% 32%) 2px,
+        hsl(120 35% 38%) 2px, hsl(120 35% 38%) 4px,
+        hsl(115 30% 35%) 4px, hsl(115 30% 35%) 6px,
+        hsl(125 38% 33%) 6px, hsl(125 38% 33%) 8px
+      ),
+      hsl(var(--tile-grass));
+    background-size: 8px 8px;
+  }
+
+  .tile-water {
+    background: 
+      repeating-linear-gradient(
+        45deg,
+        transparent 0px, transparent 2px,
+        hsl(200 75% 55%) 2px, hsl(200 75% 55%) 4px,
+        transparent 4px, transparent 6px
+      ),
+      repeating-linear-gradient(
+        -45deg,
+        transparent 0px, transparent 3px,
+        hsl(200 65% 40%) 3px, hsl(200 65% 40%) 4px
+      ),
+      hsl(var(--tile-water));
+    background-size: 8px 8px, 6px 6px, auto;
+    animation: water-shimmer 2s ease-in-out infinite;
+  }
+
+  @keyframes water-shimmer {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.1); }
+  }
+
+  .tile-sand {
+    background: 
+      repeating-linear-gradient(
+        90deg,
+        hsl(40 55% 68%) 0px, hsl(40 55% 68%) 2px,
+        hsl(38 48% 62%) 2px, hsl(38 48% 62%) 3px,
+        hsl(42 52% 70%) 3px, hsl(42 52% 70%) 5px,
+        hsl(35 45% 60%) 5px, hsl(35 45% 60%) 6px
+      ),
+      hsl(var(--tile-sand));
+    background-size: 6px 6px;
+  }
+
+  .tile-stone {
+    background: 
+      repeating-linear-gradient(
+        135deg,
+        hsl(220 10% 42%) 0px, hsl(220 10% 42%) 3px,
+        hsl(220 8% 50%) 3px, hsl(220 8% 50%) 4px,
+        hsl(215 12% 38%) 4px, hsl(215 12% 38%) 7px,
+        hsl(225 6% 48%) 7px, hsl(225 6% 48%) 8px
+      ),
+      linear-gradient(
+        180deg,
+        hsl(220 8% 48%) 0%, hsl(220 8% 42%) 100%
+      );
+    background-size: 8px 8px, auto;
+  }
+
+  .tile-dirt {
+    background: 
+      repeating-linear-gradient(
+        0deg,
+        hsl(28 35% 28%) 0px, hsl(28 35% 28%) 2px,
+        hsl(32 28% 32%) 2px, hsl(32 28% 32%) 3px,
+        hsl(25 32% 26%) 3px, hsl(25 32% 26%) 5px,
+        hsl(30 30% 30%) 5px, hsl(30 30% 30%) 6px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent 0px, transparent 4px,
+        hsl(28 25% 24%) 4px, hsl(28 25% 24%) 5px
+      ),
+      hsl(var(--tile-dirt));
+    background-size: 6px 6px, 5px 5px, auto;
+  }
+
+  .tile-forest {
+    background: 
+      repeating-linear-gradient(
+        0deg,
+        hsl(140 45% 22%) 0px, hsl(140 45% 22%) 2px,
+        hsl(145 38% 28%) 2px, hsl(145 38% 28%) 4px,
+        hsl(135 42% 20%) 4px, hsl(135 42% 20%) 5px,
+        hsl(142 35% 25%) 5px, hsl(142 35% 25%) 7px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent 0px, transparent 3px,
+        hsl(140 50% 18%) 3px, hsl(140 50% 18%) 4px
+      ),
+      hsl(var(--tile-forest));
+    background-size: 7px 7px, 4px 8px, auto;
+  }
+
+  .tile-snow {
+    background: 
+      repeating-linear-gradient(
+        45deg,
+        hsl(210 25% 92%) 0px, hsl(210 25% 92%) 2px,
+        hsl(210 18% 88%) 2px, hsl(210 18% 88%) 3px,
+        hsl(205 22% 95%) 3px, hsl(205 22% 95%) 5px,
+        hsl(215 20% 90%) 5px, hsl(215 20% 90%) 6px
+      ),
+      hsl(var(--tile-snow));
+    background-size: 6px 6px;
+  }
+
+  .tile-ice {
+    background: 
+      repeating-linear-gradient(
+        60deg,
+        hsl(190 65% 78%) 0px, hsl(190 65% 78%) 2px,
+        hsl(195 58% 72%) 2px, hsl(195 58% 72%) 4px,
+        hsl(188 70% 82%) 4px, hsl(188 70% 82%) 5px,
+        hsl(192 55% 70%) 5px, hsl(192 55% 70%) 7px
+      ),
+      linear-gradient(
+        135deg,
+        hsl(190 60% 80%) 0%, hsl(195 65% 70%) 100%
+      );
+    background-size: 7px 7px, auto;
+  }
+
+  .tile-swamp {
+    background: 
+      repeating-linear-gradient(
+        0deg,
+        hsl(80 45% 25%) 0px, hsl(80 45% 25%) 2px,
+        hsl(75 38% 30%) 2px, hsl(75 38% 30%) 3px,
+        hsl(85 42% 22%) 3px, hsl(85 42% 22%) 5px,
+        hsl(78 35% 28%) 5px, hsl(78 35% 28%) 6px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent 0px, transparent 2px,
+        hsl(90 30% 20%) 2px, hsl(90 30% 20%) 3px
+      ),
+      hsl(var(--tile-swamp));
+    background-size: 6px 6px, 3px 6px, auto;
+  }
+
+  .tile-lava {
+    background: 
+      repeating-linear-gradient(
+        45deg,
+        hsl(15 85% 52%) 0px, hsl(15 85% 52%) 2px,
+        hsl(25 80% 58%) 2px, hsl(25 80% 58%) 4px,
+        hsl(10 90% 45%) 4px, hsl(10 90% 45%) 5px,
+        hsl(20 82% 55%) 5px, hsl(20 82% 55%) 7px
+      ),
+      hsl(var(--tile-lava));
+    background-size: 7px 7px;
+    animation: lava-glow 1.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes lava-glow {
+    0% { filter: brightness(0.9); }
+    100% { filter: brightness(1.2); }
+  }
+
+  .tile-mountain {
+    background: 
+      repeating-linear-gradient(
+        120deg,
+        hsl(220 12% 32%) 0px, hsl(220 12% 32%) 3px,
+        hsl(215 10% 40%) 3px, hsl(215 10% 40%) 5px,
+        hsl(225 8% 28%) 5px, hsl(225 8% 28%) 7px,
+        hsl(218 14% 36%) 7px, hsl(218 14% 36%) 9px
+      ),
+      linear-gradient(
+        180deg,
+        hsl(220 10% 38%) 0%, hsl(220 10% 30%) 100%
+      );
+    background-size: 9px 9px, auto;
+  }
+
+  .tile-jungle {
+    background: 
+      repeating-linear-gradient(
+        0deg,
+        hsl(150 55% 20%) 0px, hsl(150 55% 20%) 2px,
+        hsl(155 48% 24%) 2px, hsl(155 48% 24%) 3px,
+        hsl(145 52% 18%) 3px, hsl(145 52% 18%) 5px,
+        hsl(152 45% 22%) 5px, hsl(152 45% 22%) 6px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent 0px, transparent 2px,
+        hsl(148 60% 15%) 2px, hsl(148 60% 15%) 3px,
+        transparent 3px, transparent 5px
+      ),
+      hsl(var(--tile-jungle));
+    background-size: 6px 6px, 5px 7px, auto;
+  }
 
   .btn {
     @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded transition-colors;
