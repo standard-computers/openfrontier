@@ -82,38 +82,27 @@ export const useWorlds = (userId: string | undefined) => {
     const resources = [...DEFAULT_RESOURCES];
     const map = generateMap(width, height, resources);
 
-    // Create the world
-    const { data: worldData, error: worldError } = await supabase
-      .from('worlds')
-      .insert([{
-        name,
-        map_data: JSON.parse(JSON.stringify(map)) as Json,
-        resources: JSON.parse(JSON.stringify(resources)) as Json,
-      }])
-      .select()
-      .single();
+    const playerData = {
+      position: map.spawnPoint,
+      inventory: [],
+      coins: 500,
+      userColor: '#22c55e',
+    };
 
-    if (worldError) throw worldError;
+    // Use the database function to create world and membership atomically
+    const { data: worldId, error } = await supabase
+      .rpc('create_world_with_owner', {
+        _name: name,
+        _map_data: JSON.parse(JSON.stringify(map)),
+        _resources: JSON.parse(JSON.stringify(resources)),
+        _user_id: userId,
+        _player_data: JSON.parse(JSON.stringify(playerData)),
+      });
 
-    // Add creator as owner
-    const { error: memberError } = await supabase
-      .from('world_members')
-      .insert([{
-        world_id: worldData.id,
-        user_id: userId,
-        role: 'owner',
-        player_data: JSON.parse(JSON.stringify({
-          position: map.spawnPoint,
-          inventory: [],
-          coins: 500,
-          userColor: '#22c55e',
-        })) as Json,
-      }]);
-
-    if (memberError) throw memberError;
+    if (error) throw error;
 
     await fetchWorlds();
-    return worldData.id;
+    return worldId as string;
   };
 
   const joinWorld = async (joinCode: string) => {
