@@ -32,6 +32,9 @@ const Index = () => {
   const {
     world,
     selectedTile,
+    isOwner,
+    members,
+    loading: worldLoading,
     movePlayer,
     selectTile,
     claimTile,
@@ -84,7 +87,7 @@ const Index = () => {
 
   const zoomPercent = Math.round((tileSize / DEFAULT_TILE_SIZE) * 100);
 
-  if (loading) {
+  if (loading || worldLoading) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-background">
         <div className="text-muted-foreground">Loading...</div>
@@ -172,7 +175,7 @@ const Index = () => {
         isOpen={configOpen}
         onClose={() => setConfigOpen(false)}
         worldName={world.name}
-        isOwner={true} // TODO: Get from world membership
+        isOwner={isOwner}
         resources={world.resources}
         onUpdateWorldName={updateWorldName}
         onAddResource={addResource}
@@ -186,6 +189,7 @@ const Index = () => {
         onClose={() => setStatsOpen(false)}
         world={world}
         resources={world.resources}
+        members={members}
       />
 
       <CraftingPanel
