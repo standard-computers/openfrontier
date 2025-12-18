@@ -12,14 +12,15 @@ export interface Resource {
   rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
   description: string;
   gatherTime: number;
-  spawnTiles: TileType[]; // Which tile types this resource can spawn on
-  spawnChance: number; // 0-1 probability
+  spawnTiles: TileType[];
+  spawnChance: number;
 }
 
 export interface MapTile {
   type: TileType;
-  resource?: string;
+  resources: string[]; // Array of resource IDs available on this tile
   walkable: boolean;
+  claimedBy?: string; // User ID who claimed this tile
 }
 
 export interface WorldMap {
@@ -43,6 +44,8 @@ export interface GameWorld {
   resources: Resource[];
   inventory: InventorySlot[];
   playerPosition: Position;
+  userId: string;
+  userColor: string;
 }
 
 export const TILE_TYPES: { type: TileType; label: string; walkable: boolean; color: string }[] = [
@@ -71,25 +74,35 @@ export const RARITY_COLORS: Record<Resource['rarity'], string> = {
   legendary: 'text-amber-400',
 };
 
+export const USER_COLORS = [
+  '#22c55e', // green
+  '#3b82f6', // blue
+  '#f59e0b', // amber
+  '#ef4444', // red
+  '#8b5cf6', // purple
+  '#ec4899', // pink
+  '#14b8a6', // teal
+  '#f97316', // orange
+];
+
 export const DEFAULT_RESOURCES: Resource[] = [
-  { id: 'wood', name: 'Wood', icon: '🪵', rarity: 'common', description: 'Basic building material', gatherTime: 2, spawnTiles: ['forest', 'grass'], spawnChance: 0.15 },
-  { id: 'stone', name: 'Stone', icon: '🪨', rarity: 'common', description: 'Hard construction material', gatherTime: 3, spawnTiles: ['stone', 'dirt'], spawnChance: 0.2 },
-  { id: 'iron', name: 'Iron Ore', icon: '⛏️', rarity: 'uncommon', description: 'Raw iron for smelting', gatherTime: 5, spawnTiles: ['stone'], spawnChance: 0.08 },
-  { id: 'gold', name: 'Gold Ore', icon: '✨', rarity: 'rare', description: 'Precious golden ore', gatherTime: 8, spawnTiles: ['stone'], spawnChance: 0.03 },
-  { id: 'coal', name: 'Coal', icon: '⚫', rarity: 'common', description: 'Fuel for smelting', gatherTime: 2, spawnTiles: ['stone', 'dirt'], spawnChance: 0.12 },
-  { id: 'fiber', name: 'Fiber', icon: '🌿', rarity: 'common', description: 'Plant fibers', gatherTime: 1, spawnTiles: ['grass', 'forest'], spawnChance: 0.1 },
-  { id: 'fish', name: 'Fish', icon: '🐟', rarity: 'common', description: 'Fresh catch', gatherTime: 3, spawnTiles: ['sand'], spawnChance: 0.15 },
-  { id: 'crystal', name: 'Crystal', icon: '💎', rarity: 'epic', description: 'Magical crystal', gatherTime: 10, spawnTiles: ['stone'], spawnChance: 0.01 },
-  { id: 'mushroom', name: 'Mushroom', icon: '🍄', rarity: 'uncommon', description: 'Forest fungus', gatherTime: 2, spawnTiles: ['forest', 'dirt'], spawnChance: 0.08 },
-  { id: 'cactus', name: 'Cactus', icon: '🌵', rarity: 'uncommon', description: 'Desert plant', gatherTime: 3, spawnTiles: ['sand'], spawnChance: 0.1 },
-  { id: 'shell', name: 'Shell', icon: '🐚', rarity: 'common', description: 'Sea shell', gatherTime: 1, spawnTiles: ['sand'], spawnChance: 0.12 },
-  { id: 'flower', name: 'Flower', icon: '🌸', rarity: 'common', description: 'Pretty flower', gatherTime: 1, spawnTiles: ['grass'], spawnChance: 0.08 },
+  { id: 'wood', name: 'Wood', icon: '🪵', rarity: 'common', description: 'Basic building material', gatherTime: 2, spawnTiles: ['forest', 'grass'], spawnChance: 0.4 },
+  { id: 'stone', name: 'Stone', icon: '🪨', rarity: 'common', description: 'Hard construction material', gatherTime: 3, spawnTiles: ['stone', 'dirt'], spawnChance: 0.5 },
+  { id: 'iron', name: 'Iron Ore', icon: '⛏️', rarity: 'uncommon', description: 'Raw iron for smelting', gatherTime: 5, spawnTiles: ['stone'], spawnChance: 0.2 },
+  { id: 'gold', name: 'Gold Ore', icon: '✨', rarity: 'rare', description: 'Precious golden ore', gatherTime: 8, spawnTiles: ['stone'], spawnChance: 0.08 },
+  { id: 'coal', name: 'Coal', icon: '⚫', rarity: 'common', description: 'Fuel for smelting', gatherTime: 2, spawnTiles: ['stone', 'dirt'], spawnChance: 0.3 },
+  { id: 'fiber', name: 'Fiber', icon: '🌿', rarity: 'common', description: 'Plant fibers', gatherTime: 1, spawnTiles: ['grass', 'forest'], spawnChance: 0.35 },
+  { id: 'fish', name: 'Fish', icon: '🐟', rarity: 'common', description: 'Fresh catch', gatherTime: 3, spawnTiles: ['sand'], spawnChance: 0.3 },
+  { id: 'crystal', name: 'Crystal', icon: '💎', rarity: 'epic', description: 'Magical crystal', gatherTime: 10, spawnTiles: ['stone'], spawnChance: 0.03 },
+  { id: 'mushroom', name: 'Mushroom', icon: '🍄', rarity: 'uncommon', description: 'Forest fungus', gatherTime: 2, spawnTiles: ['forest', 'dirt'], spawnChance: 0.2 },
+  { id: 'cactus', name: 'Cactus', icon: '🌵', rarity: 'uncommon', description: 'Desert plant', gatherTime: 3, spawnTiles: ['sand'], spawnChance: 0.25 },
+  { id: 'shell', name: 'Shell', icon: '🐚', rarity: 'common', description: 'Sea shell', gatherTime: 1, spawnTiles: ['sand'], spawnChance: 0.3 },
+  { id: 'flower', name: 'Flower', icon: '🌸', rarity: 'common', description: 'Pretty flower', gatherTime: 1, spawnTiles: ['grass'], spawnChance: 0.2 },
 ];
 
 export const generateMap = (width: number, height: number, resources: Resource[]): WorldMap => {
   const tiles: MapTile[][] = [];
   
-  // Generate terrain with some noise-like patterns
   for (let y = 0; y < height; y++) {
     const row: MapTile[] = [];
     for (let x = 0; x < width; x++) {
@@ -104,7 +117,7 @@ export const generateMap = (width: number, height: number, resources: Resource[]
       else type = 'stone';
       
       const tileInfo = TILE_TYPES.find(t => t.type === type)!;
-      row.push({ type, walkable: tileInfo.walkable, resource: undefined });
+      row.push({ type, walkable: tileInfo.walkable, resources: [] });
     }
     tiles.push(row);
   }
@@ -126,15 +139,14 @@ export const seedResources = (tiles: MapTile[][], resources: Resource[]) => {
   for (let y = 0; y < tiles.length; y++) {
     for (let x = 0; x < tiles[y].length; x++) {
       const tile = tiles[y][x];
-      if (!tile.walkable) continue;
+      tile.resources = [];
       
       // Find resources that can spawn on this tile type
       const validResources = resources.filter(r => r.spawnTiles.includes(tile.type));
       
       for (const resource of validResources) {
         if (Math.random() < resource.spawnChance) {
-          tile.resource = resource.id;
-          break; // Only one resource per tile
+          tile.resources.push(resource.id);
         }
       }
     }

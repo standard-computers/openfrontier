@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { GameWorld, Resource, Position, DEFAULT_RESOURCES, generateMap, createEmptyInventory, seedResources, TileType, TILE_TYPES } from '@/types/game';
+import { GameWorld, Resource, Position, DEFAULT_RESOURCES, generateMap, createEmptyInventory, seedResources, TileType, TILE_TYPES, USER_COLORS } from '@/types/game';
 
-const STORAGE_KEY = 'pixel-world-v2';
+const STORAGE_KEY = 'pixel-world-v3';
 const MAP_WIDTH = 80;
 const MAP_HEIGHT = 50;
 
@@ -9,7 +9,6 @@ const getDefaultWorld = (): GameWorld => {
   const resources = [...DEFAULT_RESOURCES];
   const map = generateMap(MAP_WIDTH, MAP_HEIGHT, resources);
   
-  // Ensure spawn point is walkable
   let spawnX = map.spawnPoint.x;
   let spawnY = map.spawnPoint.y;
   while (!map.tiles[spawnY][spawnX].walkable) {
@@ -25,6 +24,8 @@ const getDefaultWorld = (): GameWorld => {
     resources,
     inventory: createEmptyInventory(),
     playerPosition: { ...map.spawnPoint },
+    userId: 'player-1',
+    userColor: USER_COLORS[Math.floor(Math.random() * USER_COLORS.length)],
   };
 };
 
@@ -40,6 +41,8 @@ export const useGameWorld = () => {
     }
     return getDefaultWorld();
   });
+
+  const [selectedTile, setSelectedTile] = useState<Position | null>(null);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(world));
@@ -57,14 +60,34 @@ export const useGameWorld = () => {
     });
   }, []);
 
-  const gatherResource = useCallback(() => {
+  const selectTile = useCallback((x: number, y: number) => {
+    setSelectedTile(prev => 
+      prev?.x === x && prev?.y === y ? null : { x, y }
+    );
+  }, []);
+
+  const claimTile = useCallback((x: number, y: number) => {
     setWorld(prev => {
-      const tile = prev.map.tiles[prev.playerPosition.y][prev.playerPosition.x];
-      if (!tile.resource) return prev;
+      const tile = prev.map.tiles[y][x];
+      if (tile.claimedBy) return prev; // Already claimed
       
-      const resourceId = tile.resource;
+      const newTiles = prev.map.tiles.map((row, ry) =>
+        row.map((t, rx) =>
+          rx === x && ry === y ? { ...t, claimedBy: prev.userId } : t
+        )
+      );
+      
+      return { ...prev, map: { ...prev.map, tiles: newTiles } };
+    });
+  }, []);
+
+  const gatherFromTile = useCallback((x: number, y: number, resourceId: string) => {
+    setWorld(prev => {
+      const tile = prev.map.tiles[y][x];
+      if (!tile.resources.includes(resourceId)) return prev;
+      if (tile.claimedBy && tile.claimedBy !== prev.userId) return prev; // Not your tile
+      
       const newInventory = [...prev.inventory];
-      
       let slotIndex = newInventory.findIndex(s => s.resourceId === resourceId && s.quantity < 99);
       if (slotIndex === -1) {
         slotIndex = newInventory.findIndex(s => s.resourceId === null);
@@ -77,10 +100,11 @@ export const useGameWorld = () => {
         newInventory[slotIndex] = { resourceId, quantity: 1 };
       }
       
-      const newTiles = prev.map.tiles.map((row, y) =>
-        row.map((t, x) =>
-          y === prev.playerPosition.y && x === prev.playerPosition.x
-            ? { ...t, resource: undefined }
+      // Remove resource from tile
+      const newTiles = prev.map.tiles.map((row, ry) =>
+        row.map((t, rx) =>
+          rx === x && ry === y
+            ? { ...t, resources: t.resources.filter(r => r !== resourceId) }
             : t
         )
       );
@@ -90,20 +114,6 @@ export const useGameWorld = () => {
         inventory: newInventory,
         map: { ...prev.map, tiles: newTiles },
       };
-    });
-  }, []);
-
-  const updateTile = useCallback((x: number, y: number, type: TileType) => {
-    setWorld(prev => {
-      const tileInfo = TILE_TYPES.find(t => t.type === type)!;
-      const newTiles = prev.map.tiles.map((row, ry) =>
-        row.map((tile, rx) =>
-          rx === x && ry === y
-            ? { type, walkable: tileInfo.walkable, resource: undefined }
-            : tile
-        )
-      );
-      return { ...prev, map: { ...prev.map, tiles: newTiles } };
     });
   }, []);
 
@@ -145,7 +155,7 @@ export const useGameWorld = () => {
 
   const respawnResources = useCallback(() => {
     setWorld(prev => {
-      const newTiles = prev.map.tiles.map(row => row.map(t => ({ ...t, resource: undefined })));
+      const newTiles = prev.map.tiles.map(row => row.map(t => ({ ...t, resources: [] })));
       seedResources(newTiles, prev.resources);
       return { ...prev, map: { ...prev.map, tiles: newTiles } };
     });
@@ -155,16 +165,23 @@ export const useGameWorld = () => {
     setWorld(prev => ({ ...prev, name }));
   }, []);
 
+  const setUserColor = useCallback((color: string) => {
+    setWorld(prev => ({ ...prev, userColor: color }));
+  }, []);
+
   return {
     world,
+    selectedTile,
     movePlayer,
-    gatherResource,
-    updateTile,
+    selectTile,
+    claimTile,
+    gatherFromTile,
     addResource,
     updateResource,
     deleteResource,
     regenerateWorld,
     respawnResources,
     updateWorldName,
+    setUserColor,
   };
 };
