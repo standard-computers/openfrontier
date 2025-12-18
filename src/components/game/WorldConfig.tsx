@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Resource, RARITY_COLORS } from '@/types/game';
-import { X, Plus, Save, RefreshCw, Map, Package, Hammer, Copy, Lock, Store } from 'lucide-react';
+import { X, Plus, Save, RefreshCw, Map, Package, Hammer, Copy, Lock, Database } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import ResourceEditorModal from './ResourceEditorModal';
 import ResourceIcon from './ResourceIcon';
-import ResourceMarketplace from './ResourceMarketplace';
+import ResourceRepository from './ResourceRepository';
 
 interface WorldConfigProps {
   isOpen: boolean;
@@ -40,7 +40,7 @@ const WorldConfig = ({
   const [name, setName] = useState(worldName);
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
   const [isNewResource, setIsNewResource] = useState(false);
-  const [marketplaceOpen, setMarketplaceOpen] = useState(false);
+  const [repositoryOpen, setRepositoryOpen] = useState(false);
 
   if (!isOpen) return null;
 
@@ -192,8 +192,8 @@ const WorldConfig = ({
                     <h3 className="text-sm font-medium">Resources ({resources.length})</h3>
                     {isOwner && (
                       <div className="flex gap-2">
-                        <button onClick={() => setMarketplaceOpen(true)} className="btn text-xs">
-                          <Store className="w-3 h-3 mr-1" /> Marketplace
+                        <button onClick={() => setRepositoryOpen(true)} className="btn text-xs">
+                          <Database className="w-3 h-3 mr-1" /> Repository
                         </button>
                         <button onClick={handleNewResource} className="btn btn-accent text-xs">
                           <Plus className="w-3 h-3 mr-1" /> New Resource
@@ -265,9 +265,9 @@ const WorldConfig = ({
         />
       )}
 
-      <ResourceMarketplace
-        isOpen={marketplaceOpen}
-        onClose={() => setMarketplaceOpen(false)}
+      <ResourceRepository
+        isOpen={repositoryOpen}
+        onClose={() => setRepositoryOpen(false)}
         onAddResource={onAddResource}
         existingResources={resources}
         userId={userId}
