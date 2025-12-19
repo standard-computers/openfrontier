@@ -18,6 +18,8 @@ interface RepositoryResource {
   recipe: any;
   download_count: number;
   created_by: string | null;
+  is_container: boolean;
+  is_floating: boolean;
 }
 
 interface ResourceRepositoryProps {
@@ -77,7 +79,7 @@ const ResourceRepository = ({
       id: `res-${Date.now()}`,
       name: repoResource.name,
       icon: repoResource.icon,
-      iconType: 'emoji',
+      iconType: repoResource.icon?.startsWith('http') ? 'image' : 'emoji',
       rarity: repoResource.rarity as Resource['rarity'],
       description: repoResource.description || '',
       gatherTime: 1000,
@@ -89,6 +91,8 @@ const ResourceRepository = ({
       canInflictDamage: false,
       damage: 0,
       recipes: repoResource.recipe ? [repoResource.recipe] : [],
+      isContainer: repoResource.is_container || false,
+      isFloating: repoResource.is_floating || false,
     };
 
     onAddResource(newResource);
@@ -119,6 +123,8 @@ const ResourceRepository = ({
         base_value: resource.coinValue,
         recipe: resource.recipes?.[0] ? JSON.parse(JSON.stringify(resource.recipes[0])) : null,
         created_by: userId,
+        is_container: resource.isContainer || false,
+        is_floating: resource.isFloating || false,
       }]);
 
       if (error) throw error;
@@ -168,6 +174,8 @@ const ResourceRepository = ({
         base_value: resource.coinValue,
         recipe: resource.recipes?.[0] ? JSON.parse(JSON.stringify(resource.recipes[0])) : null,
         created_by: userId,
+        is_container: resource.isContainer || false,
+        is_floating: resource.isFloating || false,
       }]);
 
       if (error) throw error;

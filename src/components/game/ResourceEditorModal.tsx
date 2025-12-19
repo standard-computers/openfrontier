@@ -431,6 +431,44 @@ const ResourceEditorModal = ({
                   </div>
                 </div>
               </div>
+
+              {/* Special Properties */}
+              <div className="border-t border-border pt-4 mt-4">
+                <h4 className="text-sm font-medium mb-3 text-muted-foreground">Special Properties</h4>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="isContainer"
+                      checked={form.isContainer || false}
+                      onChange={(e) => setForm({ ...form, isContainer: e.target.checked })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="isContainer" className="text-sm">Is Container</label>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="isFloating"
+                      checked={form.isFloating || false}
+                      onChange={(e) => setForm({ ...form, isFloating: e.target.checked })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="isFloating" className="text-sm">Is Floating</label>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3 mt-2">
+                  <p className="text-[10px] text-muted-foreground">
+                    Item can hold inventory (like a bag or chest)
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Visible on tile, gathered when walking over it
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
