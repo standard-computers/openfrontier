@@ -270,13 +270,15 @@ const ResourceRepository = ({
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {filteredResources.map((resource) => (
+                {filteredResources.map((resource) => {
+                  const isImageIcon = resource.icon?.startsWith('http');
+                  return (
                   <div
                     key={resource.id}
                     className="game-panel p-4 space-y-3 hover:bg-muted/30 transition-colors"
                   >
                     <div className="flex items-start gap-3">
-                      <ResourceIcon icon={resource.icon} iconType="emoji" size="lg" />
+                      <ResourceIcon icon={resource.icon} iconType={isImageIcon ? 'image' : 'emoji'} size="lg" />
                       <div className="flex-1 min-w-0">
                         <h3 className="font-medium truncate">{resource.name}</h3>
                         <div className="flex items-center gap-2 text-xs">
@@ -305,7 +307,8 @@ const ResourceRepository = ({
                       </button>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
