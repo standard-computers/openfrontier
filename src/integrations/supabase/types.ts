@@ -41,6 +41,8 @@ export type Database = {
           download_count: number
           icon: string
           id: string
+          is_container: boolean
+          is_floating: boolean
           name: string
           rarity: string
           recipe: Json | null
@@ -55,6 +57,8 @@ export type Database = {
           download_count?: number
           icon?: string
           id?: string
+          is_container?: boolean
+          is_floating?: boolean
           name: string
           rarity?: string
           recipe?: Json | null
@@ -69,6 +73,8 @@ export type Database = {
           download_count?: number
           icon?: string
           id?: string
+          is_container?: boolean
+          is_floating?: boolean
           name?: string
           rarity?: string
           recipe?: Json | null

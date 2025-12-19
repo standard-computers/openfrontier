@@ -33,6 +33,8 @@ export interface Resource {
   healthGain?: number;
   canInflictDamage?: boolean;
   damage?: number;
+  isContainer?: boolean; // Can hold inventory
+  isFloating?: boolean; // Visible on tile, gathered when entering
 }
 
 export interface MapTile {
