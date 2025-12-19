@@ -155,6 +155,13 @@ const WorldsDashboard = () => {
             <UserPlus className="w-5 h-5" />
             <span className="font-medium">Join World</span>
           </button>
+          <button
+            onClick={() => { setRepositoryOpen(true); setIsCreating(false); setIsJoining(false); }}
+            className="game-panel p-4 flex items-center justify-center gap-2 transition-colors hover:bg-muted/50"
+          >
+            <Database className="w-5 h-5" />
+            <span className="font-medium">Resources</span>
+          </button>
         </div>
 
         {/* Create world form */}
