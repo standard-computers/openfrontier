@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Plus, Download, Search, Database, Upload } from 'lucide-react';
+import { X, Plus, Download, Search, Database, Upload, Edit2 } from 'lucide-react';
 import { Resource, RARITY_COLORS } from '@/types/game';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -43,6 +43,7 @@ const ResourceRepository = ({
   const [filterRarity, setFilterRarity] = useState<string>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newResource, setNewResource] = useState<Resource | null>(null);
+  const [editingRepoResource, setEditingRepoResource] = useState<RepositoryResource | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -189,6 +190,44 @@ const ResourceRepository = ({
     }
   };
 
+  const handleEditResource = (repoResource: RepositoryResource) => {
+    if (repoResource.created_by !== userId) {
+      toast.error('You can only edit resources you created');
+      return;
+    }
+    setEditingRepoResource(repoResource);
+  };
+
+  const handleUpdateResource = async (resource: Resource) => {
+    if (!editingRepoResource || !userId) return;
+
+    try {
+      const { error } = await supabase
+        .from('resource_marketplace')
+        .update({
+          name: resource.name,
+          icon: resource.icon,
+          rarity: resource.rarity,
+          description: resource.description,
+          spawn_tiles: resource.spawnTiles,
+          spawn_chance: resource.spawnChance,
+          base_value: resource.coinValue,
+          recipe: resource.recipes?.[0] ? JSON.parse(JSON.stringify(resource.recipes[0])) : null,
+          is_container: resource.isContainer || false,
+          is_floating: resource.isFloating || false,
+        })
+        .eq('id', editingRepoResource.id);
+
+      if (error) throw error;
+      toast.success(`Updated "${resource.name}"`);
+      setEditingRepoResource(null);
+      fetchRepositoryResources();
+    } catch (error) {
+      console.error('Failed to update resource:', error);
+      toast.error('Failed to update resource');
+    }
+  };
+
   const filteredResources = resources.filter(r => {
     const matchesSearch = r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (r.description && r.description.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -280,15 +319,21 @@ const ResourceRepository = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {filteredResources.map((resource) => {
                   const isImageIcon = resource.icon?.startsWith('http');
+                  const isCreator = resource.created_by === userId;
                   return (
                   <div
                     key={resource.id}
-                    className="game-panel p-4 space-y-3 hover:bg-muted/30 transition-colors"
+                    onClick={() => isCreator && handleEditResource(resource)}
+                    className={`game-panel p-4 space-y-3 transition-colors ${isCreator ? 'hover:bg-muted/50 cursor-pointer' : 'hover:bg-muted/30'}`}
+                    title={isCreator ? 'Click to edit' : undefined}
                   >
                     <div className="flex items-start gap-3">
                       <ResourceIcon icon={resource.icon} iconType={isImageIcon ? 'image' : 'emoji'} size="lg" />
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium truncate">{resource.name}</h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium truncate">{resource.name}</h3>
+                          {isCreator && <Edit2 className="w-3 h-3 text-muted-foreground" />}
+                        </div>
                         <div className="flex items-center gap-2 text-xs">
                           <span className={RARITY_COLORS[resource.rarity as keyof typeof RARITY_COLORS]}>
                             {resource.rarity}
@@ -308,7 +353,10 @@ const ResourceRepository = ({
                         <Download className="w-3 h-3" /> {resource.download_count || 0}
                       </span>
                       <button
-                        onClick={() => handleAddToWorld(resource)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddToWorld(resource);
+                        }}
                         className="btn btn-primary text-xs py-1 px-3"
                       >
                         <Plus className="w-3 h-3 mr-1" /> Add to World
@@ -334,6 +382,35 @@ const ResourceRepository = ({
             setShowCreateModal(false);
             setNewResource(null);
           }}
+        />
+      )}
+
+      {editingRepoResource && (
+        <ResourceEditorModal
+          resource={{
+            id: editingRepoResource.id,
+            name: editingRepoResource.name,
+            icon: editingRepoResource.icon,
+            iconType: editingRepoResource.icon?.startsWith('http') ? 'image' : 'emoji',
+            rarity: editingRepoResource.rarity as Resource['rarity'],
+            description: editingRepoResource.description || '',
+            gatherTime: 1000,
+            spawnTiles: editingRepoResource.spawn_tiles as Resource['spawnTiles'],
+            spawnChance: Number(editingRepoResource.spawn_chance),
+            coinValue: editingRepoResource.base_value,
+            consumable: false,
+            healthGain: 0,
+            canInflictDamage: false,
+            damage: 0,
+            recipes: editingRepoResource.recipe ? [editingRepoResource.recipe] : [],
+            isContainer: editingRepoResource.is_container || false,
+            isFloating: editingRepoResource.is_floating || false,
+          }}
+          allResources={[]}
+          isNew={false}
+          onSave={handleUpdateResource}
+          onDelete={() => {}}
+          onClose={() => setEditingRepoResource(null)}
         />
       )}
     </>
