@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Globe, Trash2, Play, LogOut, Users, Crown, Copy, UserPlus } from 'lucide-react';
+import { Plus, Globe, Trash2, Play, LogOut, Users, Crown, Copy, UserPlus, Database } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { useWorlds } from '@/hooks/useWorlds';
+import ResourceRepository from '@/components/game/ResourceRepository';
+import { Resource } from '@/types/game';
 
 const WorldsDashboard = () => {
   const navigate = useNavigate();
@@ -18,6 +20,9 @@ const WorldsDashboard = () => {
   const [isJoining, setIsJoining] = useState(false);
   const [joinCode, setJoinCode] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createTab, setCreateTab] = useState<'settings' | 'resources'>('settings');
+  const [selectedResources, setSelectedResources] = useState<Resource[]>([]);
+  const [repositoryOpen, setRepositoryOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -156,47 +161,119 @@ const WorldsDashboard = () => {
         {isCreating && (
           <div className="game-panel p-6 mb-6 space-y-4">
             <h2 className="font-semibold text-foreground">Create New World</h2>
-            <input
-              value={newWorldName}
-              onChange={(e) => setNewWorldName(e.target.value)}
-              placeholder="World name..."
-              className="input-field w-full"
-              autoFocus
-              onKeyDown={(e) => e.key === 'Enter' && !isSubmitting && handleCreateWorld()}
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Width (min 12)</label>
-                <input
-                  type="number"
-                  value={newWorldWidth}
-                  onChange={(e) => setNewWorldWidth(e.target.value)}
-                  onBlur={(e) => {
-                    const val = parseInt(e.target.value);
-                    if (!val || val < 12) setNewWorldWidth('12');
-                  }}
-                  min={12}
-                  className="input-field w-full"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Height (min 12)</label>
-                <input
-                  type="number"
-                  value={newWorldHeight}
-                  onChange={(e) => setNewWorldHeight(e.target.value)}
-                  onBlur={(e) => {
-                    const val = parseInt(e.target.value);
-                    if (!val || val < 12) setNewWorldHeight('12');
-                  }}
-                  min={12}
-                  className="input-field w-full"
-                />
-              </div>
+            
+            {/* Tabs */}
+            <div className="flex gap-2 border-b border-border pb-2">
+              <button
+                onClick={() => setCreateTab('settings')}
+                className={cn(
+                  "px-4 py-2 text-sm font-medium rounded-t transition-colors",
+                  createTab === 'settings' 
+                    ? "bg-primary/20 text-primary border-b-2 border-primary" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Settings
+              </button>
+              <button
+                onClick={() => setCreateTab('resources')}
+                className={cn(
+                  "px-4 py-2 text-sm font-medium rounded-t transition-colors flex items-center gap-2",
+                  createTab === 'resources' 
+                    ? "bg-primary/20 text-primary border-b-2 border-primary" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Database className="w-4 h-4" />
+                Resources
+                {selectedResources.length > 0 && (
+                  <span className="bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full">
+                    {selectedResources.length}
+                  </span>
+                )}
+              </button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Total tiles: {((parseInt(newWorldWidth) || 500) * (parseInt(newWorldHeight) || 500)).toLocaleString()}
-            </p>
+            
+            {createTab === 'settings' && (
+              <>
+                <input
+                  value={newWorldName}
+                  onChange={(e) => setNewWorldName(e.target.value)}
+                  placeholder="World name..."
+                  className="input-field w-full"
+                  autoFocus
+                  onKeyDown={(e) => e.key === 'Enter' && !isSubmitting && handleCreateWorld()}
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Width (min 12)</label>
+                    <input
+                      type="number"
+                      value={newWorldWidth}
+                      onChange={(e) => setNewWorldWidth(e.target.value)}
+                      onBlur={(e) => {
+                        const val = parseInt(e.target.value);
+                        if (!val || val < 12) setNewWorldWidth('12');
+                      }}
+                      min={12}
+                      className="input-field w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Height (min 12)</label>
+                    <input
+                      type="number"
+                      value={newWorldHeight}
+                      onChange={(e) => setNewWorldHeight(e.target.value)}
+                      onBlur={(e) => {
+                        const val = parseInt(e.target.value);
+                        if (!val || val < 12) setNewWorldHeight('12');
+                      }}
+                      min={12}
+                      className="input-field w-full"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Total tiles: {((parseInt(newWorldWidth) || 500) * (parseInt(newWorldHeight) || 500)).toLocaleString()}
+                </p>
+              </>
+            )}
+            
+            {createTab === 'resources' && (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Add custom resources to your world from the community repository.
+                </p>
+                <button
+                  onClick={() => setRepositoryOpen(true)}
+                  className="btn btn-primary w-full"
+                >
+                  <Database className="w-4 h-4 mr-2" />
+                  Open Resource Repository
+                </button>
+                {selectedResources.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">Selected resources:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedResources.map(res => (
+                        <div key={res.id} className="bg-muted/50 px-2 py-1 rounded text-sm flex items-center gap-2">
+                          <span>{res.icon}</span>
+                          <span>{res.name}</span>
+                          <button 
+                            onClick={() => setSelectedResources(prev => prev.filter(r => r.id !== res.id))}
+                            className="text-muted-foreground hover:text-destructive"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
             <div className="flex gap-2">
               <button 
                 onClick={handleCreateWorld} 
@@ -206,7 +283,7 @@ const WorldsDashboard = () => {
                 {isSubmitting ? 'Creating...' : <><Plus className="w-4 h-4" /> Create World</>}
               </button>
               <button 
-                onClick={() => { setIsCreating(false); setNewWorldName(''); }}
+                onClick={() => { setIsCreating(false); setNewWorldName(''); setSelectedResources([]); setCreateTab('settings'); }}
                 className="btn"
               >
                 Cancel
@@ -322,6 +399,17 @@ const WorldsDashboard = () => {
           </div>
         )}
       </div>
+      
+      <ResourceRepository
+        isOpen={repositoryOpen}
+        onClose={() => setRepositoryOpen(false)}
+        onAddResource={(resource) => {
+          setSelectedResources(prev => [...prev, resource]);
+          toast.success(`Added "${resource.name}" to world resources`);
+        }}
+        existingResources={selectedResources}
+        userId={user?.id}
+      />
     </div>
   );
 };
