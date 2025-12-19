@@ -10,20 +10,14 @@ interface RepositoryResource {
   id: string;
   name: string;
   icon: string;
-  icon_type: string;
   rarity: string;
-  description: string;
-  gather_time: number;
+  description: string | null;
   spawn_tiles: string[];
   spawn_chance: number;
-  coin_value: number;
-  consumable: boolean;
-  health_gain: number;
-  can_inflict_damage: boolean;
-  damage: number;
-  recipes: any[];
-  downloads: number;
-  created_by: string;
+  base_value: number;
+  recipe: any;
+  download_count: number;
+  created_by: string | null;
 }
 
 interface ResourceRepositoryProps {
@@ -58,12 +52,12 @@ const ResourceRepository = ({
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('resource_marketplace' as any)
+        .from('resource_marketplace')
         .select('*')
-        .order('downloads', { ascending: false });
+        .order('download_count', { ascending: false });
 
       if (error) throw error;
-      setResources((data as unknown as RepositoryResource[]) || []);
+      setResources((data as RepositoryResource[]) || []);
     } catch (error) {
       console.error('Failed to fetch repository resources:', error);
       toast.error('Failed to load repository');
@@ -83,26 +77,26 @@ const ResourceRepository = ({
       id: `res-${Date.now()}`,
       name: repoResource.name,
       icon: repoResource.icon,
-      iconType: repoResource.icon_type as 'emoji' | 'image',
+      iconType: 'emoji',
       rarity: repoResource.rarity as Resource['rarity'],
       description: repoResource.description || '',
-      gatherTime: repoResource.gather_time,
+      gatherTime: 1000,
       spawnTiles: repoResource.spawn_tiles as Resource['spawnTiles'],
       spawnChance: Number(repoResource.spawn_chance),
-      coinValue: repoResource.coin_value,
-      consumable: repoResource.consumable,
-      healthGain: repoResource.health_gain,
-      canInflictDamage: repoResource.can_inflict_damage,
-      damage: repoResource.damage,
-      recipes: repoResource.recipes || [],
+      coinValue: repoResource.base_value,
+      consumable: false,
+      healthGain: 0,
+      canInflictDamage: false,
+      damage: 0,
+      recipes: repoResource.recipe ? [repoResource.recipe] : [],
     };
 
     onAddResource(newResource);
 
     // Increment download count
     await supabase
-      .from('resource_marketplace' as any)
-      .update({ downloads: (repoResource.downloads || 0) + 1 })
+      .from('resource_marketplace')
+      .update({ download_count: (repoResource.download_count || 0) + 1 })
       .eq('id', repoResource.id);
 
     toast.success(`Added "${repoResource.name}" to your world`);
@@ -115,23 +109,17 @@ const ResourceRepository = ({
     }
 
     try {
-      const { error } = await supabase.from('resource_marketplace' as any).insert({
+      const { error } = await supabase.from('resource_marketplace').insert([{
         name: resource.name,
         icon: resource.icon,
-        icon_type: resource.iconType || 'emoji',
         rarity: resource.rarity,
         description: resource.description,
-        gather_time: resource.gatherTime,
         spawn_tiles: resource.spawnTiles,
         spawn_chance: resource.spawnChance,
-        coin_value: resource.coinValue,
-        consumable: resource.consumable || false,
-        health_gain: resource.healthGain || 0,
-        can_inflict_damage: resource.canInflictDamage || false,
-        damage: resource.damage || 0,
-        recipes: resource.recipes || [],
+        base_value: resource.coinValue,
+        recipe: resource.recipes?.[0] ? JSON.parse(JSON.stringify(resource.recipes[0])) : null,
         created_by: userId,
-      });
+      }]);
 
       if (error) throw error;
       toast.success(`Added "${resource.name}" to the repository!`);
@@ -170,23 +158,17 @@ const ResourceRepository = ({
     }
 
     try {
-      const { error } = await supabase.from('resource_marketplace' as any).insert({
+      const { error } = await supabase.from('resource_marketplace').insert([{
         name: resource.name,
         icon: resource.icon,
-        icon_type: resource.iconType || 'emoji',
         rarity: resource.rarity,
         description: resource.description,
-        gather_time: resource.gatherTime,
         spawn_tiles: resource.spawnTiles,
         spawn_chance: resource.spawnChance,
-        coin_value: resource.coinValue,
-        consumable: resource.consumable || false,
-        health_gain: resource.healthGain || 0,
-        can_inflict_damage: resource.canInflictDamage || false,
-        damage: resource.damage || 0,
-        recipes: resource.recipes || [],
+        base_value: resource.coinValue,
+        recipe: resource.recipes?.[0] ? JSON.parse(JSON.stringify(resource.recipes[0])) : null,
         created_by: userId,
-      });
+      }]);
 
       if (error) throw error;
       toast.success(`Created "${resource.name}" in the repository!`);
@@ -294,7 +276,7 @@ const ResourceRepository = ({
                     className="game-panel p-4 space-y-3 hover:bg-muted/30 transition-colors"
                   >
                     <div className="flex items-start gap-3">
-                      <ResourceIcon icon={resource.icon} iconType={resource.icon_type as 'emoji' | 'image'} size="lg" />
+                      <ResourceIcon icon={resource.icon} iconType="emoji" size="lg" />
                       <div className="flex-1 min-w-0">
                         <h3 className="font-medium truncate">{resource.name}</h3>
                         <div className="flex items-center gap-2 text-xs">
@@ -302,7 +284,7 @@ const ResourceRepository = ({
                             {resource.rarity}
                           </span>
                           <span className="text-muted-foreground">•</span>
-                          <span className="text-muted-foreground">{resource.coin_value} coins</span>
+                          <span className="text-muted-foreground">{resource.base_value} coins</span>
                         </div>
                       </div>
                     </div>
@@ -313,7 +295,7 @@ const ResourceRepository = ({
 
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Download className="w-3 h-3" /> {resource.downloads || 0}
+                        <Download className="w-3 h-3" /> {resource.download_count || 0}
                       </span>
                       <button
                         onClick={() => handleAddToWorld(resource)}
