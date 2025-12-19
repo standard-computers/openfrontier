@@ -49,6 +49,7 @@ const Index = () => {
     updateWorldName,
     setUserColor,
     craftResource,
+    consumeResource,
     createSovereignty,
     updateSovereignty,
     renameTile,
@@ -135,6 +136,7 @@ const Index = () => {
           onOpenStats={() => setStatsOpen(true)}
           onOpenCrafting={() => setCraftingOpen(true)}
           onZoom={handleZoom}
+          onConsumeResource={consumeResource}
         />
 
         {isTouchDevice && <TouchControls onMove={movePlayer} />}

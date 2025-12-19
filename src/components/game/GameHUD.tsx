@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { GameWorld, Resource, Sovereignty, MAX_HEALTH } from '@/types/game';
 import { Settings, User, Coins, ChevronRight, Hammer, ZoomIn, ZoomOut, Crown, Clock, Heart } from 'lucide-react';
 import ResourceIcon from './ResourceIcon';
+import InventoryItemModal from './InventoryItemModal';
 
 interface GameHUDProps {
   world: GameWorld;
@@ -14,11 +15,13 @@ interface GameHUDProps {
   onOpenStats: () => void;
   onOpenCrafting: () => void;
   onZoom: (delta: number) => void;
+  onConsumeResource: (resourceId: string) => { success: boolean; message: string };
 }
 
-const GameHUD = ({ world, resources, zoomPercent, username, onOpenConfig, onOpenAccount, onOpenSovereignty, onOpenStats, onOpenCrafting, onZoom }: GameHUDProps) => {
+const GameHUD = ({ world, resources, zoomPercent, username, onOpenConfig, onOpenAccount, onOpenSovereignty, onOpenStats, onOpenCrafting, onZoom, onConsumeResource }: GameHUDProps) => {
   const getResource = (id: string | null) => resources.find(r => r.id === id);
   const [worldTime, setWorldTime] = useState({ days: 0, hours: 0 });
+  const [selectedItem, setSelectedItem] = useState<{ resourceId: string; quantity: number } | null>(null);
 
   // Calculate world time: 1 real hour = 1 game day
   useEffect(() => {
@@ -158,10 +161,12 @@ const GameHUD = ({ world, resources, zoomPercent, username, onOpenConfig, onOpen
             {world.inventory.slice(0, 12).map((slot, i) => {
               const resource = getResource(slot.resourceId);
               return (
-                <div
+                <button
                   key={i}
-                  className="w-11 h-11 bg-input rounded flex items-center justify-center relative text-lg"
+                  className="w-11 h-11 bg-input rounded flex items-center justify-center relative text-lg hover:bg-muted transition-colors disabled:cursor-default"
                   title={resource?.name}
+                  onClick={() => slot.resourceId && setSelectedItem({ resourceId: slot.resourceId, quantity: slot.quantity })}
+                  disabled={!slot.resourceId}
                 >
                   {resource && (
                     <>
@@ -173,7 +178,7 @@ const GameHUD = ({ world, resources, zoomPercent, username, onOpenConfig, onOpen
                       )}
                     </>
                   )}
-                </div>
+                </button>
               );
             })}
           </div>
@@ -190,6 +195,15 @@ const GameHUD = ({ world, resources, zoomPercent, username, onOpenConfig, onOpen
           <span className="text-muted-foreground">{claimedCount} tiles</span>
         </div>
       </div>
+
+      {/* Inventory Item Modal */}
+      <InventoryItemModal
+        open={!!selectedItem}
+        onOpenChange={(open) => !open && setSelectedItem(null)}
+        resource={selectedItem ? getResource(selectedItem.resourceId) || null : null}
+        quantity={selectedItem?.quantity || 0}
+        onConsume={onConsumeResource}
+      />
     </>
   );
 };
