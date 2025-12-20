@@ -241,7 +241,14 @@ export const useGameWorld = () => {
       if (newX < 0 || newX >= prev.map.width || newY < 0 || newY >= prev.map.height) return prev;
       if (!prev.map.tiles[newY][newX].walkable) return prev;
       
-      return { ...prev, playerPosition: { x: newX, y: newY } };
+      // Mountain tiles deplete health by 0.05 per step
+      const targetTile = prev.map.tiles[newY][newX];
+      let newHealth = prev.health;
+      if (targetTile.type === 'mountain') {
+        newHealth = Math.max(0, prev.health - 0.05);
+      }
+      
+      return { ...prev, playerPosition: { x: newX, y: newY }, health: newHealth };
     });
   }, []);
 
