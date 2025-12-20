@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { WorldMap, Position, Market } from '@/types/game';
+import FullMapModal from './FullMapModal';
 
 interface MinimapProps {
   map: WorldMap;
@@ -26,6 +27,8 @@ const TILE_COLORS: Record<string, string> = {
 };
 
 const Minimap = ({ map, playerPosition, userColor, userId, markets = [], size = 120 }: MinimapProps) => {
+  const [showFullMap, setShowFullMap] = useState(false);
+
   const minimapData = useMemo(() => {
     const canvas = document.createElement('canvas');
     const scale = Math.max(1, Math.floor(Math.max(map.width, map.height) / size));
@@ -68,45 +71,59 @@ const Minimap = ({ map, playerPosition, userColor, userId, markets = [], size = 
   const playerY = (playerPosition.y / minimapData.scale);
 
   return (
-    <div 
-      className="game-panel p-1.5 relative overflow-hidden"
-      style={{ width: minimapData.scaledWidth + 12, height: minimapData.scaledHeight + 12 }}
-    >
+    <>
       <div 
-        className="relative rounded overflow-hidden"
-        style={{ width: minimapData.scaledWidth, height: minimapData.scaledHeight }}
+        className="game-panel p-1.5 relative overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+        style={{ width: minimapData.scaledWidth + 12, height: minimapData.scaledHeight + 12 }}
+        onClick={() => setShowFullMap(true)}
+        title="Click to expand map"
       >
-        <img 
-          src={minimapData.dataUrl} 
-          alt="Minimap"
-          className="w-full h-full"
-          style={{ imageRendering: 'pixelated' }}
-        />
-        
-        {/* Player indicator */}
         <div 
-          className="absolute w-2 h-2 rounded-full border border-background animate-pulse"
-          style={{ 
-            backgroundColor: userColor,
-            left: playerX - 4,
-            top: playerY - 4,
-            boxShadow: `0 0 4px ${userColor}`,
-          }}
-        />
-
-        {/* Market indicators */}
-        {markets.map((market) => (
-          <div
-            key={market.id}
-            className="absolute w-1.5 h-1.5 bg-amber-400 rounded-sm"
-            style={{
-              left: (market.position.x + 0.5) / minimapData.scale - 3,
-              top: (market.position.y + 0.5) / minimapData.scale - 3,
+          className="relative rounded overflow-hidden"
+          style={{ width: minimapData.scaledWidth, height: minimapData.scaledHeight }}
+        >
+          <img 
+            src={minimapData.dataUrl} 
+            alt="Minimap"
+            className="w-full h-full"
+            style={{ imageRendering: 'pixelated' }}
+          />
+          
+          {/* Player indicator */}
+          <div 
+            className="absolute w-2 h-2 rounded-full border border-background animate-pulse"
+            style={{ 
+              backgroundColor: userColor,
+              left: playerX - 4,
+              top: playerY - 4,
+              boxShadow: `0 0 4px ${userColor}`,
             }}
           />
-        ))}
+
+          {/* Market indicators */}
+          {markets.map((market) => (
+            <div
+              key={market.id}
+              className="absolute w-1.5 h-1.5 bg-amber-400 rounded-sm"
+              style={{
+                left: (market.position.x + 0.5) / minimapData.scale - 3,
+                top: (market.position.y + 0.5) / minimapData.scale - 3,
+              }}
+            />
+          ))}
+        </div>
       </div>
-    </div>
+
+      <FullMapModal
+        open={showFullMap}
+        onOpenChange={setShowFullMap}
+        map={map}
+        playerPosition={playerPosition}
+        userColor={userColor}
+        userId={userId}
+        markets={markets}
+      />
+    </>
   );
 };
 
