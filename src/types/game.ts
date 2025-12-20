@@ -94,6 +94,7 @@ export interface GameWorld {
   sovereignty?: Sovereignty;
   createdAt: string;
   health: number;
+  xp: number; // Experience points - gains 1 per game day
   joinCode?: string;
   enableMarkets?: boolean;
   markets?: Market[];

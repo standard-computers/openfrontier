@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { GameWorld, Resource, Sovereignty, MAX_HEALTH } from '@/types/game';
-import { Settings, User, Coins, ChevronRight, Hammer, ZoomIn, ZoomOut, Crown, Clock, Heart } from 'lucide-react';
+import { GameWorld, Resource, MAX_HEALTH } from '@/types/game';
+import { Settings, User, Coins, ChevronRight, Hammer, ZoomIn, ZoomOut, Crown, Clock, Heart, Sparkles } from 'lucide-react';
 import ResourceIcon from './ResourceIcon';
 import InventoryItemModal from './InventoryItemModal';
 
@@ -25,6 +25,7 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, onSele
   const getResource = (id: string | null) => resources.find(r => r.id === id);
   const [worldTime, setWorldTime] = useState({ days: 0, hours: 0 });
   const [selectedItem, setSelectedItem] = useState<{ resourceId: string; quantity: number } | null>(null);
+  
   // Calculate world time: 1 real hour = 1 game day
   useEffect(() => {
     const calculateWorldTime = () => {
@@ -141,13 +142,32 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, onSele
         </div>
       </div>
 
-      {/* Inventory bar with coins and health */}
+      {/* Inventory bar with tiles, health, xp, coins */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 game-panel p-2 pointer-events-auto">
         <div className="flex items-center gap-2">
+          {/* Claimed tiles indicator */}
+          <button 
+            onClick={onOpenClaimedTiles}
+            className="flex items-center gap-1.5 px-3 py-1 bg-muted/50 rounded hover:bg-muted transition-colors"
+            title="Claimed Tiles"
+          >
+            <div 
+              className="w-3 h-3 rounded-full"
+              style={{ backgroundColor: world.userColor }}
+            />
+            <span className="text-sm text-muted-foreground">{claimedCount}</span>
+          </button>
+
           {/* Health */}
           <div className="flex items-center gap-1 px-3 py-1 bg-red-500/20 rounded">
             <Heart className="w-4 h-4 text-red-500" />
             <span className="font-bold text-red-500 text-sm">{Math.floor(world.health)}/{MAX_HEALTH}</span>
+          </div>
+
+          {/* XP */}
+          <div className="flex items-center gap-1 px-3 py-1 bg-purple-400/20 rounded">
+            <Sparkles className="w-4 h-4 text-purple-400" />
+            <span className="font-bold text-purple-400 text-sm">{world.xp ?? 0} XP</span>
           </div>
 
           {/* Coins */}
@@ -199,20 +219,6 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, onSele
           </div>
         </div>
       </div>
-
-      {/* Claimed tiles indicator - clickable */}
-      <button 
-        onClick={onOpenClaimedTiles}
-        className="absolute bottom-4 left-4 game-panel px-3 py-2 pointer-events-auto hover:bg-muted/50 transition-colors"
-      >
-        <div className="flex items-center gap-2 text-sm">
-          <div 
-            className="w-3 h-3 rounded-full"
-            style={{ backgroundColor: world.userColor }}
-          />
-          <span className="text-muted-foreground">{claimedCount} tiles</span>
-        </div>
-      </button>
 
       {/* Inventory Item Modal */}
       <InventoryItemModal
