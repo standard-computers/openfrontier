@@ -157,15 +157,10 @@ const GameMap = ({
             .map(resId => resources.find(r => r.id === resId))
             .filter(r => r?.isFloating);
 
-          // Check if this tile is part of a market (3x3 building)
+          // Check if this tile is a market (1x1 building)
           const marketOnTile = enableMarkets ? markets.find(m => 
-            x >= m.position.x && x < m.position.x + 3 &&
-            y >= m.position.y && y < m.position.y + 3
+            x === m.position.x && y === m.position.y
           ) : null;
-          
-          const isMarketCenter = marketOnTile && 
-            x === marketOnTile.position.x + 1 && 
-            y === marketOnTile.position.y + 1;
 
           // Calculate which borders to show for claimed tiles
           // Only show border on edges that don't have an adjacent tile claimed by the same owner
@@ -212,8 +207,8 @@ const GameMap = ({
               }}
               onClick={() => isWalkable && !marketOnTile && onTileSelect(x, y)}
             >
-              {/* Show market icon in center */}
-              {isMarketCenter && (
+              {/* Show market icon */}
+              {marketOnTile && (
                 <span 
                   className="absolute inset-0 flex items-center justify-center drop-shadow-lg z-20"
                   style={{ fontSize: Math.max(16, tileSize * 0.8) }}

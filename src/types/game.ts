@@ -77,7 +77,7 @@ export interface Sovereignty {
 
 export interface Market {
   id: string;
-  position: Position; // Top-left corner of the 3x3 market
+  position: Position; // Position of the 1x1 market
   name: string;
 }
 
