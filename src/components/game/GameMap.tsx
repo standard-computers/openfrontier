@@ -140,6 +140,11 @@ const GameMap = ({
           const tileTypeInfo = TILE_TYPES.find(t => t.type === tile.type);
           const isWalkable = tileTypeInfo?.walkable ?? tile.walkable;
 
+          // Get floating resources on this tile
+          const floatingResources = tile.resources
+            .map(resId => resources.find(r => r.id === resId))
+            .filter(r => r?.isFloating);
+
           // Calculate which borders to show for claimed tiles
           // Only show border on edges that don't have an adjacent tile claimed by the same owner
           let borderStyles: React.CSSProperties = {};
@@ -185,6 +190,15 @@ const GameMap = ({
               }}
               onClick={() => isWalkable && onTileSelect(x, y)}
             >
+              {/* Show floating resources */}
+              {floatingResources.length > 0 && !isPlayerHere && (
+                <span 
+                  className="absolute inset-0 flex items-center justify-center drop-shadow-md"
+                  style={{ fontSize: Math.max(10, tileSize * 0.5) }}
+                >
+                  {floatingResources[0]?.icon}
+                </span>
+              )}
               {isPlayerHere && (
                 <span className="drop-shadow-lg z-10" style={{ fontSize: Math.max(12, tileSize * 0.65) }}>🧑‍🌾</span>
               )}
