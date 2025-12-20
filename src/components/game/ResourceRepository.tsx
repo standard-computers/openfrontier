@@ -22,6 +22,10 @@ interface RepositoryResource {
   is_floating: boolean;
   placeable: boolean;
   passable: boolean;
+  consumable: boolean;
+  health_gain: number;
+  can_inflict_damage: boolean;
+  damage: number;
 }
 
 interface ResourceRepositoryProps {
@@ -89,10 +93,10 @@ const ResourceRepository = ({
       spawnTiles: repoResource.spawn_tiles as Resource['spawnTiles'],
       spawnChance: Number(repoResource.spawn_chance),
       coinValue: repoResource.base_value,
-      consumable: false,
-      healthGain: 0,
-      canInflictDamage: false,
-      damage: 0,
+      consumable: repoResource.consumable || false,
+      healthGain: repoResource.health_gain || 0,
+      canInflictDamage: repoResource.can_inflict_damage || false,
+      damage: repoResource.damage || 0,
       recipes: repoResource.recipe ? [repoResource.recipe] : [],
       isContainer: repoResource.is_container || false,
       isFloating: repoResource.is_floating || false,
@@ -132,6 +136,10 @@ const ResourceRepository = ({
         is_floating: resource.isFloating || false,
         placeable: resource.placeable || false,
         passable: resource.passable || false,
+        consumable: resource.consumable || false,
+        health_gain: resource.healthGain || 0,
+        can_inflict_damage: resource.canInflictDamage || false,
+        damage: resource.damage || 0,
       }]);
 
       if (error) throw error;
@@ -189,6 +197,10 @@ const ResourceRepository = ({
         is_floating: resource.isFloating || false,
         placeable: resource.placeable || false,
         passable: resource.passable || false,
+        consumable: resource.consumable || false,
+        health_gain: resource.healthGain || 0,
+        can_inflict_damage: resource.canInflictDamage || false,
+        damage: resource.damage || 0,
       }]);
 
       if (error) throw error;
@@ -229,6 +241,10 @@ const ResourceRepository = ({
           is_floating: resource.isFloating || false,
           placeable: resource.placeable || false,
           passable: resource.passable || false,
+          consumable: resource.consumable || false,
+          health_gain: resource.healthGain || 0,
+          can_inflict_damage: resource.canInflictDamage || false,
+          damage: resource.damage || 0,
         })
         .eq('id', editingRepoResource.id);
 
@@ -399,10 +415,10 @@ const ResourceRepository = ({
             spawnTiles: r.spawn_tiles as Resource['spawnTiles'],
             spawnChance: Number(r.spawn_chance),
             coinValue: r.base_value,
-            consumable: false,
-            healthGain: 0,
-            canInflictDamage: false,
-            damage: 0,
+            consumable: r.consumable || false,
+            healthGain: r.health_gain || 0,
+            canInflictDamage: r.can_inflict_damage || false,
+            damage: r.damage || 0,
             recipes: r.recipe ? [r.recipe] : [],
             isContainer: r.is_container || false,
             isFloating: r.is_floating || false,
@@ -432,10 +448,10 @@ const ResourceRepository = ({
             spawnTiles: editingRepoResource.spawn_tiles as Resource['spawnTiles'],
             spawnChance: Number(editingRepoResource.spawn_chance),
             coinValue: editingRepoResource.base_value,
-            consumable: false,
-            healthGain: 0,
-            canInflictDamage: false,
-            damage: 0,
+            consumable: editingRepoResource.consumable || false,
+            healthGain: editingRepoResource.health_gain || 0,
+            canInflictDamage: editingRepoResource.can_inflict_damage || false,
+            damage: editingRepoResource.damage || 0,
             recipes: editingRepoResource.recipe ? [editingRepoResource.recipe] : [],
             isContainer: editingRepoResource.is_container || false,
             isFloating: editingRepoResource.is_floating || false,
@@ -453,10 +469,10 @@ const ResourceRepository = ({
             spawnTiles: r.spawn_tiles as Resource['spawnTiles'],
             spawnChance: Number(r.spawn_chance),
             coinValue: r.base_value,
-            consumable: false,
-            healthGain: 0,
-            canInflictDamage: false,
-            damage: 0,
+            consumable: r.consumable || false,
+            healthGain: r.health_gain || 0,
+            canInflictDamage: r.can_inflict_damage || false,
+            damage: r.damage || 0,
             recipes: r.recipe ? [r.recipe] : [],
             isContainer: r.is_container || false,
             isFloating: r.is_floating || false,

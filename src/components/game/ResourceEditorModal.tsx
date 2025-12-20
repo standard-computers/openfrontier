@@ -442,11 +442,10 @@ const ResourceEditorModal = ({
                   </div>
                 </div>
 
-                {/* Conditional Fields */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">
-                      Health Gain {form.consumable ? '(on consume)' : '(per day)'}
+                      Health Gain (on consumption)
                     </label>
                     <input
                       type="text"
@@ -457,11 +456,10 @@ const ResourceEditorModal = ({
                         setForm({ ...form, healthGain: Math.max(0, parseInt(val) || 0) });
                       }}
                       className="input-field w-full"
+                      disabled={!form.consumable}
                     />
                     <p className="text-[10px] text-muted-foreground mt-0.5">
-                      {form.consumable 
-                        ? 'Health gained when consumed' 
-                        : 'Health gained every world day while in inventory'}
+                      Health gained when item is consumed
                     </p>
                   </div>
 
