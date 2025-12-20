@@ -19,6 +19,7 @@ const getDefaultWorld = (): GameWorld => {
     coins: STARTING_COINS,
     createdAt: new Date().toISOString(),
     health: STARTING_HEALTH,
+    xp: 0,
     enableMarkets: false,
     markets: [],
   };
@@ -98,6 +99,7 @@ export const useGameWorld = () => {
           userColor?: string;
           sovereignty?: Sovereignty;
           health?: number;
+          xp?: number;
         };
 
         const mapData = worldData.map_data as unknown as WorldMap;
@@ -116,6 +118,12 @@ export const useGameWorld = () => {
           normalizedInventory.push({ resourceId: null, quantity: 0 });
         }
 
+        // Calculate XP based on game days since creation
+        const createdAt = new Date(worldData.created_at).getTime();
+        const elapsedMs = Date.now() - createdAt;
+        const gameDays = Math.floor(elapsedMs / 3600000); // 1 real hour = 1 game day
+        const calculatedXp = Math.max(playerData.xp ?? 0, gameDays);
+
         setWorld({
           id: worldId,
           name: worldData.name,
@@ -129,6 +137,7 @@ export const useGameWorld = () => {
           sovereignty: playerData.sovereignty,
           createdAt: worldData.created_at,
           health: playerData.health ?? STARTING_HEALTH,
+          xp: calculatedXp,
           joinCode: worldData.join_code,
           enableMarkets: worldData.enable_markets ?? false,
           markets: (worldData.markets as unknown as Market[]) ?? [],
@@ -158,6 +167,7 @@ export const useGameWorld = () => {
         userColor: world.userColor,
         sovereignty: world.sovereignty,
         health: world.health,
+        xp: world.xp,
       };
 
       await supabase
@@ -169,7 +179,7 @@ export const useGameWorld = () => {
 
     const timeoutId = setTimeout(savePlayerData, 1000);
     return () => clearTimeout(timeoutId);
-  }, [dbWorldId, world.playerPosition, world.inventory, world.coins, world.userColor, world.sovereignty, world.health, loading]);
+  }, [dbWorldId, world.playerPosition, world.inventory, world.coins, world.userColor, world.sovereignty, world.health, world.xp, loading]);
 
   // Health decay: -5 health per world day (1 real hour)
   useEffect(() => {
@@ -210,6 +220,29 @@ export const useGameWorld = () => {
     const interval = setInterval(checkHealthDecay, 3600000);
     return () => clearInterval(interval);
   }, [world.createdAt, world.resources, world.inventory, loading]);
+
+  // XP gain: +1 XP per game day (1 real hour)
+  useEffect(() => {
+    if (!world.createdAt || loading) return;
+
+    const updateXp = () => {
+      const createdAt = new Date(world.createdAt).getTime();
+      const now = Date.now();
+      const gameDays = Math.floor((now - createdAt) / 3600000); // 1 real hour = 1 game day
+      
+      setWorld(prev => {
+        if (gameDays > prev.xp) {
+          return { ...prev, xp: gameDays };
+        }
+        return prev;
+      });
+    };
+
+    updateXp();
+    // Check every real hour (1 game day)
+    const interval = setInterval(updateXp, 3600000);
+    return () => clearInterval(interval);
+  }, [world.createdAt, loading]);
 
   // Save world map data - all members can save map changes (for tile claiming)
   const saveMapData = useCallback(async (mapData?: WorldMap) => {
