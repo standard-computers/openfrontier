@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { X, Plus, Download, Search, Database, Upload, Edit2 } from 'lucide-react';
+import { X, Plus, Download, Search, Database, Upload, Edit2, Filter, Tag, Check } from 'lucide-react';
 import { Resource, RARITY_COLORS } from '@/types/game';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import ResourceIcon from './ResourceIcon';
 import ResourceEditorModal from './ResourceEditorModal';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 interface RepositoryResource {
   id: string;
@@ -26,6 +28,7 @@ interface RepositoryResource {
   health_gain: number;
   can_inflict_damage: boolean;
   damage: number;
+  category: string | null;
 }
 
 interface ResourceRepositoryProps {
@@ -35,6 +38,8 @@ interface ResourceRepositoryProps {
   existingResources: Resource[];
   userId?: string;
 }
+
+const RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
 
 const ResourceRepository = ({
   isOpen,
@@ -46,10 +51,12 @@ const ResourceRepository = ({
   const [resources, setResources] = useState<RepositoryResource[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterRarity, setFilterRarity] = useState<string>('all');
+  const [filterRarities, setFilterRarities] = useState<string[]>([]);
+  const [filterCategories, setFilterCategories] = useState<string[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newResource, setNewResource] = useState<Resource | null>(null);
   const [editingRepoResource, setEditingRepoResource] = useState<RepositoryResource | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -63,10 +70,15 @@ const ResourceRepository = ({
       const { data, error } = await supabase
         .from('resource_marketplace')
         .select('*')
-        .order('download_count', { ascending: false });
+        .order('name', { ascending: true });
 
       if (error) throw error;
-      setResources((data as RepositoryResource[]) || []);
+      const repoResources = (data as RepositoryResource[]) || [];
+      setResources(repoResources);
+      
+      // Extract unique categories
+      const uniqueCategories = [...new Set(repoResources.map(r => r.category).filter(Boolean))] as string[];
+      setCategories(uniqueCategories);
     } catch (error) {
       console.error('Failed to fetch repository resources:', error);
       toast.error('Failed to load repository');
@@ -140,6 +152,7 @@ const ResourceRepository = ({
         health_gain: resource.healthGain || 0,
         can_inflict_damage: resource.canInflictDamage || false,
         damage: resource.damage || 0,
+        category: resource.category || null,
       }]);
 
       if (error) throw error;
@@ -201,6 +214,7 @@ const ResourceRepository = ({
         health_gain: resource.healthGain || 0,
         can_inflict_damage: resource.canInflictDamage || false,
         damage: resource.damage || 0,
+        category: resource.category || null,
       }]);
 
       if (error) throw error;
@@ -245,6 +259,7 @@ const ResourceRepository = ({
           health_gain: resource.healthGain || 0,
           can_inflict_damage: resource.canInflictDamage || false,
           damage: resource.damage || 0,
+          category: resource.category || null,
         })
         .eq('id', editingRepoResource.id);
 
@@ -258,11 +273,26 @@ const ResourceRepository = ({
     }
   };
 
+  const toggleRarityFilter = (rarity: string) => {
+    setFilterRarities(prev => 
+      prev.includes(rarity) ? prev.filter(r => r !== rarity) : [...prev, rarity]
+    );
+  };
+
+  const toggleCategoryFilter = (category: string) => {
+    setFilterCategories(prev =>
+      prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]
+    );
+  };
+
+  const activeFilterCount = filterRarities.length + filterCategories.length;
+
   const filteredResources = resources.filter(r => {
     const matchesSearch = r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (r.description && r.description.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesRarity = filterRarity === 'all' || r.rarity === filterRarity;
-    return matchesSearch && matchesRarity;
+    const matchesRarity = filterRarities.length === 0 || filterRarities.includes(r.rarity);
+    const matchesCategory = filterCategories.length === 0 || (r.category && filterCategories.includes(r.category));
+    return matchesSearch && matchesRarity && matchesCategory;
   });
 
   if (!isOpen) return null;
@@ -299,18 +329,81 @@ const ResourceRepository = ({
                   className="input-field w-full pl-10"
                 />
               </div>
-              <select
-                value={filterRarity}
-                onChange={(e) => setFilterRarity(e.target.value)}
-                className="input-field"
-              >
-                <option value="all">All Rarities</option>
-                <option value="common">Common</option>
-                <option value="uncommon">Uncommon</option>
-                <option value="rare">Rare</option>
-                <option value="epic">Epic</option>
-                <option value="legendary">Legendary</option>
-              </select>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="btn btn-ghost p-2 relative">
+                    <Filter className="w-5 h-5" />
+                    {activeFilterCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
+                        {activeFilterCount}
+                      </span>
+                    )}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-3" align="end">
+                  <div className="space-y-4">
+                    {/* Rarity Filters */}
+                    <div>
+                      <h4 className="text-xs font-medium text-muted-foreground mb-2">Rarity</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {RARITIES.map(rarity => (
+                          <button
+                            key={rarity}
+                            onClick={() => toggleRarityFilter(rarity)}
+                            className={cn(
+                              'px-2 py-1 text-xs rounded capitalize flex items-center gap-1',
+                              filterRarities.includes(rarity) 
+                                ? 'bg-primary text-primary-foreground' 
+                                : 'bg-muted hover:bg-muted/80'
+                            )}
+                          >
+                            {filterRarities.includes(rarity) && <Check className="w-3 h-3" />}
+                            {rarity}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Category Filters */}
+                    {categories.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-medium text-muted-foreground mb-2">Category</h4>
+                        <div className="flex flex-wrap gap-1">
+                          {categories.map(category => (
+                            <button
+                              key={category}
+                              onClick={() => toggleCategoryFilter(category)}
+                              className={cn(
+                                'px-2 py-1 text-xs rounded flex items-center gap-1',
+                                filterCategories.includes(category)
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-muted hover:bg-muted/80'
+                              )}
+                            >
+                              {filterCategories.includes(category) && <Check className="w-3 h-3" />}
+                              <Tag className="w-3 h-3" />
+                              {category}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Clear Filters */}
+                    {activeFilterCount > 0 && (
+                      <button
+                        onClick={() => {
+                          setFilterRarities([]);
+                          setFilterCategories([]);
+                        }}
+                        className="text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        Clear all filters
+                      </button>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
 
             {/* Share your resources section */}
@@ -364,12 +457,21 @@ const ResourceRepository = ({
                           <h3 className="font-medium truncate">{resource.name}</h3>
                           {isCreator && <Edit2 className="w-3 h-3 text-muted-foreground" />}
                         </div>
-                        <div className="flex items-center gap-2 text-xs">
+                        <div className="flex items-center gap-2 text-xs flex-wrap">
                           <span className={RARITY_COLORS[resource.rarity as keyof typeof RARITY_COLORS]}>
                             {resource.rarity}
                           </span>
                           <span className="text-muted-foreground">•</span>
                           <span className="text-muted-foreground">{resource.base_value} coins</span>
+                          {resource.category && (
+                            <>
+                              <span className="text-muted-foreground">•</span>
+                              <span className="text-muted-foreground flex items-center gap-0.5">
+                                <Tag className="w-2.5 h-2.5" />
+                                {resource.category}
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -424,7 +526,9 @@ const ResourceRepository = ({
             isFloating: r.is_floating || false,
             placeable: r.placeable || false,
             passable: r.passable || false,
+            category: r.category || undefined,
           }))}
+          categories={categories}
           isNew={true}
           onSave={handleSaveNewResource}
           onDelete={() => {}}
@@ -457,6 +561,7 @@ const ResourceRepository = ({
             isFloating: editingRepoResource.is_floating || false,
             placeable: editingRepoResource.placeable || false,
             passable: editingRepoResource.passable || false,
+            category: editingRepoResource.category || undefined,
           }}
           allResources={resources.map(r => ({
             id: r.id,
@@ -478,7 +583,9 @@ const ResourceRepository = ({
             isFloating: r.is_floating || false,
             placeable: r.placeable || false,
             passable: r.passable || false,
+            category: r.category || undefined,
           }))}
+          categories={categories}
           isNew={false}
           onSave={handleUpdateResource}
           onDelete={() => {}}
