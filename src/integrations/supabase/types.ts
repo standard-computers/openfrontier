@@ -127,27 +127,33 @@ export type Database = {
       worlds: {
         Row: {
           created_at: string
+          enable_markets: boolean
           id: string
           join_code: string
           map_data: Json
+          markets: Json
           name: string
           resources: Json
           updated_at: string
         }
         Insert: {
           created_at?: string
+          enable_markets?: boolean
           id?: string
           join_code?: string
           map_data: Json
+          markets?: Json
           name: string
           resources: Json
           updated_at?: string
         }
         Update: {
           created_at?: string
+          enable_markets?: boolean
           id?: string
           join_code?: string
           map_data?: Json
+          markets?: Json
           name?: string
           resources?: Json
           updated_at?: string

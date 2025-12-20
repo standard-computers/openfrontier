@@ -14,6 +14,8 @@ import WorldStatsPanel from '@/components/game/WorldStatsPanel';
 import CraftingPanel from '@/components/game/CraftingPanel';
 import UserProfilePanel from '@/components/game/UserProfilePanel';
 import ClaimedTilesPanel from '@/components/game/ClaimedTilesPanel';
+import MarketplacePanel from '@/components/game/MarketplacePanel';
+import { Market } from '@/types/game';
 import { toast } from 'sonner';
 
 const MIN_TILE_SIZE = 12;
@@ -33,6 +35,8 @@ const Index = () => {
   const [craftingOpen, setCraftingOpen] = useState(false);
   const [userProfileOpen, setUserProfileOpen] = useState(false);
   const [claimedTilesOpen, setClaimedTilesOpen] = useState(false);
+  const [marketplaceOpen, setMarketplaceOpen] = useState(false);
+  const [currentMarket, setCurrentMarket] = useState<Market | null>(null);
   const [selectedMember, setSelectedMember] = useState<WorldMember | null>(null);
   const [tileSize, setTileSize] = useState(DEFAULT_TILE_SIZE);
   const [selectedSlot, setSelectedSlot] = useState(0);
@@ -60,6 +64,11 @@ const Index = () => {
     updateSovereignty,
     renameTile,
     placeItem,
+    toggleEnableMarkets,
+    addMarket,
+    removeMarket,
+    buyFromMarket,
+    sellToMarket,
   } = useGameWorld();
 
   useEffect(() => {
@@ -136,6 +145,46 @@ const Index = () => {
     }
   }, [world.inventory, selectedSlot, facingDirection, placeItem]);
 
+  // Check if player is adjacent to and facing a market
+  const getAdjacentMarket = useCallback((): Market | null => {
+    if (!world.enableMarkets || !world.markets?.length) return null;
+    
+    const { x, y } = world.playerPosition;
+    let targetX = x;
+    let targetY = y;
+    
+    switch (facingDirection) {
+      case 'north': targetY -= 1; break;
+      case 'south': targetY += 1; break;
+      case 'east': targetX += 1; break;
+      case 'west': targetX -= 1; break;
+    }
+    
+    // Check if the target tile is part of any market (3x3)
+    for (const market of world.markets) {
+      if (
+        targetX >= market.position.x && targetX < market.position.x + 3 &&
+        targetY >= market.position.y && targetY < market.position.y + 3
+      ) {
+        return market;
+      }
+    }
+    
+    return null;
+  }, [world.playerPosition, world.enableMarkets, world.markets, facingDirection]);
+
+  // Handle opening marketplace
+  const handleOpenMarketplace = useCallback(() => {
+    const market = getAdjacentMarket();
+    if (market) {
+      setCurrentMarket(market);
+      setMarketplaceOpen(true);
+    } else {
+      // If not near a market, use Q for placing items instead
+      handlePlaceItem();
+    }
+  }, [getAdjacentMarket, handlePlaceItem]);
+
   // Handle keyboard input for slot selection and placement
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -156,16 +205,16 @@ const Index = () => {
         setSelectedSlot(slotKeys[e.key]);
       }
       
-      // Q key for placing
+      // Q key for marketplace (when adjacent) or placing items
       if (e.key.toLowerCase() === 'q') {
         e.preventDefault();
-        handlePlaceItem();
+        handleOpenMarketplace();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handlePlaceItem]);
+  }, [handleOpenMarketplace]);
 
   const zoomPercent = Math.round((tileSize / DEFAULT_TILE_SIZE) * 100);
 
@@ -191,6 +240,8 @@ const Index = () => {
           userColor={world.userColor}
           userId={world.userId}
           tileSize={tileSize}
+          markets={world.markets}
+          enableMarkets={world.enableMarkets}
           onMove={handleMove}
           onTileSelect={selectTile}
           onZoom={handleZoom}
@@ -277,11 +328,13 @@ const Index = () => {
         isOwner={isOwner}
         resources={world.resources}
         userId={world.userId}
+        enableMarkets={world.enableMarkets}
         onUpdateWorldName={updateWorldName}
         onAddResource={addResource}
         onUpdateResource={updateResource}
         onDeleteResource={deleteResource}
         onRespawnResources={respawnResources}
+        onToggleMarkets={toggleEnableMarkets}
       />
 
       <WorldStatsPanel
@@ -318,6 +371,20 @@ const Index = () => {
         isOpen={claimedTilesOpen}
         onClose={() => setClaimedTilesOpen(false)}
         world={world}
+      />
+
+      <MarketplacePanel
+        isOpen={marketplaceOpen}
+        onClose={() => {
+          setMarketplaceOpen(false);
+          setCurrentMarket(null);
+        }}
+        marketName={currentMarket?.name || 'Marketplace'}
+        playerCoins={world.coins}
+        inventory={world.inventory}
+        resources={world.resources}
+        onBuyResource={buyFromMarket}
+        onSellResource={sellToMarket}
       />
     </div>
   );

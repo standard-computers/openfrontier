@@ -1,5 +1,5 @@
 import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
-import { WorldMap, Position, Resource, TILE_COLORS, TileType, TILE_TYPES } from '@/types/game';
+import { WorldMap, Position, Resource, TILE_COLORS, TileType, TILE_TYPES, Market } from '@/types/game';
 import { cn } from '@/lib/utils';
 
 interface GameMapProps {
@@ -10,6 +10,8 @@ interface GameMapProps {
   userColor: string;
   userId: string;
   tileSize: number;
+  markets?: Market[];
+  enableMarkets?: boolean;
   onMove: (dx: number, dy: number) => void;
   onTileSelect: (x: number, y: number) => void;
   onZoom: (delta: number) => void;
@@ -23,6 +25,8 @@ const GameMap = ({
   userColor,
   userId,
   tileSize,
+  markets = [],
+  enableMarkets = false,
   onMove,
   onTileSelect,
   onZoom,
@@ -145,6 +149,16 @@ const GameMap = ({
             .map(resId => resources.find(r => r.id === resId))
             .filter(r => r?.isFloating);
 
+          // Check if this tile is part of a market (3x3 building)
+          const marketOnTile = enableMarkets ? markets.find(m => 
+            x >= m.position.x && x < m.position.x + 3 &&
+            y >= m.position.y && y < m.position.y + 3
+          ) : null;
+          
+          const isMarketCenter = marketOnTile && 
+            x === marketOnTile.position.x + 1 && 
+            y === marketOnTile.position.y + 1;
+
           // Calculate which borders to show for claimed tiles
           // Only show border on edges that don't have an adjacent tile claimed by the same owner
           let borderStyles: React.CSSProperties = {};
@@ -176,8 +190,8 @@ const GameMap = ({
               key={`${x}-${y}`}
               className={cn(
                 'tile cursor-pointer relative box-border',
-                TILE_COLORS[tile.type],
-                !isWalkable && 'brightness-75'
+                marketOnTile ? 'bg-amber-800' : TILE_COLORS[tile.type],
+                !isWalkable && !marketOnTile && 'brightness-75'
               )}
               style={{
                 gridColumn: screenX + 1,
@@ -188,8 +202,17 @@ const GameMap = ({
                 boxShadow: isSelected ? 'inset 0 0 0 3px #fff' : undefined,
                 ...borderStyles,
               }}
-              onClick={() => isWalkable && onTileSelect(x, y)}
+              onClick={() => isWalkable && !marketOnTile && onTileSelect(x, y)}
             >
+              {/* Show market icon in center */}
+              {isMarketCenter && (
+                <span 
+                  className="absolute inset-0 flex items-center justify-center drop-shadow-lg z-20"
+                  style={{ fontSize: Math.max(16, tileSize * 0.8) }}
+                >
+                  🏪
+                </span>
+              )}
               {/* Show floating resources */}
               {floatingResources.length > 0 && !isPlayerHere && (
                 <span 
