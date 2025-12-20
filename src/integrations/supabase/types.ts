@@ -35,10 +35,14 @@ export type Database = {
       resource_marketplace: {
         Row: {
           base_value: number
+          can_inflict_damage: boolean
+          consumable: boolean
           created_at: string
           created_by: string | null
+          damage: number
           description: string | null
           download_count: number
+          health_gain: number
           icon: string
           id: string
           is_container: boolean
@@ -53,10 +57,14 @@ export type Database = {
         }
         Insert: {
           base_value?: number
+          can_inflict_damage?: boolean
+          consumable?: boolean
           created_at?: string
           created_by?: string | null
+          damage?: number
           description?: string | null
           download_count?: number
+          health_gain?: number
           icon?: string
           id?: string
           is_container?: boolean
@@ -71,10 +79,14 @@ export type Database = {
         }
         Update: {
           base_value?: number
+          can_inflict_damage?: boolean
+          consumable?: boolean
           created_at?: string
           created_by?: string | null
+          damage?: number
           description?: string | null
           download_count?: number
+          health_gain?: number
           icon?: string
           id?: string
           is_container?: boolean
