@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { useWorlds } from '@/hooks/useWorlds';
 import ResourceRepository from '@/components/game/ResourceRepository';
+import ResourceIcon from '@/components/game/ResourceIcon';
 import { Resource } from '@/types/game';
 
 const WorldsDashboard = () => {
@@ -265,7 +266,7 @@ const WorldsDashboard = () => {
                     <div className="flex flex-wrap gap-2">
                       {selectedResources.map(res => (
                         <div key={res.id} className="bg-muted/50 px-2 py-1 rounded text-sm flex items-center gap-2">
-                          <span>{res.icon}</span>
+                          <ResourceIcon icon={res.icon} iconType={res.iconType} size="sm" />
                           <span>{res.name}</span>
                           <button 
                             onClick={() => setSelectedResources(prev => prev.filter(r => r.id !== res.id))}

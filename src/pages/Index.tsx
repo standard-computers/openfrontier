@@ -81,7 +81,8 @@ const Index = () => {
       const resource = world.resources.find(r => r.id === resourceId);
       gatherFromTile(selectedTile.x, selectedTile.y, resourceId);
       if (resource) {
-        toast.success(`Gathered ${resource.icon} ${resource.name}`);
+        const iconDisplay = resource.iconType === 'image' ? '✓' : resource.icon;
+        toast.success(`Gathered ${iconDisplay} ${resource.name}`);
       }
     }
   };
