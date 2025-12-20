@@ -335,21 +335,6 @@ const ResourceEditorModal = ({
                 </div>
               </div>
 
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Gather Time (seconds)</label>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  step="0.01"
-                  min="0"
-                  value={form.gatherTime}
-                  onChange={(e) => {
-                    const val = parseFloat(e.target.value) || 0;
-                    setForm({ ...form, gatherTime: Math.max(0, Math.round(val * 100) / 100) });
-                  }}
-                  className="input-field w-full"
-                />
-              </div>
 
 
               <div>
@@ -449,8 +434,25 @@ const ResourceEditorModal = ({
 
           {activeTab === 'controls' && (
             <div className="space-y-4">
-              {/* Spawn Settings */}
+              {/* Gather Time */}
               <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Gather Time (seconds)</label>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  step="0.01"
+                  min="0"
+                  value={form.gatherTime}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value) || 0;
+                    setForm({ ...form, gatherTime: Math.max(0, Math.round(val * 100) / 100) });
+                  }}
+                  className="input-field w-full"
+                />
+              </div>
+
+              {/* Spawn Settings */}
+              <div className="border-t border-border pt-4">
                 <h4 className="text-sm font-medium mb-3">Spawn Settings</h4>
                 <div className="space-y-3">
                   <div>
@@ -562,6 +564,42 @@ const ResourceEditorModal = ({
                     />
                     <label htmlFor="passable" className={cn("text-sm", !form.placeable && "text-muted-foreground")}>Passable</label>
                   </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="hasLimitedLifetime"
+                      checked={form.hasLimitedLifetime || false}
+                      onChange={(e) => setForm({ ...form, hasLimitedLifetime: e.target.checked, lifetimeHours: e.target.checked ? (form.lifetimeHours || 24) : undefined })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="hasLimitedLifetime" className="text-sm">Limited Lifetime</label>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mt-4">
+                  {form.hasLimitedLifetime && (
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">
+                        Lifetime (game hours)
+                      </label>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        step="0.01"
+                        min="0.01"
+                        value={form.lifetimeHours || 24}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value) || 1;
+                          setForm({ ...form, lifetimeHours: Math.max(0.01, Math.round(val * 100) / 100) });
+                        }}
+                        className="input-field w-full"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Hours before resource expires
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
