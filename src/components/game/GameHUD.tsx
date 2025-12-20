@@ -16,11 +16,12 @@ interface GameHUDProps {
   onOpenSovereignty: () => void;
   onOpenStats: () => void;
   onOpenCrafting: () => void;
+  onOpenClaimedTiles: () => void;
   onZoom: (delta: number) => void;
   onConsumeResource: (resourceId: string) => { success: boolean; message: string };
 }
 
-const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, onSelectSlot, onOpenConfig, onOpenAccount, onOpenSovereignty, onOpenStats, onOpenCrafting, onZoom, onConsumeResource }: GameHUDProps) => {
+const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, onSelectSlot, onOpenConfig, onOpenAccount, onOpenSovereignty, onOpenStats, onOpenCrafting, onOpenClaimedTiles, onZoom, onConsumeResource }: GameHUDProps) => {
   const getResource = (id: string | null) => resources.find(r => r.id === id);
   const [worldTime, setWorldTime] = useState({ days: 0, hours: 0 });
   const [selectedItem, setSelectedItem] = useState<{ resourceId: string; quantity: number } | null>(null);
@@ -199,8 +200,11 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, onSele
         </div>
       </div>
 
-      {/* Claimed tiles indicator */}
-      <div className="absolute bottom-4 left-4 game-panel px-3 py-2 pointer-events-auto">
+      {/* Claimed tiles indicator - clickable */}
+      <button 
+        onClick={onOpenClaimedTiles}
+        className="absolute bottom-4 left-4 game-panel px-3 py-2 pointer-events-auto hover:bg-muted/50 transition-colors"
+      >
         <div className="flex items-center gap-2 text-sm">
           <div 
             className="w-3 h-3 rounded-full"
@@ -208,7 +212,7 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, onSele
           />
           <span className="text-muted-foreground">{claimedCount} tiles</span>
         </div>
-      </div>
+      </button>
 
       {/* Inventory Item Modal */}
       <InventoryItemModal

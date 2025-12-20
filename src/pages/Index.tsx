@@ -13,6 +13,7 @@ import TouchControls from '@/components/game/TouchControls';
 import WorldStatsPanel from '@/components/game/WorldStatsPanel';
 import CraftingPanel from '@/components/game/CraftingPanel';
 import UserProfilePanel from '@/components/game/UserProfilePanel';
+import ClaimedTilesPanel from '@/components/game/ClaimedTilesPanel';
 import { toast } from 'sonner';
 
 const MIN_TILE_SIZE = 12;
@@ -31,6 +32,7 @@ const Index = () => {
   const [statsOpen, setStatsOpen] = useState(false);
   const [craftingOpen, setCraftingOpen] = useState(false);
   const [userProfileOpen, setUserProfileOpen] = useState(false);
+  const [claimedTilesOpen, setClaimedTilesOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<WorldMember | null>(null);
   const [tileSize, setTileSize] = useState(DEFAULT_TILE_SIZE);
   const [selectedSlot, setSelectedSlot] = useState(0);
@@ -206,6 +208,7 @@ const Index = () => {
           onOpenSovereignty={() => setSovereigntyOpen(true)}
           onOpenStats={() => setStatsOpen(true)}
           onOpenCrafting={() => setCraftingOpen(true)}
+          onOpenClaimedTiles={() => setClaimedTilesOpen(true)}
           onZoom={handleZoom}
           onConsumeResource={consumeResource}
         />
@@ -308,6 +311,12 @@ const Index = () => {
           setSelectedMember(null);
         }}
         member={selectedMember}
+        world={world}
+      />
+
+      <ClaimedTilesPanel
+        isOpen={claimedTilesOpen}
+        onClose={() => setClaimedTilesOpen(false)}
         world={world}
       />
     </div>
