@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { GameWorld, Resource, Sovereignty, Market, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap, TILE_TYPES } from '@/types/game';
 import type { Json } from '@/integrations/supabase/types';
 
+// Hook version marker for HMR compatibility
+
 const getDefaultWorld = (): GameWorld => {
   const resources: Resource[] = [];
   const map = generateMap(80, 50, resources);
