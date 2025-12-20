@@ -160,6 +160,10 @@ const ResourceRepository = ({
       canInflictDamage: false,
       damage: 0,
       recipes: [],
+      isContainer: false,
+      isFloating: false,
+      placeable: false,
+      passable: false,
     });
     setShowCreateModal(true);
   };
