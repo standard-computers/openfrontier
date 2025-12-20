@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Globe, Trash2, Play, LogOut, Users, Crown, Copy, UserPlus, Database } from 'lucide-react';
+import { Plus, Globe, Trash2, Play, LogOut, Users, Crown, Copy, UserPlus, Database, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
@@ -8,6 +8,7 @@ import { useWorlds } from '@/hooks/useWorlds';
 import ResourceRepository from '@/components/game/ResourceRepository';
 import ResourceIcon from '@/components/game/ResourceIcon';
 import { Resource } from '@/types/game';
+import { supabase } from '@/integrations/supabase/client';
 
 const WorldsDashboard = () => {
   const navigate = useNavigate();
@@ -24,6 +25,7 @@ const WorldsDashboard = () => {
   const [createTab, setCreateTab] = useState<'settings' | 'resources'>('settings');
   const [selectedResources, setSelectedResources] = useState<Resource[]>([]);
   const [repositoryOpen, setRepositoryOpen] = useState(false);
+  const [addingAllResources, setAddingAllResources] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -109,6 +111,63 @@ const WorldsDashboard = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate('/auth');
+  };
+
+  const handleAddAllResources = async () => {
+    setAddingAllResources(true);
+    try {
+      const { data, error } = await supabase
+        .from('resource_marketplace')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+
+      const existingNames = new Set(selectedResources.map(r => r.name.toLowerCase()));
+      let addedCount = 0;
+
+      for (const repoResource of data || []) {
+        if (!existingNames.has(repoResource.name.toLowerCase())) {
+          const newResource: Resource = {
+            id: `res-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            name: repoResource.name,
+            icon: repoResource.icon,
+            iconType: repoResource.icon?.startsWith('http') ? 'image' : 'emoji',
+            rarity: repoResource.rarity as Resource['rarity'],
+            description: repoResource.description || '',
+            gatherTime: 1000,
+            spawnTiles: repoResource.spawn_tiles as Resource['spawnTiles'],
+            spawnChance: Number(repoResource.spawn_chance),
+            coinValue: repoResource.base_value,
+            consumable: repoResource.consumable || false,
+            healthGain: repoResource.health_gain || 0,
+            canInflictDamage: repoResource.can_inflict_damage || false,
+            damage: repoResource.damage || 0,
+            recipes: repoResource.recipe ? [repoResource.recipe as unknown as import('@/types/game').Recipe] : [],
+            isContainer: repoResource.is_container || false,
+            isFloating: repoResource.is_floating || false,
+            placeable: repoResource.placeable || false,
+            passable: repoResource.passable || false,
+            tileWidth: 1,
+            tileHeight: 1,
+          };
+          setSelectedResources(prev => [...prev, newResource]);
+          existingNames.add(repoResource.name.toLowerCase());
+          addedCount++;
+        }
+      }
+
+      if (addedCount > 0) {
+        toast.success(`Added ${addedCount} resources from repository`);
+      } else {
+        toast.info('All repository resources are already added');
+      }
+    } catch (error) {
+      console.error('Failed to fetch repository resources:', error);
+      toast.error('Failed to load repository resources');
+    } finally {
+      setAddingAllResources(false);
+    }
   };
 
   const loading = authLoading || worldsLoading;
@@ -254,13 +313,24 @@ const WorldsDashboard = () => {
                 <p className="text-sm text-muted-foreground">
                   Add custom resources to your world from the community repository.
                 </p>
-                <button
-                  onClick={() => setRepositoryOpen(true)}
-                  className="btn btn-primary w-full"
-                >
-                  <Database className="w-4 h-4 mr-2" />
-                  Open Resource Repository
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setRepositoryOpen(true)}
+                    className="btn btn-primary flex-1"
+                  >
+                    <Database className="w-4 h-4 mr-2" />
+                    Open Resource Repository
+                  </button>
+                  <button
+                    onClick={handleAddAllResources}
+                    disabled={addingAllResources}
+                    className="btn"
+                    title="Add all resources from repository"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    {addingAllResources ? 'Adding...' : 'Add All'}
+                  </button>
+                </div>
                 {selectedResources.length > 0 && (
                   <div className="space-y-2">
                     <p className="text-xs text-muted-foreground">Selected resources:</p>
