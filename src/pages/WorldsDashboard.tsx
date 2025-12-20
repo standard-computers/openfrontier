@@ -42,9 +42,10 @@ const WorldsDashboard = () => {
     
     setIsSubmitting(true);
     try {
-      const worldId = await createWorld(newWorldName.trim(), width, height);
+      const worldId = await createWorld(newWorldName.trim(), width, height, selectedResources);
       localStorage.setItem('currentWorldId', worldId);
       toast.success(`World created! (${width}×${height} tiles)`);
+      setSelectedResources([]);
       navigate('/');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to create world');
