@@ -42,6 +42,8 @@ export interface Resource {
   lifetimeHours?: number; // Number of game hours before resource expires
   tileWidth?: number; // Width in tiles (0 = smaller than tile, 1 = default, 2+ = multi-tile)
   tileHeight?: number; // Height in tiles (0 = smaller than tile, 1 = default, 2+ = multi-tile)
+  useLife?: boolean; // If true, using the item decreases its life
+  lifeDecreasePerUse?: number; // Amount of life decreased per use (default 100 = full consumption)
 }
 
 export interface MapTile {

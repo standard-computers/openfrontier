@@ -50,6 +50,7 @@ export type Database = {
           id: string
           is_container: boolean
           is_floating: boolean
+          life_decrease_per_use: number
           lifetime_hours: number | null
           name: string
           passable: boolean
@@ -60,6 +61,7 @@ export type Database = {
           spawn_tiles: string[]
           tile_height: number
           tile_width: number
+          use_life: boolean
         }
         Insert: {
           base_value?: number
@@ -78,6 +80,7 @@ export type Database = {
           id?: string
           is_container?: boolean
           is_floating?: boolean
+          life_decrease_per_use?: number
           lifetime_hours?: number | null
           name: string
           passable?: boolean
@@ -88,6 +91,7 @@ export type Database = {
           spawn_tiles?: string[]
           tile_height?: number
           tile_width?: number
+          use_life?: boolean
         }
         Update: {
           base_value?: number
@@ -106,6 +110,7 @@ export type Database = {
           id?: string
           is_container?: boolean
           is_floating?: boolean
+          life_decrease_per_use?: number
           lifetime_hours?: number | null
           name?: string
           passable?: boolean
@@ -116,6 +121,7 @@ export type Database = {
           spawn_tiles?: string[]
           tile_height?: number
           tile_width?: number
+          use_life?: boolean
         }
         Relationships: []
       }
