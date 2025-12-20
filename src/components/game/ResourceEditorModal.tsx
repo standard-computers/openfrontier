@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Resource, Recipe, RecipeIngredient, TileType, TILE_TYPES, RARITY_COLORS } from '@/types/game';
-import { X, Save, Trash2, Plus, ChevronRight, Upload, Smile, Image } from 'lucide-react';
+import { X, Save, Trash2, Plus, ChevronRight, Upload, Smile, Image, ChevronDown } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -512,17 +513,41 @@ const ResourceEditorModal = ({
                       <div className="space-y-2">
                         {editingRecipe.ingredients.map((ingredient, index) => (
                           <div key={index} className="flex items-center gap-2 bg-secondary/30 p-2 rounded">
-                            <select
-                              value={ingredient.resourceId}
-                              onChange={(e) => handleUpdateIngredient(index, { resourceId: e.target.value })}
-                              className="input-field flex-1"
-                            >
-                              {allResources
-                                .filter(r => r.id !== form.id)
-                                .map(r => (
-                                  <option key={r.id} value={r.id}>{r.iconType === 'image' ? '🖼️' : r.icon} {r.name}</option>
-                                ))}
-                            </select>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button className="input-field flex-1 flex items-center gap-2 text-left">
+                                  {(() => {
+                                    const selectedResource = allResources.find(r => r.id === ingredient.resourceId);
+                                    return selectedResource ? (
+                                      <>
+                                        <ResourceIcon icon={selectedResource.icon} iconType={selectedResource.iconType} size="sm" />
+                                        <span className="flex-1 truncate">{selectedResource.name}</span>
+                                      </>
+                                    ) : (
+                                      <span className="text-muted-foreground">Select resource...</span>
+                                    );
+                                  })()}
+                                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-64 p-1 max-h-60 overflow-auto z-50 bg-card border border-border" align="start">
+                                {allResources
+                                  .filter(r => r.id !== form.id)
+                                  .map(r => (
+                                    <button
+                                      key={r.id}
+                                      onClick={() => handleUpdateIngredient(index, { resourceId: r.id })}
+                                      className={cn(
+                                        "w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-muted transition-colors",
+                                        ingredient.resourceId === r.id && "bg-primary/20"
+                                      )}
+                                    >
+                                      <ResourceIcon icon={r.icon} iconType={r.iconType} size="sm" />
+                                      <span className="truncate">{r.name}</span>
+                                    </button>
+                                  ))}
+                              </PopoverContent>
+                            </Popover>
                             <span className="text-muted-foreground">×</span>
                             <input
                               type="number"
