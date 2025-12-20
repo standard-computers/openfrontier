@@ -11,6 +11,8 @@ interface GameMapProps {
   playerPosition: Position;
   resources: Resource[];
   selectedTile: Position | null;
+  selectedTiles: Position[];
+  multiSelectMode: boolean;
   userColor: string;
   userId: string;
   tileSize: number;
@@ -20,6 +22,7 @@ interface GameMapProps {
   isMoving: boolean;
   onMove: (dx: number, dy: number) => void;
   onTileSelect: (x: number, y: number) => void;
+  onMultiTileSelect: (tiles: Position[]) => void;
   onZoom: (delta: number) => void;
 }
 
@@ -28,6 +31,8 @@ const GameMap = ({
   playerPosition,
   resources,
   selectedTile,
+  selectedTiles,
+  multiSelectMode,
   userColor,
   userId,
   tileSize,
@@ -37,10 +42,14 @@ const GameMap = ({
   isMoving,
   onMove,
   onTileSelect,
+  onMultiTileSelect,
   onZoom,
 }: GameMapProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewportSize, setViewportSize] = useState({ tilesX: 30, tilesY: 20 });
+  const [dragStart, setDragStart] = useState<Position | null>(null);
+  const [dragEnd, setDragEnd] = useState<Position | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const updateViewport = useCallback(() => {
     if (containerRef.current) {
@@ -64,6 +73,74 @@ const GameMap = ({
       onZoom(e.deltaY > 0 ? -4 : 4);
     }
   }, [onZoom]);
+
+  // Calculate tiles in drag selection
+  const getDragSelectedTiles = useCallback((): Position[] => {
+    if (!dragStart || !dragEnd) return [];
+    const minX = Math.min(dragStart.x, dragEnd.x);
+    const maxX = Math.max(dragStart.x, dragEnd.x);
+    const minY = Math.min(dragStart.y, dragEnd.y);
+    const maxY = Math.max(dragStart.y, dragEnd.y);
+    
+    const tiles: Position[] = [];
+    for (let y = minY; y <= maxY; y++) {
+      for (let x = minX; x <= maxX; x++) {
+        const tile = map.tiles[y]?.[x];
+        const tileTypeInfo = TILE_TYPES.find(t => t.type === tile?.type);
+        const isWalkable = tileTypeInfo?.walkable ?? tile?.walkable;
+        if (tile && isWalkable) {
+          tiles.push({ x, y });
+        }
+      }
+    }
+    return tiles;
+  }, [dragStart, dragEnd, map.tiles]);
+
+  const handleTileMouseDown = useCallback((x: number, y: number) => {
+    if (multiSelectMode) {
+      setDragStart({ x, y });
+      setDragEnd({ x, y });
+      setIsDragging(true);
+    }
+  }, [multiSelectMode]);
+
+  const handleTileMouseEnter = useCallback((x: number, y: number) => {
+    if (isDragging && multiSelectMode) {
+      setDragEnd({ x, y });
+    }
+  }, [isDragging, multiSelectMode]);
+
+  const handleMouseUp = useCallback(() => {
+    if (isDragging && multiSelectMode) {
+      const tiles = getDragSelectedTiles();
+      if (tiles.length > 0) {
+        onMultiTileSelect(tiles);
+      }
+      setDragStart(null);
+      setDragEnd(null);
+      setIsDragging(false);
+    }
+  }, [isDragging, multiSelectMode, getDragSelectedTiles, onMultiTileSelect]);
+
+  useEffect(() => {
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => window.removeEventListener('mouseup', handleMouseUp);
+  }, [handleMouseUp]);
+
+  // Calculate if a tile is in the current drag selection
+  const isTileInDragSelection = useCallback((x: number, y: number): boolean => {
+    if (!dragStart || !dragEnd || !isDragging) return false;
+    const minX = Math.min(dragStart.x, dragEnd.x);
+    const maxX = Math.max(dragStart.x, dragEnd.x);
+    const minY = Math.min(dragStart.y, dragEnd.y);
+    const maxY = Math.max(dragStart.y, dragEnd.y);
+    return x >= minX && x <= maxX && y >= minY && y <= maxY;
+  }, [dragStart, dragEnd, isDragging]);
+
+  // Check if tile is in selectedTiles array
+  const isTileMultiSelected = useCallback((x: number, y: number): boolean => {
+    return selectedTiles.some(t => t.x === x && t.y === y);
+  }, [selectedTiles]);
 
   const viewportOffset = useMemo(() => {
     const offsetX = Math.max(0, Math.min(
@@ -144,6 +221,8 @@ const GameMap = ({
         {visibleTiles.map(({ x, y, tile }) => {
           const isPlayerHere = x === playerPosition.x && y === playerPosition.y;
           const isSelected = selectedTile?.x === x && selectedTile?.y === y;
+          const isInDragSelection = isTileInDragSelection(x, y);
+          const isMultiSelected = isTileMultiSelected(x, y);
           const isClaimed = !!tile.claimedBy;
           const isOwnClaim = tile.claimedBy === userId;
           const screenX = x - viewportOffset.x;
@@ -165,7 +244,7 @@ const GameMap = ({
           // Calculate which borders to show for claimed tiles
           // Only show border on edges that don't have an adjacent tile claimed by the same owner
           let borderStyles: React.CSSProperties = {};
-          if (isClaimed && !isSelected) {
+          if (isClaimed && !isSelected && !isMultiSelected) {
             const claimColor = isOwnClaim ? userColor : '#888';
             const borderWidth = 2;
             
@@ -188,13 +267,24 @@ const GameMap = ({
             };
           }
 
+          // Determine selection visual
+          let selectionStyle: React.CSSProperties = {};
+          if (isSelected) {
+            selectionStyle.boxShadow = 'inset 0 0 0 3px #fff';
+          } else if (isMultiSelected) {
+            selectionStyle.boxShadow = 'inset 0 0 0 2px #3b82f6';
+          } else if (isInDragSelection && isWalkable) {
+            selectionStyle.boxShadow = 'inset 0 0 0 2px rgba(59, 130, 246, 0.6)';
+          }
+
           return (
             <div
               key={`${x}-${y}`}
               className={cn(
-                'tile cursor-pointer relative box-border',
+                'tile cursor-pointer relative box-border select-none',
                 marketOnTile ? 'bg-amber-800' : TILE_COLORS[tile.type],
-                !isWalkable && !marketOnTile && 'brightness-75'
+                !isWalkable && !marketOnTile && 'brightness-75',
+                (isInDragSelection || isMultiSelected) && isWalkable && 'brightness-110'
               )}
               style={{
                 gridColumn: screenX + 1,
@@ -202,10 +292,16 @@ const GameMap = ({
                 width: tileSize,
                 height: tileSize,
                 fontSize: Math.max(10, tileSize * 0.5),
-                boxShadow: isSelected ? 'inset 0 0 0 3px #fff' : undefined,
                 ...borderStyles,
+                ...selectionStyle,
               }}
-              onClick={() => isWalkable && !marketOnTile && onTileSelect(x, y)}
+              onMouseDown={() => handleTileMouseDown(x, y)}
+              onMouseEnter={() => handleTileMouseEnter(x, y)}
+              onClick={() => {
+                if (!multiSelectMode && isWalkable && !marketOnTile) {
+                  onTileSelect(x, y);
+                }
+              }}
             >
               {/* Show market icon */}
               {marketOnTile && (
