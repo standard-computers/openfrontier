@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Resource, RARITY_COLORS } from '@/types/game';
-import { X, Plus, Save, RefreshCw, Map, Package, Hammer, Copy, Lock, Database } from 'lucide-react';
+import { X, Plus, Save, RefreshCw, Map, Package, Hammer, Copy, Lock, Database, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import ResourceEditorModal from './ResourceEditorModal';
@@ -36,6 +37,7 @@ const WorldConfig = ({
   onDeleteResource,
   onRespawnResources,
 }: WorldConfigProps) => {
+  const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<'world' | 'resources'>('world');
   const [name, setName] = useState(worldName);
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
@@ -43,6 +45,11 @@ const WorldConfig = ({
   const [repositoryOpen, setRepositoryOpen] = useState(false);
 
   if (!isOpen) return null;
+
+  const handleLeaveWorld = () => {
+    onClose();
+    navigate('/worlds');
+  };
 
   const handleSaveName = () => {
     onUpdateWorldName(name);
@@ -103,7 +110,7 @@ const WorldConfig = ({
 
           <div className="flex flex-1 overflow-hidden">
             {/* Sidebar */}
-            <div className="w-48 border-r border-border p-2 space-y-1">
+            <div className="w-48 border-r border-border p-2 flex flex-col gap-1">
               <button
                 onClick={() => setActiveSection('world')}
                 className={cn('w-full flex items-center gap-2 px-3 py-2 rounded text-sm', activeSection === 'world' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted')}
@@ -116,6 +123,16 @@ const WorldConfig = ({
               >
                 <Package className="w-4 h-4" /> Resources
               </button>
+              
+              {/* Leave World button at bottom of sidebar */}
+              <div className="!mt-auto pt-4 border-t border-border">
+                <button
+                  onClick={handleLeaveWorld}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" /> Leave World
+                </button>
+              </div>
             </div>
 
             {/* Content */}

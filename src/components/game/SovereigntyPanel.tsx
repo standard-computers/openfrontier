@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Sovereignty, USER_COLORS } from '@/types/game';
-import { X, Flag, Crown, Palette, Coins, LogOut, Info, Settings, Plus } from 'lucide-react';
+import { X, Flag, Crown, Palette, Coins, Info, Settings, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const FLAG_OPTIONS = ['🏴', '🏳️', '🚩', '⚔️', '🛡️', '👑', '🦁', '🦅', '🐉', '🌟', '⭐', '🔱', '🏰', '⚜️', '🗡️', '🎭'];
@@ -31,7 +30,6 @@ const SovereigntyPanel = ({
   onCreateSovereignty,
   onUpdateSovereignty,
 }: SovereigntyPanelProps) => {
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'general' | 'controls'>('general');
   const [isCreating, setIsCreating] = useState(false);
   const [newName, setNewName] = useState('');
@@ -39,11 +37,6 @@ const SovereigntyPanel = ({
   const [newMotto, setNewMotto] = useState('');
 
   if (!isOpen) return null;
-
-  const handleLeaveWorld = () => {
-    onClose();
-    navigate('/worlds');
-  };
 
   const handleCreate = () => {
     if (newName.trim()) {
@@ -152,16 +145,6 @@ const SovereigntyPanel = ({
             >
               <Plus className="w-4 h-4" /> Found a Sovereignty
             </button>
-
-            <div className="pt-2 border-t border-border">
-              <button
-                onClick={handleLeaveWorld}
-                className="w-full btn flex items-center justify-center gap-2 border border-border hover:bg-muted"
-              >
-                <LogOut className="w-4 h-4" />
-                Leave World
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -292,18 +275,7 @@ const SovereigntyPanel = ({
                     </button>
                   ))}
                 </div>
-              </div>
-
-              {/* Leave World */}
-              <div className="pt-2 border-t border-border">
-                <button
-                  onClick={handleLeaveWorld}
-                  className="w-full btn flex items-center justify-center gap-2 border border-border hover:bg-muted"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Leave World
-                </button>
-              </div>
+                </div>
             </div>
           )}
         </div>
