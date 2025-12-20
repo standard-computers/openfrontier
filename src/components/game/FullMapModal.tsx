@@ -1,6 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { WorldMap, Position, Market } from '@/types/game';
+import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 
 interface FullMapModalProps {
   open: boolean;
@@ -27,12 +29,6 @@ const TILE_COLORS: Record<string, string> = {
   jungle: '#15803d',
 };
 
-interface ClaimedRegion {
-  claimedBy: string;
-  color: string;
-  tiles: { x: number; y: number }[];
-}
-
 const FullMapModal = ({ 
   open, 
   onOpenChange, 
@@ -42,6 +38,29 @@ const FullMapModal = ({
   userId, 
   markets = [] 
 }: FullMapModalProps) => {
+  const [zoom, setZoom] = useState(1);
+
+  const handleZoomIn = useCallback(() => {
+    setZoom(z => Math.min(z + 0.25, 4));
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    setZoom(z => Math.max(z - 0.25, 0.25));
+  }, []);
+
+  const handleResetZoom = useCallback(() => {
+    setZoom(1);
+  }, []);
+
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    if (e.deltaY < 0) {
+      setZoom(z => Math.min(z + 0.1, 4));
+    } else {
+      setZoom(z => Math.max(z - 0.1, 0.25));
+    }
+  }, []);
+
   const mapData = useMemo(() => {
     const maxSize = 600;
     const scale = Math.max(1, Math.ceil(Math.max(map.width, map.height) / maxSize));
@@ -134,13 +153,33 @@ const FullMapModal = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[90vw] max-h-[90vh] w-auto">
-        <DialogHeader>
+        <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle>World Map</DialogTitle>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleZoomOut}>
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+            <span className="text-xs text-muted-foreground w-12 text-center">
+              {Math.round(zoom * 100)}%
+            </span>
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleZoomIn}>
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleResetZoom}>
+              <RotateCcw className="h-4 w-4" />
+            </Button>
+          </div>
         </DialogHeader>
-        <div className="relative overflow-auto max-h-[75vh]">
+        <div 
+          className="relative overflow-auto max-h-[70vh]"
+          onWheel={handleWheel}
+        >
           <div 
-            className="relative"
-            style={{ width: mapData.scaledWidth, height: mapData.scaledHeight }}
+            className="relative origin-top-left transition-transform duration-150"
+            style={{ 
+              width: mapData.scaledWidth * zoom, 
+              height: mapData.scaledHeight * zoom,
+            }}
           >
             <img 
               src={mapData.dataUrl} 
@@ -151,11 +190,13 @@ const FullMapModal = ({
             
             {/* Player indicator */}
             <div 
-              className="absolute w-3 h-3 rounded-full border-2 border-white animate-pulse"
+              className="absolute rounded-full border-2 border-white animate-pulse"
               style={{ 
                 backgroundColor: userColor,
-                left: playerX - 6,
-                top: playerY - 6,
+                width: Math.max(6, 12 * zoom),
+                height: Math.max(6, 12 * zoom),
+                left: playerX * zoom - Math.max(3, 6 * zoom),
+                top: playerY * zoom - Math.max(3, 6 * zoom),
                 boxShadow: `0 0 8px ${userColor}`,
               }}
             />
@@ -166,11 +207,11 @@ const FullMapModal = ({
                 key={market.id}
                 className="absolute flex items-center justify-center"
                 style={{
-                  left: (market.position.x + 0.5) / mapData.scale - 8,
-                  top: (market.position.y + 0.5) / mapData.scale - 8,
-                  width: 16,
-                  height: 16,
-                  fontSize: 12,
+                  left: ((market.position.x + 0.5) / mapData.scale) * zoom - 8 * zoom,
+                  top: ((market.position.y + 0.5) / mapData.scale) * zoom - 8 * zoom,
+                  width: 16 * zoom,
+                  height: 16 * zoom,
+                  fontSize: 12 * zoom,
                 }}
                 title={market.name}
               >
