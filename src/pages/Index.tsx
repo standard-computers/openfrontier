@@ -56,6 +56,7 @@ const Index = () => {
     movePlayer,
     selectTile,
     claimTile,
+    claimMultipleTiles,
     gatherFromTile,
     addResource,
     updateResource,
@@ -98,27 +99,15 @@ const Index = () => {
   };
 
   const handleClaimAll = useCallback(() => {
-    let successCount = 0;
-    let totalCost = 0;
+    const result = claimMultipleTiles(selectedTiles);
     
-    for (const pos of selectedTiles) {
-      const tile = world.map.tiles[pos.y]?.[pos.x];
-      if (tile && !tile.claimedBy) {
-        const result = claimTile(pos.x, pos.y);
-        if (result.success) {
-          successCount++;
-          totalCost += calculateTileValue(tile, world.resources);
-        }
-      }
-    }
-    
-    if (successCount > 0) {
-      toast.success(`Claimed ${successCount} tiles for ${totalCost} coins!`);
+    if (result.success) {
+      toast.success(result.message);
       setSelectedTiles([]);
     } else {
-      toast.error('Could not claim any tiles');
+      toast.error(result.message);
     }
-  }, [selectedTiles, world.map.tiles, world.resources, claimTile]);
+  }, [selectedTiles, claimMultipleTiles]);
 
   const handleMultiTileSelect = useCallback((tiles: Position[]) => {
     setSelectedTiles(tiles);
