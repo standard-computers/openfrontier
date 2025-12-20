@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { GameWorld, Resource, Sovereignty, DEFAULT_RESOURCES, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap } from '@/types/game';
+import { GameWorld, Resource, Sovereignty, DEFAULT_RESOURCES, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap, TILE_TYPES } from '@/types/game';
 import type { Json } from '@/integrations/supabase/types';
 
 const getDefaultWorld = (): GameWorld => {
@@ -239,10 +239,15 @@ export const useGameWorld = () => {
       const newY = prev.playerPosition.y + dy;
       
       if (newX < 0 || newX >= prev.map.width || newY < 0 || newY >= prev.map.height) return prev;
-      if (!prev.map.tiles[newY][newX].walkable) return prev;
+      
+      const targetTile = prev.map.tiles[newY][newX];
+      // Check walkability from TILE_TYPES (source of truth) instead of stored tile data
+      const tileTypeInfo = TILE_TYPES.find(t => t.type === targetTile.type);
+      const isWalkable = tileTypeInfo?.walkable ?? targetTile.walkable;
+      
+      if (!isWalkable) return prev;
       
       // Mountain tiles deplete health by 0.05 per step
-      const targetTile = prev.map.tiles[newY][newX];
       let newHealth = prev.health;
       if (targetTile.type === 'mountain') {
         newHealth = Math.max(0, prev.health - 0.05);
