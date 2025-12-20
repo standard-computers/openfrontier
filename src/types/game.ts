@@ -38,6 +38,8 @@ export interface Resource {
   placeable?: boolean; // Can be placed on a tile
   passable?: boolean; // If placeable, can players walk through it
   category?: string; // Resource category for filtering
+  hasLimitedLifetime?: boolean; // If true, resource expires after lifetime hours
+  lifetimeHours?: number; // Number of game hours before resource expires
 }
 
 export interface MapTile {
