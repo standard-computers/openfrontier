@@ -167,12 +167,9 @@ const Index = () => {
       case 'west': targetX -= 1; break;
     }
     
-    // Check if the target tile is part of any market (3x3)
+    // Check if the target tile is a market (1x1)
     for (const market of world.markets) {
-      if (
-        targetX >= market.position.x && targetX < market.position.x + 3 &&
-        targetY >= market.position.y && targetY < market.position.y + 3
-      ) {
+      if (targetX === market.position.x && targetY === market.position.y) {
         return market;
       }
     }

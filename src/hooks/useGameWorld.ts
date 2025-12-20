@@ -22,7 +22,7 @@ const getDefaultWorld = (): GameWorld => {
     createdAt: new Date().toISOString(),
     health: STARTING_HEALTH,
     xp: 0,
-    enableMarkets: false,
+    enableMarkets: true,
     markets: [],
   };
 };

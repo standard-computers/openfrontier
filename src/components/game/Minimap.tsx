@@ -100,8 +100,8 @@ const Minimap = ({ map, playerPosition, userColor, userId, markets = [], size = 
             key={market.id}
             className="absolute w-1.5 h-1.5 bg-amber-400 rounded-sm"
             style={{
-              left: (market.position.x + 1.5) / minimapData.scale - 3,
-              top: (market.position.y + 1.5) / minimapData.scale - 3,
+              left: (market.position.x + 0.5) / minimapData.scale - 3,
+              top: (market.position.y + 0.5) / minimapData.scale - 3,
             }}
           />
         ))}
