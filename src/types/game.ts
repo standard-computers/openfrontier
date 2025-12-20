@@ -89,7 +89,7 @@ export const TILE_TYPES: { type: TileType; label: string; walkable: boolean; col
   { type: 'dirt', label: 'Dirt', walkable: true, color: 'bg-amber-800', baseValue: 3 },
   { type: 'sand', label: 'Sand', walkable: true, color: 'bg-yellow-500', baseValue: 4 },
   { type: 'stone', label: 'Stone', walkable: true, color: 'bg-gray-500', baseValue: 8 },
-  { type: 'mountain', label: 'Mountain', walkable: false, color: 'bg-gray-700', baseValue: 20 },
+  { type: 'mountain', label: 'Mountain', walkable: true, color: 'bg-gray-700', baseValue: 20 },
   { type: 'snow', label: 'Snow', walkable: true, color: 'bg-slate-100', baseValue: 6 },
   { type: 'ice', label: 'Ice', walkable: true, color: 'bg-cyan-200', baseValue: 7 },
   { type: 'swamp', label: 'Swamp', walkable: true, color: 'bg-lime-800', baseValue: 8 },
