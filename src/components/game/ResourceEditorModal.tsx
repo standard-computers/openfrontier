@@ -520,7 +520,7 @@ const ResourceEditorModal = ({
                               {allResources
                                 .filter(r => r.id !== form.id)
                                 .map(r => (
-                                  <option key={r.id} value={r.id}>{r.icon} {r.name}</option>
+                                  <option key={r.id} value={r.id}>{r.iconType === 'image' ? '🖼️' : r.icon} {r.name}</option>
                                 ))}
                             </select>
                             <span className="text-muted-foreground">×</span>
