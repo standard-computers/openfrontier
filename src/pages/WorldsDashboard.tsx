@@ -39,8 +39,8 @@ const WorldsDashboard = () => {
       return;
     }
 
-    const width = Math.max(12, parseInt(newWorldWidth) || 500);
-    const height = Math.max(12, parseInt(newWorldHeight) || 500);
+    const width = Math.max(1, parseInt(newWorldWidth) || 500);
+    const height = Math.max(1, parseInt(newWorldHeight) || 500);
     
     setIsSubmitting(true);
     try {
