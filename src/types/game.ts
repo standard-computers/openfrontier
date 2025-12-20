@@ -40,6 +40,8 @@ export interface Resource {
   category?: string; // Resource category for filtering
   hasLimitedLifetime?: boolean; // If true, resource expires after lifetime hours
   lifetimeHours?: number; // Number of game hours before resource expires
+  tileWidth?: number; // Width in tiles (0 = smaller than tile, 1 = default, 2+ = multi-tile)
+  tileHeight?: number; // Height in tiles (0 = smaller than tile, 1 = default, 2+ = multi-tile)
 }
 
 export interface MapTile {
