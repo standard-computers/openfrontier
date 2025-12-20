@@ -236,7 +236,15 @@ const GameMap = ({
                 </span>
               )}
               {isPlayerHere && (
-                <div className="absolute inset-0 flex items-center justify-center z-10">
+                <div 
+                  className="absolute z-20 flex items-end justify-center pointer-events-none"
+                  style={{
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    height: tileSize * 2, // Character spans 2 tiles tall
+                  }}
+                >
                   <PixelCharacter 
                     direction={facingDirection} 
                     isMoving={isMoving} 
