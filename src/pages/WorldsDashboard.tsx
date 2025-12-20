@@ -418,6 +418,7 @@ const WorldsDashboard = () => {
         }}
         existingResources={selectedResources}
         userId={user?.id}
+        canAddToWorld={true}
       />
     </div>
   );
