@@ -216,28 +216,28 @@ const WorldsDashboard = () => {
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Width (min 12)</label>
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       value={newWorldWidth}
-                      onChange={(e) => setNewWorldWidth(e.target.value)}
+                      onChange={(e) => setNewWorldWidth(e.target.value.replace(/[^0-9]/g, ''))}
                       onBlur={(e) => {
                         const val = parseInt(e.target.value);
                         if (!val || val < 12) setNewWorldWidth('12');
                       }}
-                      min={12}
                       className="input-field w-full"
                     />
                   </div>
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Height (min 12)</label>
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       value={newWorldHeight}
-                      onChange={(e) => setNewWorldHeight(e.target.value)}
+                      onChange={(e) => setNewWorldHeight(e.target.value.replace(/[^0-9]/g, ''))}
                       onBlur={(e) => {
                         const val = parseInt(e.target.value);
                         if (!val || val < 12) setNewWorldHeight('12');
                       }}
-                      min={12}
                       className="input-field w-full"
                     />
                   </div>

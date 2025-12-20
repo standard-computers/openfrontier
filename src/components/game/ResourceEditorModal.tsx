@@ -306,10 +306,13 @@ const ResourceEditorModal = ({
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Coin Value</label>
                   <input
-                    type="number"
-                    min={1}
+                    type="text"
+                    inputMode="numeric"
                     value={form.coinValue}
-                    onChange={(e) => setForm({ ...form, coinValue: Math.max(1, parseInt(e.target.value) || 1) })}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9]/g, '');
+                      setForm({ ...form, coinValue: Math.max(1, parseInt(val) || 1) });
+                    }}
                     className="input-field w-full"
                   />
                 </div>
@@ -319,10 +322,13 @@ const ResourceEditorModal = ({
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Gather Time (seconds)</label>
                   <input
-                    type="number"
-                    min={0}
+                    type="text"
+                    inputMode="numeric"
                     value={form.gatherTime}
-                    onChange={(e) => setForm({ ...form, gatherTime: Math.max(0, parseInt(e.target.value) || 0) })}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9]/g, '');
+                      setForm({ ...form, gatherTime: Math.max(0, parseInt(val) || 0) });
+                    }}
                     className="input-field w-full"
                   />
                 </div>
@@ -403,10 +409,13 @@ const ResourceEditorModal = ({
                       Health Gain {form.consumable ? '(on consume)' : '(per day)'}
                     </label>
                     <input
-                      type="number"
-                      min={0}
+                      type="text"
+                      inputMode="numeric"
                       value={form.healthGain || 0}
-                      onChange={(e) => setForm({ ...form, healthGain: Math.max(0, parseInt(e.target.value) || 0) })}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9]/g, '');
+                        setForm({ ...form, healthGain: Math.max(0, parseInt(val) || 0) });
+                      }}
                       className="input-field w-full"
                     />
                     <p className="text-[10px] text-muted-foreground mt-0.5">
@@ -419,10 +428,13 @@ const ResourceEditorModal = ({
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Damage Amount</label>
                     <input
-                      type="number"
-                      min={0}
+                      type="text"
+                      inputMode="numeric"
                       value={form.damage || 0}
-                      onChange={(e) => setForm({ ...form, damage: Math.max(0, parseInt(e.target.value) || 0) })}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9]/g, '');
+                        setForm({ ...form, damage: Math.max(0, parseInt(val) || 0) });
+                      }}
                       className="input-field w-full"
                       disabled={!form.canInflictDamage}
                     />
@@ -489,10 +501,13 @@ const ResourceEditorModal = ({
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Output Quantity</label>
                     <input
-                      type="number"
-                      min={1}
+                      type="text"
+                      inputMode="numeric"
                       value={editingRecipe.outputQuantity}
-                      onChange={(e) => setEditingRecipe({ ...editingRecipe, outputQuantity: Math.max(1, parseInt(e.target.value) || 1) })}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9]/g, '');
+                        setEditingRecipe({ ...editingRecipe, outputQuantity: Math.max(1, parseInt(val) || 1) });
+                      }}
                       className="input-field w-20"
                     />
                   </div>
@@ -550,10 +565,13 @@ const ResourceEditorModal = ({
                             </Popover>
                             <span className="text-muted-foreground">×</span>
                             <input
-                              type="number"
-                              min={1}
+                              type="text"
+                              inputMode="numeric"
                               value={ingredient.quantity}
-                              onChange={(e) => handleUpdateIngredient(index, { quantity: Math.max(1, parseInt(e.target.value) || 1) })}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/[^0-9]/g, '');
+                                handleUpdateIngredient(index, { quantity: Math.max(1, parseInt(val) || 1) });
+                              }}
                               className="input-field w-16 text-center"
                             />
                             <button 
