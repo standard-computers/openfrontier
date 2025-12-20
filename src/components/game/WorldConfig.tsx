@@ -316,6 +316,7 @@ const WorldConfig = ({
         onAddResource={onAddResource}
         existingResources={resources}
         userId={userId}
+        canAddToWorld={true}
       />
     </>
   );

@@ -37,6 +37,7 @@ interface ResourceRepositoryProps {
   onAddResource: (resource: Resource) => void;
   existingResources: Resource[];
   userId?: string;
+  canAddToWorld?: boolean;
 }
 
 const RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
@@ -47,6 +48,7 @@ const ResourceRepository = ({
   onAddResource,
   existingResources,
   userId,
+  canAddToWorld = false,
 }: ResourceRepositoryProps) => {
   const [resources, setResources] = useState<RepositoryResource[]>([]);
   const [loading, setLoading] = useState(true);
@@ -407,7 +409,7 @@ const ResourceRepository = ({
             </div>
 
             {/* Share your resources section */}
-            {existingResources.length > 0 && (
+            {canAddToWorld && existingResources.length > 0 && (
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm text-muted-foreground">Share your resources:</span>
                 {existingResources.slice(0, 5).map(res => (
@@ -484,15 +486,17 @@ const ResourceRepository = ({
                       <span className="text-xs text-muted-foreground flex items-center gap-1">
                         <Download className="w-3 h-3" /> {resource.download_count || 0}
                       </span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAddToWorld(resource);
-                        }}
-                        className="btn btn-primary text-xs py-1 px-3"
-                      >
-                        <Plus className="w-3 h-3 mr-1" /> Add to World
-                      </button>
+                      {canAddToWorld && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddToWorld(resource);
+                          }}
+                          className="btn btn-primary text-xs py-1 px-3"
+                        >
+                          <Plus className="w-3 h-3 mr-1" /> Add to World
+                        </button>
+                      )}
                     </div>
                   </div>
                   );
