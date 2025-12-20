@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { DEFAULT_RESOURCES, generateMap } from '@/types/game';
+import { generateMap } from '@/types/game';
 import type { Json } from '@/integrations/supabase/types';
 
 interface WorldMembership {
@@ -79,7 +79,7 @@ export const useWorlds = (userId: string | undefined) => {
   const createWorld = async (name: string, width: number, height: number) => {
     if (!userId) throw new Error('Not authenticated');
 
-    const resources = [...DEFAULT_RESOURCES];
+    const resources: any[] = [];
     const map = generateMap(width, height, resources);
 
     const playerData = {

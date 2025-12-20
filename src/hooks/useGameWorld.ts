@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { GameWorld, Resource, Sovereignty, DEFAULT_RESOURCES, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap, TILE_TYPES } from '@/types/game';
+import { GameWorld, Resource, Sovereignty, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap, TILE_TYPES } from '@/types/game';
 import type { Json } from '@/integrations/supabase/types';
 
 const getDefaultWorld = (): GameWorld => {
-  const resources = [...DEFAULT_RESOURCES];
+  const resources: Resource[] = [];
   const map = generateMap(80, 50, resources);
   
   return {
