@@ -9,6 +9,8 @@ interface GameHUDProps {
   resources: Resource[];
   zoomPercent: number;
   username: string | null;
+  selectedSlot: number;
+  onSelectSlot: (slot: number) => void;
   onOpenConfig: () => void;
   onOpenAccount: () => void;
   onOpenSovereignty: () => void;
@@ -18,11 +20,10 @@ interface GameHUDProps {
   onConsumeResource: (resourceId: string) => { success: boolean; message: string };
 }
 
-const GameHUD = ({ world, resources, zoomPercent, username, onOpenConfig, onOpenAccount, onOpenSovereignty, onOpenStats, onOpenCrafting, onZoom, onConsumeResource }: GameHUDProps) => {
+const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, onSelectSlot, onOpenConfig, onOpenAccount, onOpenSovereignty, onOpenStats, onOpenCrafting, onZoom, onConsumeResource }: GameHUDProps) => {
   const getResource = (id: string | null) => resources.find(r => r.id === id);
   const [worldTime, setWorldTime] = useState({ days: 0, hours: 0 });
   const [selectedItem, setSelectedItem] = useState<{ resourceId: string; quantity: number } | null>(null);
-
   // Calculate world time: 1 real hour = 1 game day
   useEffect(() => {
     const calculateWorldTime = () => {
@@ -160,14 +161,27 @@ const GameHUD = ({ world, resources, zoomPercent, username, onOpenConfig, onOpen
           <div className="flex gap-1">
             {world.inventory.slice(0, 12).map((slot, i) => {
               const resource = getResource(slot.resourceId);
+              const isSelected = selectedSlot === i;
               return (
                 <button
                   key={i}
-                  className="w-11 h-11 bg-input rounded flex items-center justify-center relative text-lg hover:bg-muted transition-colors disabled:cursor-default"
-                  title={resource?.name}
-                  onClick={() => slot.resourceId && setSelectedItem({ resourceId: slot.resourceId, quantity: slot.quantity })}
-                  disabled={!slot.resourceId}
+                  className={`w-11 h-11 rounded flex items-center justify-center relative text-lg transition-colors ${
+                    isSelected 
+                      ? 'bg-primary/30 ring-2 ring-primary' 
+                      : 'bg-input hover:bg-muted'
+                  } ${!slot.resourceId ? 'cursor-default' : ''}`}
+                  title={resource?.name ? `${resource.name} (${i + 1})` : `Slot ${i + 1}`}
+                  onClick={() => {
+                    onSelectSlot(i);
+                    if (slot.resourceId) {
+                      setSelectedItem({ resourceId: slot.resourceId, quantity: slot.quantity });
+                    }
+                  }}
                 >
+                  {/* Slot number indicator */}
+                  <span className="absolute top-0 left-0.5 text-[8px] text-muted-foreground font-medium">
+                    {i < 9 ? i + 1 : i === 9 ? '0' : i === 10 ? '-' : '='}
+                  </span>
                   {resource && (
                     <>
                       <ResourceIcon icon={resource.icon} iconType={resource.iconType} size="md" />

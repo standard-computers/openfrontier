@@ -588,6 +588,91 @@ export const useGameWorld = () => {
     return { success: true, health: newHealth };
   }, []);
 
+  const placeItem = useCallback((resourceId: string, direction: 'north' | 'south' | 'east' | 'west'): { success: boolean; message: string } => {
+    let result = { success: false, message: '' };
+    
+    setWorld(prev => {
+      const resource = prev.resources.find(r => r.id === resourceId);
+      if (!resource) {
+        result = { success: false, message: 'Resource not found' };
+        return prev;
+      }
+      
+      if (!resource.placeable) {
+        result = { success: false, message: 'This item cannot be placed' };
+        return prev;
+      }
+      
+      // Check if player has the resource
+      const slotIndex = prev.inventory.findIndex(s => s.resourceId === resourceId && s.quantity > 0);
+      if (slotIndex === -1) {
+        result = { success: false, message: "You don't have this item" };
+        return prev;
+      }
+      
+      // Calculate target position based on direction
+      let targetX = prev.playerPosition.x;
+      let targetY = prev.playerPosition.y;
+      
+      switch (direction) {
+        case 'north': targetY -= 1; break;
+        case 'south': targetY += 1; break;
+        case 'east': targetX += 1; break;
+        case 'west': targetX -= 1; break;
+      }
+      
+      // Check bounds
+      if (targetX < 0 || targetX >= prev.map.width || targetY < 0 || targetY >= prev.map.height) {
+        result = { success: false, message: 'Cannot place outside the map' };
+        return prev;
+      }
+      
+      const targetTile = prev.map.tiles[targetY][targetX];
+      const tileTypeInfo = TILE_TYPES.find(t => t.type === targetTile.type);
+      const isWalkable = tileTypeInfo?.walkable ?? targetTile.walkable;
+      
+      if (!isWalkable) {
+        result = { success: false, message: 'Cannot place on unwalkable tile' };
+        return prev;
+      }
+      
+      // Check if tile already has this resource placed
+      if (targetTile.resources.includes(resourceId)) {
+        result = { success: false, message: 'Item already placed here' };
+        return prev;
+      }
+      
+      // Remove from inventory
+      const newInventory = [...prev.inventory];
+      newInventory[slotIndex] = { 
+        ...newInventory[slotIndex], 
+        quantity: newInventory[slotIndex].quantity - 1 
+      };
+      if (newInventory[slotIndex].quantity === 0) {
+        newInventory[slotIndex] = { resourceId: null, quantity: 0 };
+      }
+      
+      // Add resource to tile
+      const newTiles = prev.map.tiles.map((row, ry) =>
+        row.map((t, rx) =>
+          rx === targetX && ry === targetY
+            ? { ...t, resources: [...t.resources, resourceId] }
+            : t
+        )
+      );
+      const newMapData: WorldMap = { ...prev.map, tiles: newTiles };
+      
+      result = { success: true, message: `Placed ${resource.name}!` };
+      
+      // Save map changes
+      setTimeout(() => saveMapData(newMapData), 500);
+      
+      return { ...prev, inventory: newInventory, map: newMapData };
+    });
+    
+    return result;
+  }, [saveMapData]);
+
   return {
     world,
     selectedTile,
@@ -610,5 +695,6 @@ export const useGameWorld = () => {
     renameTile,
     consumeResource,
     takeDamage,
+    placeItem,
   };
 };

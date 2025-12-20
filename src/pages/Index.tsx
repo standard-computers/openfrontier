@@ -19,6 +19,8 @@ const MIN_TILE_SIZE = 12;
 const MAX_TILE_SIZE = 48;
 const DEFAULT_TILE_SIZE = 28;
 
+type FacingDirection = 'north' | 'south' | 'east' | 'west';
+
 const Index = () => {
   const navigate = useNavigate();
   const { user, loading, username } = useAuth();
@@ -31,6 +33,8 @@ const Index = () => {
   const [userProfileOpen, setUserProfileOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<WorldMember | null>(null);
   const [tileSize, setTileSize] = useState(DEFAULT_TILE_SIZE);
+  const [selectedSlot, setSelectedSlot] = useState(0);
+  const [facingDirection, setFacingDirection] = useState<FacingDirection>('south');
   
   const {
     world,
@@ -53,6 +57,7 @@ const Index = () => {
     createSovereignty,
     updateSovereignty,
     renameTile,
+    placeItem,
   } = useGameWorld();
 
   useEffect(() => {
@@ -97,6 +102,63 @@ const Index = () => {
     setTileSize(prev => Math.max(MIN_TILE_SIZE, Math.min(MAX_TILE_SIZE, prev + delta)));
   }, []);
 
+  // Handle movement with direction tracking
+  const handleMove = useCallback((dx: number, dy: number) => {
+    if (dy < 0) setFacingDirection('north');
+    else if (dy > 0) setFacingDirection('south');
+    else if (dx < 0) setFacingDirection('west');
+    else if (dx > 0) setFacingDirection('east');
+    movePlayer(dx, dy);
+  }, [movePlayer]);
+
+  // Get current selected resource
+  const selectedResource = world.inventory[selectedSlot]?.resourceId 
+    ? world.resources.find(r => r.id === world.inventory[selectedSlot].resourceId)
+    : null;
+  
+  const canPlaceSelectedItem = !!(selectedResource?.placeable && world.inventory[selectedSlot]?.quantity > 0);
+
+  // Handle placing items
+  const handlePlaceItem = useCallback(() => {
+    const slot = world.inventory[selectedSlot];
+    if (!slot?.resourceId) {
+      toast.error('No item selected');
+      return;
+    }
+    
+    const result = placeItem(slot.resourceId, facingDirection);
+    if (result.success) {
+      toast.success(result.message);
+    } else {
+      toast.error(result.message);
+    }
+  }, [world.inventory, selectedSlot, facingDirection, placeItem]);
+
+  // Handle keyboard input for slot selection and placement
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Number keys 1-9, 0, -, = for slots 0-11
+      const slotKeys: Record<string, number> = {
+        '1': 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5,
+        '7': 6, '8': 7, '9': 8, '0': 9, '-': 10, '=': 11
+      };
+      
+      if (e.key in slotKeys) {
+        e.preventDefault();
+        setSelectedSlot(slotKeys[e.key]);
+      }
+      
+      // Q key for placing
+      if (e.key.toLowerCase() === 'q') {
+        e.preventDefault();
+        handlePlaceItem();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handlePlaceItem]);
+
   const zoomPercent = Math.round((tileSize / DEFAULT_TILE_SIZE) * 100);
 
   if (loading || worldLoading) {
@@ -121,7 +183,7 @@ const Index = () => {
           userColor={world.userColor}
           userId={world.userId}
           tileSize={tileSize}
-          onMove={movePlayer}
+          onMove={handleMove}
           onTileSelect={selectTile}
           onZoom={handleZoom}
         />
@@ -131,6 +193,8 @@ const Index = () => {
           resources={world.resources}
           zoomPercent={zoomPercent}
           username={username}
+          selectedSlot={selectedSlot}
+          onSelectSlot={setSelectedSlot}
           onOpenConfig={() => setConfigOpen(true)}
           onOpenAccount={() => setAccountOpen(true)}
           onOpenSovereignty={() => setSovereigntyOpen(true)}
@@ -140,7 +204,13 @@ const Index = () => {
           onConsumeResource={consumeResource}
         />
 
-        {isTouchDevice && <TouchControls onMove={movePlayer} />}
+        {isTouchDevice && (
+          <TouchControls 
+            onMove={handleMove} 
+            onPlace={handlePlaceItem}
+            canPlace={canPlaceSelectedItem}
+          />
+        )}
       </div>
 
       {/* Tile info panel */}
