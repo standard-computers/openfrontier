@@ -2,6 +2,9 @@ import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import { WorldMap, Position, Resource, TILE_COLORS, TileType, TILE_TYPES, Market } from '@/types/game';
 import { cn } from '@/lib/utils';
 import ResourceIcon from './ResourceIcon';
+import PixelCharacter from './PixelCharacter';
+
+type FacingDirection = 'north' | 'south' | 'east' | 'west';
 
 interface GameMapProps {
   map: WorldMap;
@@ -13,6 +16,8 @@ interface GameMapProps {
   tileSize: number;
   markets?: Market[];
   enableMarkets?: boolean;
+  facingDirection: FacingDirection;
+  isMoving: boolean;
   onMove: (dx: number, dy: number) => void;
   onTileSelect: (x: number, y: number) => void;
   onZoom: (delta: number) => void;
@@ -28,6 +33,8 @@ const GameMap = ({
   tileSize,
   markets = [],
   enableMarkets = false,
+  facingDirection,
+  isMoving,
   onMove,
   onTileSelect,
   onZoom,
@@ -229,7 +236,14 @@ const GameMap = ({
                 </span>
               )}
               {isPlayerHere && (
-                <span className="drop-shadow-lg z-10" style={{ fontSize: Math.max(12, tileSize * 0.65) }}>🧑‍🌾</span>
+                <div className="absolute inset-0 flex items-center justify-center z-10">
+                  <PixelCharacter 
+                    direction={facingDirection} 
+                    isMoving={isMoving} 
+                    size={tileSize} 
+                    userColor={userColor}
+                  />
+                </div>
               )}
               {isClaimed && !isPlayerHere && (
                 <div 
