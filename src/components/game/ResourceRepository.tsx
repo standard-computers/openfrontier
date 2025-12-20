@@ -374,7 +374,25 @@ const ResourceRepository = ({
       {showCreateModal && newResource && (
         <ResourceEditorModal
           resource={newResource}
-          allResources={[]}
+          allResources={resources.map(r => ({
+            id: r.id,
+            name: r.name,
+            icon: r.icon,
+            iconType: r.icon?.startsWith('http') ? 'image' as const : 'emoji' as const,
+            rarity: r.rarity as Resource['rarity'],
+            description: r.description || '',
+            gatherTime: 1000,
+            spawnTiles: r.spawn_tiles as Resource['spawnTiles'],
+            spawnChance: Number(r.spawn_chance),
+            coinValue: r.base_value,
+            consumable: false,
+            healthGain: 0,
+            canInflictDamage: false,
+            damage: 0,
+            recipes: r.recipe ? [r.recipe] : [],
+            isContainer: r.is_container || false,
+            isFloating: r.is_floating || false,
+          }))}
           isNew={true}
           onSave={handleSaveNewResource}
           onDelete={() => {}}
@@ -406,7 +424,25 @@ const ResourceRepository = ({
             isContainer: editingRepoResource.is_container || false,
             isFloating: editingRepoResource.is_floating || false,
           }}
-          allResources={[]}
+          allResources={resources.map(r => ({
+            id: r.id,
+            name: r.name,
+            icon: r.icon,
+            iconType: r.icon?.startsWith('http') ? 'image' as const : 'emoji' as const,
+            rarity: r.rarity as Resource['rarity'],
+            description: r.description || '',
+            gatherTime: 1000,
+            spawnTiles: r.spawn_tiles as Resource['spawnTiles'],
+            spawnChance: Number(r.spawn_chance),
+            coinValue: r.base_value,
+            consumable: false,
+            healthGain: 0,
+            canInflictDamage: false,
+            damage: 0,
+            recipes: r.recipe ? [r.recipe] : [],
+            isContainer: r.is_container || false,
+            isFloating: r.is_floating || false,
+          }))}
           isNew={false}
           onSave={handleUpdateResource}
           onDelete={() => {}}
