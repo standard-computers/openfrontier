@@ -134,11 +134,37 @@ const GameMap = ({
           const tileTypeInfo = TILE_TYPES.find(t => t.type === tile.type);
           const isWalkable = tileTypeInfo?.walkable ?? tile.walkable;
 
+          // Calculate which borders to show for claimed tiles
+          // Only show border on edges that don't have an adjacent tile claimed by the same owner
+          let borderStyles: React.CSSProperties = {};
+          if (isClaimed && !isSelected) {
+            const claimColor = isOwnClaim ? userColor : '#888';
+            const borderWidth = 2;
+            
+            // Check adjacent tiles
+            const topTile = map.tiles[y - 1]?.[x];
+            const bottomTile = map.tiles[y + 1]?.[x];
+            const leftTile = map.tiles[y]?.[x - 1];
+            const rightTile = map.tiles[y]?.[x + 1];
+            
+            const showTop = topTile?.claimedBy !== tile.claimedBy;
+            const showBottom = bottomTile?.claimedBy !== tile.claimedBy;
+            const showLeft = leftTile?.claimedBy !== tile.claimedBy;
+            const showRight = rightTile?.claimedBy !== tile.claimedBy;
+            
+            borderStyles = {
+              borderTop: showTop ? `${borderWidth}px solid ${claimColor}` : 'none',
+              borderBottom: showBottom ? `${borderWidth}px solid ${claimColor}` : 'none',
+              borderLeft: showLeft ? `${borderWidth}px solid ${claimColor}` : 'none',
+              borderRight: showRight ? `${borderWidth}px solid ${claimColor}` : 'none',
+            };
+          }
+
           return (
             <div
               key={`${x}-${y}`}
               className={cn(
-                'tile cursor-pointer relative',
+                'tile cursor-pointer relative box-border',
                 TILE_COLORS[tile.type],
                 !isWalkable && 'brightness-75'
               )}
@@ -148,11 +174,8 @@ const GameMap = ({
                 width: tileSize,
                 height: tileSize,
                 fontSize: Math.max(10, tileSize * 0.5),
-                boxShadow: isSelected 
-                  ? 'inset 0 0 0 3px #fff'
-                  : isClaimed 
-                    ? `inset 0 0 0 2px ${isOwnClaim ? userColor : '#888'}`
-                    : undefined,
+                boxShadow: isSelected ? 'inset 0 0 0 3px #fff' : undefined,
+                ...borderStyles,
               }}
               onClick={() => isWalkable && onTileSelect(x, y)}
             >
