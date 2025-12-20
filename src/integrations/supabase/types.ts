@@ -36,6 +36,7 @@ export type Database = {
         Row: {
           base_value: number
           can_inflict_damage: boolean
+          category: string | null
           consumable: boolean
           created_at: string
           created_by: string | null
@@ -58,6 +59,7 @@ export type Database = {
         Insert: {
           base_value?: number
           can_inflict_damage?: boolean
+          category?: string | null
           consumable?: boolean
           created_at?: string
           created_by?: string | null
@@ -80,6 +82,7 @@ export type Database = {
         Update: {
           base_value?: number
           can_inflict_damage?: boolean
+          category?: string | null
           consumable?: boolean
           created_at?: string
           created_by?: string | null

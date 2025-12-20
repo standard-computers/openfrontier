@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Resource, Recipe, RecipeIngredient, TileType, TILE_TYPES, RARITY_COLORS } from '@/types/game';
-import { X, Save, Trash2, Plus, ChevronRight, Upload, Smile, Image, ChevronDown } from 'lucide-react';
+import { X, Save, Trash2, Plus, ChevronRight, Upload, Smile, Image, ChevronDown, Tag } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -14,6 +14,7 @@ interface ResourceEditorModalProps {
   onSave: (resource: Resource) => void;
   onDelete?: () => void;
   onClose: () => void;
+  categories?: string[];
 }
 
 const ICONS = ['🪵', '🪨', '⛏️', '✨', '💎', '🔶', '🌿', '💧', '🔥', '❄️', '⚡', '🍎', '🌾', '🐟', '🥚', '🧵', '⚙️', '💀', '🍄', '🌸', '🦴', '🪶', '🌵', '🐚', '🍯', '🧲', '🔩', '🥇', '🪢', '🧊', '🖤', '💛', '🌱', '🐸', '🪴', '🥭', '⚫', '🌺', '🍇', '🥕', '🧀', '🍖', '🪙', '💰', '📦', '🎁', '⭐', '🌟', '💫', '🔮', '🧪', '⚗️', '🏺', '🗡️', '🛡️', '🏹', '🪓', '⚒️', '🔧', '🗝️', '🔑'];
@@ -25,6 +26,7 @@ const ResourceEditorModal = ({
   onSave,
   onDelete,
   onClose,
+  categories = [],
 }: ResourceEditorModalProps) => {
   const [activeTab, setActiveTab] = useState<'general' | 'recipes'>('general');
   const [iconMode, setIconMode] = useState<'emoji' | 'image'>(resource.iconType === 'image' ? 'image' : 'emoji');
@@ -32,6 +34,8 @@ const ResourceEditorModal = ({
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [isNewRecipe, setIsNewRecipe] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [newCategoryInput, setNewCategoryInput] = useState('');
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getResource = (id: string) => allResources.find(r => r.id === id);
@@ -491,6 +495,89 @@ const ResourceEditorModal = ({
                   className="input-field w-full"
                   placeholder="Brief description"
                 />
+              </div>
+
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Category</label>
+                <div className="relative">
+                  <div className="flex gap-2">
+                    <input
+                      value={newCategoryInput}
+                      onChange={(e) => {
+                        setNewCategoryInput(e.target.value);
+                        setShowCategoryDropdown(true);
+                      }}
+                      onFocus={() => setShowCategoryDropdown(true)}
+                      onBlur={() => setTimeout(() => setShowCategoryDropdown(false), 150)}
+                      placeholder={form.category || "Select or create category..."}
+                      className="input-field w-full"
+                    />
+                    {form.category && (
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, category: undefined })}
+                        className="btn btn-ghost px-2 text-muted-foreground hover:text-foreground"
+                        title="Clear category"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                  
+                  {showCategoryDropdown && (
+                    <div className="absolute z-10 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-40 overflow-auto">
+                      {/* Show create option if typing something new */}
+                      {newCategoryInput.trim() && !categories.includes(newCategoryInput.trim()) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setForm({ ...form, category: newCategoryInput.trim() });
+                            setNewCategoryInput('');
+                            setShowCategoryDropdown(false);
+                          }}
+                          className="w-full px-3 py-2 text-left text-sm hover:bg-muted flex items-center gap-2"
+                        >
+                          <Plus className="w-3 h-3" />
+                          Create "{newCategoryInput.trim()}"
+                        </button>
+                      )}
+                      
+                      {/* Show existing categories filtered by input */}
+                      {categories
+                        .filter(c => c.toLowerCase().includes(newCategoryInput.toLowerCase()))
+                        .map(category => (
+                          <button
+                            key={category}
+                            type="button"
+                            onClick={() => {
+                              setForm({ ...form, category });
+                              setNewCategoryInput('');
+                              setShowCategoryDropdown(false);
+                            }}
+                            className={cn(
+                              "w-full px-3 py-2 text-left text-sm hover:bg-muted flex items-center gap-2",
+                              form.category === category && "bg-muted"
+                            )}
+                          >
+                            <Tag className="w-3 h-3" />
+                            {category}
+                          </button>
+                        ))}
+                      
+                      {categories.length === 0 && !newCategoryInput.trim() && (
+                        <div className="px-3 py-2 text-sm text-muted-foreground">
+                          Type to create a new category
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {form.category && (
+                  <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                    <Tag className="w-3 h-3" />
+                    <span>{form.category}</span>
+                  </div>
+                )}
               </div>
             </div>
           )}

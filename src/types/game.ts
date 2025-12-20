@@ -37,6 +37,7 @@ export interface Resource {
   isFloating?: boolean; // Visible on tile, gathered when entering
   placeable?: boolean; // Can be placed on a tile
   passable?: boolean; // If placeable, can players walk through it
+  category?: string; // Resource category for filtering
 }
 
 export interface MapTile {
