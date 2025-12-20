@@ -356,6 +356,81 @@ export const useGameWorld = () => {
     return { success: true, message: `Claimed for ${tileValue} coins!` };
   }, [world, saveMapData]);
 
+  const claimMultipleTiles = useCallback((positions: { x: number; y: number }[]): { success: boolean; message: string; claimedCount: number; totalCost: number } => {
+    // Calculate total cost and validate all tiles upfront
+    let totalCost = 0;
+    const validPositions: { x: number; y: number; tileValue: number; resources: string[] }[] = [];
+    
+    for (const pos of positions) {
+      const tile = world.map.tiles[pos.y]?.[pos.x];
+      if (!tile || tile.claimedBy) continue; // Skip claimed or invalid tiles
+      
+      const tileValue = calculateTileValue(tile, world.resources);
+      totalCost += tileValue;
+      validPositions.push({ x: pos.x, y: pos.y, tileValue, resources: [...tile.resources] });
+    }
+    
+    if (validPositions.length === 0) {
+      return { success: false, message: 'No claimable tiles in selection', claimedCount: 0, totalCost: 0 };
+    }
+    
+    if (world.coins < totalCost) {
+      return { success: false, message: `Not enough coins! Need ${totalCost} coins`, claimedCount: 0, totalCost };
+    }
+    
+    // Build new map with all tiles claimed at once
+    const newTiles = world.map.tiles.map((row, ry) =>
+      row.map((t, rx) => {
+        const found = validPositions.find(p => p.x === rx && p.y === ry);
+        if (found) {
+          return { ...t, claimedBy: world.userId, resources: [] };
+        }
+        return t;
+      })
+    );
+    const newMapData: WorldMap = { ...world.map, tiles: newTiles };
+    
+    // Collect all resources from claimed tiles
+    const allResources: string[] = [];
+    for (const pos of validPositions) {
+      allResources.push(...pos.resources);
+    }
+    
+    // Apply state update atomically
+    setWorld(prev => {
+      let newInventory = [...prev.inventory];
+      for (const resourceId of allResources) {
+        let slotIndex = newInventory.findIndex(s => s.resourceId === resourceId && s.quantity < 99);
+        if (slotIndex === -1) {
+          slotIndex = newInventory.findIndex(s => !s.resourceId);
+        }
+        if (slotIndex !== -1) {
+          if (newInventory[slotIndex].resourceId === resourceId) {
+            newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
+          } else {
+            newInventory[slotIndex] = { resourceId, quantity: 1 };
+          }
+        }
+      }
+      return {
+        ...prev,
+        coins: prev.coins - totalCost,
+        inventory: newInventory,
+        map: newMapData,
+      };
+    });
+
+    // Save map changes
+    setTimeout(() => saveMapData(newMapData), 500);
+    
+    return { 
+      success: true, 
+      message: `Claimed ${validPositions.length} tiles for ${totalCost} coins!`,
+      claimedCount: validPositions.length,
+      totalCost
+    };
+  }, [world, saveMapData]);
+
   const gatherFromTile = useCallback((x: number, y: number, resourceId: string) => {
     const currentWorld = world;
     const tile = currentWorld.map.tiles[y][x];
@@ -840,6 +915,7 @@ export const useGameWorld = () => {
     movePlayer,
     selectTile,
     claimTile,
+    claimMultipleTiles,
     gatherFromTile,
     addResource,
     updateResource,
