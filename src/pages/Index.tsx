@@ -7,6 +7,7 @@ import GameMap from '@/components/game/GameMap';
 import Minimap from '@/components/game/Minimap';
 import GameHUD from '@/components/game/GameHUD';
 import TileInfoPanel from '@/components/game/TileInfoPanel';
+import MultiTileInfoPanel from '@/components/game/MultiTileInfoPanel';
 import WorldConfig from '@/components/game/WorldConfig';
 import AccountPanel from '@/components/game/AccountPanel';
 import SovereigntyPanel from '@/components/game/SovereigntyPanel';
@@ -16,7 +17,7 @@ import CraftingPanel from '@/components/game/CraftingPanel';
 import UserProfilePanel from '@/components/game/UserProfilePanel';
 import ClaimedTilesPanel from '@/components/game/ClaimedTilesPanel';
 import MarketplacePanel from '@/components/game/MarketplacePanel';
-import { Market } from '@/types/game';
+import { Market, Position, calculateTileValue } from '@/types/game';
 import { toast } from 'sonner';
 
 const MIN_TILE_SIZE = 12;
@@ -43,6 +44,8 @@ const Index = () => {
   const [selectedSlot, setSelectedSlot] = useState(0);
   const [facingDirection, setFacingDirection] = useState<FacingDirection>('south');
   const [isMoving, setIsMoving] = useState(false);
+  const [multiSelectMode, setMultiSelectMode] = useState(false);
+  const [selectedTiles, setSelectedTiles] = useState<Position[]>([]);
   
   const {
     world,
@@ -93,6 +96,42 @@ const Index = () => {
       }
     }
   };
+
+  const handleClaimAll = useCallback(() => {
+    let successCount = 0;
+    let totalCost = 0;
+    
+    for (const pos of selectedTiles) {
+      const tile = world.map.tiles[pos.y]?.[pos.x];
+      if (tile && !tile.claimedBy) {
+        const result = claimTile(pos.x, pos.y);
+        if (result.success) {
+          successCount++;
+          totalCost += calculateTileValue(tile, world.resources);
+        }
+      }
+    }
+    
+    if (successCount > 0) {
+      toast.success(`Claimed ${successCount} tiles for ${totalCost} coins!`);
+      setSelectedTiles([]);
+    } else {
+      toast.error('Could not claim any tiles');
+    }
+  }, [selectedTiles, world.map.tiles, world.resources, claimTile]);
+
+  const handleMultiTileSelect = useCallback((tiles: Position[]) => {
+    setSelectedTiles(tiles);
+  }, []);
+
+  const handleMultiGather = useCallback((x: number, y: number, resourceId: string) => {
+    const resource = world.resources.find(r => r.id === resourceId);
+    gatherFromTile(x, y, resourceId);
+    if (resource) {
+      const iconDisplay = resource.iconType === 'image' ? '✓' : resource.icon;
+      toast.success(`Gathered ${iconDisplay} ${resource.name}`);
+    }
+  }, [world.resources, gatherFromTile]);
 
   const handleGather = (resourceId: string) => {
     if (selectedTile) {
@@ -241,6 +280,8 @@ const Index = () => {
           playerPosition={world.playerPosition}
           resources={world.resources}
           selectedTile={selectedTile}
+          selectedTiles={selectedTiles}
+          multiSelectMode={multiSelectMode}
           userColor={world.userColor}
           userId={world.userId}
           tileSize={tileSize}
@@ -250,6 +291,7 @@ const Index = () => {
           isMoving={isMoving}
           onMove={handleMove}
           onTileSelect={selectTile}
+          onMultiTileSelect={handleMultiTileSelect}
           onZoom={handleZoom}
         />
         
@@ -259,6 +301,7 @@ const Index = () => {
           zoomPercent={zoomPercent}
           username={username}
           selectedSlot={selectedSlot}
+          multiSelectMode={multiSelectMode}
           onSelectSlot={setSelectedSlot}
           onOpenConfig={() => setConfigOpen(true)}
           onOpenAccount={() => setAccountOpen(true)}
@@ -268,6 +311,10 @@ const Index = () => {
           onOpenClaimedTiles={() => setClaimedTilesOpen(true)}
           onZoom={handleZoom}
           onConsumeResource={consumeResource}
+          onToggleMultiSelect={() => {
+            setMultiSelectMode(prev => !prev);
+            setSelectedTiles([]);
+          }}
         />
 
         {/* Minimap */}
@@ -290,8 +337,8 @@ const Index = () => {
         )}
       </div>
 
-      {/* Tile info panel */}
-      {selectedTile && selectedTileData && (
+      {/* Tile info panel - single tile */}
+      {selectedTile && selectedTileData && !multiSelectMode && (
         <div className="absolute right-4 top-20 z-20">
           <TileInfoPanel
             tile={selectedTileData}
@@ -310,6 +357,26 @@ const Index = () => {
               setSelectedMember(member);
               setUserProfileOpen(true);
             }}
+          />
+        </div>
+      )}
+
+      {/* Multi-tile info panel */}
+      {multiSelectMode && selectedTiles.length > 0 && (
+        <div className="absolute right-4 top-20 z-20">
+          <MultiTileInfoPanel
+            tiles={selectedTiles.map(pos => ({
+              tile: world.map.tiles[pos.y][pos.x],
+              position: pos,
+            }))}
+            playerPosition={world.playerPosition}
+            resources={world.resources}
+            userId={world.userId}
+            userColor={world.userColor}
+            userCoins={world.coins}
+            onClose={() => setSelectedTiles([])}
+            onClaimAll={handleClaimAll}
+            onGather={handleMultiGather}
           />
         </div>
       )}

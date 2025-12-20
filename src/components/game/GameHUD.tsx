@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { GameWorld, Resource, MAX_HEALTH } from '@/types/game';
-import { Settings, User, Coins, ChevronRight, Hammer, ZoomIn, ZoomOut, Crown, Clock, Heart, Sparkles } from 'lucide-react';
+import { Settings, User, Coins, ChevronRight, Hammer, ZoomIn, ZoomOut, Crown, Clock, Heart, Sparkles, BoxSelect } from 'lucide-react';
 import ResourceIcon from './ResourceIcon';
 import InventoryItemModal from './InventoryItemModal';
+import { cn } from '@/lib/utils';
 
 interface GameHUDProps {
   world: GameWorld;
@@ -10,6 +11,7 @@ interface GameHUDProps {
   zoomPercent: number;
   username: string | null;
   selectedSlot: number;
+  multiSelectMode: boolean;
   onSelectSlot: (slot: number) => void;
   onOpenConfig: () => void;
   onOpenAccount: () => void;
@@ -19,9 +21,10 @@ interface GameHUDProps {
   onOpenClaimedTiles: () => void;
   onZoom: (delta: number) => void;
   onConsumeResource: (resourceId: string) => { success: boolean; message: string };
+  onToggleMultiSelect: () => void;
 }
 
-const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, onSelectSlot, onOpenConfig, onOpenAccount, onOpenSovereignty, onOpenStats, onOpenCrafting, onOpenClaimedTiles, onZoom, onConsumeResource }: GameHUDProps) => {
+const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiSelectMode, onSelectSlot, onOpenConfig, onOpenAccount, onOpenSovereignty, onOpenStats, onOpenCrafting, onOpenClaimedTiles, onZoom, onConsumeResource, onToggleMultiSelect }: GameHUDProps) => {
   const getResource = (id: string | null) => resources.find(r => r.id === id);
   const [worldTime, setWorldTime] = useState({ days: 0, hours: 0 });
   const [selectedItem, setSelectedItem] = useState<{ resourceId: string; quantity: number } | null>(null);
@@ -76,6 +79,17 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, onSele
 
         <div className="flex flex-col items-end gap-2 pointer-events-auto">
           <div className="flex items-center gap-2">
+            <button 
+              onClick={onToggleMultiSelect}
+              className={cn(
+                "game-panel p-2 transition-colors",
+                multiSelectMode ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+              )}
+              title={multiSelectMode ? "Multi-select ON (click to disable)" : "Multi-select (click and drag to select tiles)"}
+            >
+              <BoxSelect className="w-5 h-5" />
+            </button>
+
             <button 
               onClick={onOpenCrafting}
               className="game-panel p-2 hover:bg-muted transition-colors"
