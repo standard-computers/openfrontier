@@ -137,6 +137,12 @@ const Index = () => {
   // Handle keyboard input for slot selection and placement
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if typing in an input or textarea
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+      
       // Number keys 1-9, 0, -, = for slots 0-11
       const slotKeys: Record<string, number> = {
         '1': 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5,
