@@ -333,15 +333,18 @@ const ResourceEditorModal = ({
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Spawn Chance ({Math.round(form.spawnChance * 100)}%)</label>
+                  <label className="text-xs text-muted-foreground mb-1 block">Spawn Chance (%)</label>
                   <input
-                    type="range"
+                    type="number"
                     min={0}
-                    max={0.5}
-                    step={0.01}
-                    value={form.spawnChance}
-                    onChange={(e) => setForm({ ...form, spawnChance: parseFloat(e.target.value) })}
-                    className="w-full"
+                    max={100}
+                    step={0.1}
+                    value={Math.round(form.spawnChance * 1000) / 10}
+                    onChange={(e) => {
+                      const val = Math.min(100, Math.max(0, parseFloat(e.target.value) || 0));
+                      setForm({ ...form, spawnChance: val / 100 });
+                    }}
+                    className="input-field w-full"
                   />
                 </div>
               </div>
