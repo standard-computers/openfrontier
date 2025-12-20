@@ -1,6 +1,7 @@
 import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import { WorldMap, Position, Resource, TILE_COLORS, TileType, TILE_TYPES, Market } from '@/types/game';
 import { cn } from '@/lib/utils';
+import ResourceIcon from './ResourceIcon';
 
 interface GameMapProps {
   map: WorldMap;
@@ -214,12 +215,17 @@ const GameMap = ({
                 </span>
               )}
               {/* Show floating resources */}
-              {floatingResources.length > 0 && !isPlayerHere && (
+              {floatingResources.length > 0 && !isPlayerHere && floatingResources[0] && (
                 <span 
                   className="absolute inset-0 flex items-center justify-center drop-shadow-md"
                   style={{ fontSize: Math.max(10, tileSize * 0.5) }}
                 >
-                  {floatingResources[0]?.icon}
+                  <ResourceIcon 
+                    icon={floatingResources[0].icon} 
+                    iconType={floatingResources[0].icon.startsWith('http') ? 'image' : 'emoji'}
+                    size="md"
+                    className="drop-shadow-md"
+                  />
                 </span>
               )}
               {isPlayerHere && (
