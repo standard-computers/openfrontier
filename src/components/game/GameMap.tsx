@@ -1,5 +1,5 @@
 import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
-import { WorldMap, Position, Resource, TILE_COLORS, TileType } from '@/types/game';
+import { WorldMap, Position, Resource, TILE_COLORS, TileType, TILE_TYPES } from '@/types/game';
 import { cn } from '@/lib/utils';
 
 interface GameMapProps {
@@ -130,6 +130,9 @@ const GameMap = ({
           const isOwnClaim = tile.claimedBy === userId;
           const screenX = x - viewportOffset.x;
           const screenY = y - viewportOffset.y;
+          // Check walkability from TILE_TYPES (source of truth) instead of stored tile data
+          const tileTypeInfo = TILE_TYPES.find(t => t.type === tile.type);
+          const isWalkable = tileTypeInfo?.walkable ?? tile.walkable;
 
           return (
             <div
@@ -137,7 +140,7 @@ const GameMap = ({
               className={cn(
                 'tile cursor-pointer relative',
                 TILE_COLORS[tile.type],
-                !tile.walkable && 'brightness-75'
+                !isWalkable && 'brightness-75'
               )}
               style={{
                 gridColumn: screenX + 1,
@@ -151,7 +154,7 @@ const GameMap = ({
                     ? `inset 0 0 0 2px ${isOwnClaim ? userColor : '#888'}`
                     : undefined,
               }}
-              onClick={() => tile.walkable && onTileSelect(x, y)}
+              onClick={() => isWalkable && onTileSelect(x, y)}
             >
               {isPlayerHere && (
                 <span className="drop-shadow-lg z-10" style={{ fontSize: Math.max(12, tileSize * 0.65) }}>🧑‍🌾</span>
