@@ -42,6 +42,7 @@ const Index = () => {
   const [tileSize, setTileSize] = useState(DEFAULT_TILE_SIZE);
   const [selectedSlot, setSelectedSlot] = useState(0);
   const [facingDirection, setFacingDirection] = useState<FacingDirection>('south');
+  const [isMoving, setIsMoving] = useState(false);
   
   const {
     world,
@@ -114,13 +115,18 @@ const Index = () => {
     setTileSize(prev => Math.max(MIN_TILE_SIZE, Math.min(MAX_TILE_SIZE, prev + delta)));
   }, []);
 
-  // Handle movement with direction tracking
+  // Handle movement with direction tracking and animation
   const handleMove = useCallback((dx: number, dy: number) => {
     if (dy < 0) setFacingDirection('north');
     else if (dy > 0) setFacingDirection('south');
     else if (dx < 0) setFacingDirection('west');
     else if (dx > 0) setFacingDirection('east');
+    
+    setIsMoving(true);
     movePlayer(dx, dy);
+    
+    // Stop moving animation after a short delay
+    setTimeout(() => setIsMoving(false), 200);
   }, [movePlayer]);
 
   // Get current selected resource
@@ -243,6 +249,8 @@ const Index = () => {
           tileSize={tileSize}
           markets={world.markets}
           enableMarkets={world.enableMarkets}
+          facingDirection={facingDirection}
+          isMoving={isMoving}
           onMove={handleMove}
           onTileSelect={selectTile}
           onZoom={handleZoom}
