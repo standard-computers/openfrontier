@@ -584,6 +584,17 @@ const ResourceEditorModal = ({
                     />
                     <label htmlFor="hasLimitedLifetime" className="text-sm">Limited Lifetime</label>
                   </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="useLife"
+                      checked={form.useLife || false}
+                      onChange={(e) => setForm({ ...form, useLife: e.target.checked, lifeDecreasePerUse: e.target.checked ? (form.lifeDecreasePerUse || 100) : undefined })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="useLife" className="text-sm">Use Life</label>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 mt-4">
@@ -608,7 +619,29 @@ const ResourceEditorModal = ({
                         Hours before resource expires
                       </p>
                     </div>
-                    )}
+                  )}
+                  {form.useLife && (
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">
+                        Life Decrease Per Use
+                      </label>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        step="0.01"
+                        min="0.01"
+                        value={form.lifeDecreasePerUse || 100}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value) || 100;
+                          setForm({ ...form, lifeDecreasePerUse: Math.max(0.01, Math.round(val * 100) / 100) });
+                        }}
+                        className="input-field w-full"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Default 100 = full consumption. Press 'E' to use.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Tile Dimensions */}

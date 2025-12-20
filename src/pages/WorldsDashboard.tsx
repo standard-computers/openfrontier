@@ -152,6 +152,8 @@ const WorldsDashboard = () => {
             lifetimeHours: repoResource.lifetime_hours ?? undefined,
             tileWidth: repoResource.tile_width ?? 1,
             tileHeight: repoResource.tile_height ?? 1,
+            useLife: repoResource.use_life || false,
+            lifeDecreasePerUse: repoResource.life_decrease_per_use ?? 100,
           };
           setSelectedResources(prev => [...prev, newResource]);
           existingNames.add(repoResource.name.toLowerCase());

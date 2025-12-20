@@ -34,6 +34,8 @@ interface RepositoryResource {
   lifetime_hours: number | null;
   tile_width: number;
   tile_height: number;
+  use_life: boolean;
+  life_decrease_per_use: number;
 }
 
 interface ResourceRepositoryProps {
@@ -125,6 +127,8 @@ const ResourceRepository = ({
       lifetimeHours: repoResource.lifetime_hours ?? undefined,
       tileWidth: repoResource.tile_width ?? 1,
       tileHeight: repoResource.tile_height ?? 1,
+      useLife: repoResource.use_life || false,
+      lifeDecreasePerUse: repoResource.life_decrease_per_use ?? 100,
     };
 
     onAddResource(newResource);
@@ -169,6 +173,8 @@ const ResourceRepository = ({
         lifetime_hours: resource.lifetimeHours,
         tile_width: resource.tileWidth ?? 1,
         tile_height: resource.tileHeight ?? 1,
+        use_life: resource.useLife || false,
+        life_decrease_per_use: resource.lifeDecreasePerUse ?? 100,
       }]);
 
       if (error) throw error;
@@ -236,6 +242,8 @@ const ResourceRepository = ({
         lifetime_hours: resource.lifetimeHours,
         tile_width: resource.tileWidth ?? 1,
         tile_height: resource.tileHeight ?? 1,
+        use_life: resource.useLife || false,
+        life_decrease_per_use: resource.lifeDecreasePerUse ?? 100,
       }]);
 
       if (error) throw error;
@@ -286,6 +294,8 @@ const ResourceRepository = ({
           lifetime_hours: resource.lifetimeHours,
           tile_width: resource.tileWidth ?? 1,
           tile_height: resource.tileHeight ?? 1,
+          use_life: resource.useLife || false,
+          life_decrease_per_use: resource.lifeDecreasePerUse ?? 100,
         })
         .eq('id', editingRepoResource.id);
 
@@ -559,6 +569,8 @@ const ResourceRepository = ({
             lifetimeHours: r.lifetime_hours ?? undefined,
             tileWidth: r.tile_width ?? 1,
             tileHeight: r.tile_height ?? 1,
+            useLife: r.use_life || false,
+            lifeDecreasePerUse: r.life_decrease_per_use ?? 100,
           }))}
           categories={categories}
           isNew={true}
@@ -598,6 +610,8 @@ const ResourceRepository = ({
             lifetimeHours: editingRepoResource.lifetime_hours ?? undefined,
             tileWidth: editingRepoResource.tile_width ?? 1,
             tileHeight: editingRepoResource.tile_height ?? 1,
+            useLife: editingRepoResource.use_life || false,
+            lifeDecreasePerUse: editingRepoResource.life_decrease_per_use ?? 100,
           }}
           allResources={resources.map(r => ({
             id: r.id,
@@ -624,6 +638,8 @@ const ResourceRepository = ({
             lifetimeHours: r.lifetime_hours ?? undefined,
             tileWidth: r.tile_width ?? 1,
             tileHeight: r.tile_height ?? 1,
+            useLife: r.use_life || false,
+            lifeDecreasePerUse: r.life_decrease_per_use ?? 100,
           }))}
           categories={categories}
           isNew={false}
