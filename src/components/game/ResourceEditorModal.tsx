@@ -28,7 +28,7 @@ const ResourceEditorModal = ({
   onClose,
   categories = [],
 }: ResourceEditorModalProps) => {
-  const [activeTab, setActiveTab] = useState<'general' | 'recipes'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'controls' | 'recipes'>('general');
   const [iconMode, setIconMode] = useState<'emoji' | 'image'>(resource.iconType === 'image' ? 'image' : 'emoji');
   const [form, setForm] = useState<Resource>({ ...resource, iconType: resource.iconType || 'emoji' });
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
@@ -198,6 +198,17 @@ const ResourceEditorModal = ({
             General
           </button>
           <button
+            onClick={() => setActiveTab('controls')}
+            className={cn(
+              'flex-1 px-4 py-2 text-sm font-medium transition-colors',
+              activeTab === 'controls' 
+                ? 'border-b-2 border-primary text-foreground' 
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            Controls
+          </button>
+          <button
             onClick={() => setActiveTab('recipes')}
             className={cn(
               'flex-1 px-4 py-2 text-sm font-medium transition-colors',
@@ -310,43 +321,14 @@ const ResourceEditorModal = ({
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Coin Value</label>
                   <input
-                    type="text"
-                    inputMode="numeric"
+                    type="number"
+                    inputMode="decimal"
+                    step="0.01"
+                    min="0"
                     value={form.coinValue}
                     onChange={(e) => {
-                      const val = e.target.value.replace(/[^0-9]/g, '');
-                      setForm({ ...form, coinValue: Math.max(1, parseInt(val) || 1) });
-                    }}
-                    className="input-field w-full"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Gather Time (seconds)</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={form.gatherTime}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/[^0-9]/g, '');
-                      setForm({ ...form, gatherTime: Math.max(0, parseInt(val) || 0) });
-                    }}
-                    className="input-field w-full"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Spawn Chance (%)</label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={100}
-                    step={0.1}
-                    value={Math.round(form.spawnChance * 1000) / 10}
-                    onChange={(e) => {
-                      const val = Math.min(100, Math.max(0, parseFloat(e.target.value) || 0));
-                      setForm({ ...form, spawnChance: val / 100 });
+                      const val = parseFloat(e.target.value) || 0;
+                      setForm({ ...form, coinValue: Math.max(0, Math.round(val * 100) / 100) });
                     }}
                     className="input-field w-full"
                   />
@@ -354,138 +336,21 @@ const ResourceEditorModal = ({
               </div>
 
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Spawns On Tiles</label>
-                <div className="flex flex-wrap gap-1">
-                  {TILE_TYPES.filter(t => t.walkable).map((tile) => (
-                    <button
-                      key={tile.type}
-                      onClick={() => toggleSpawnTile(tile.type)}
-                      className={cn(
-                        'px-2 py-1 text-xs rounded flex items-center gap-1',
-                        form.spawnTiles.includes(tile.type) ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                      )}
-                    >
-                      <span className={cn('w-3 h-3 rounded-sm', tile.color)} />
-                      {tile.label}
-                    </button>
-                  ))}
-                </div>
+                <label className="text-xs text-muted-foreground mb-1 block">Gather Time (seconds)</label>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  step="0.01"
+                  min="0"
+                  value={form.gatherTime}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value) || 0;
+                    setForm({ ...form, gatherTime: Math.max(0, Math.round(val * 100) / 100) });
+                  }}
+                  className="input-field w-full"
+                />
               </div>
 
-              {/* Optional Properties */}
-              <div className="border-t border-border pt-4 mt-4">
-                <h4 className="text-sm font-medium mb-3 text-muted-foreground">Optional Properties</h4>
-                
-                {/* Checkboxes Grid */}
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="consumable"
-                      checked={form.consumable || false}
-                      onChange={(e) => setForm({ ...form, consumable: e.target.checked })}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="consumable" className="text-sm">Consumable</label>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="canInflictDamage"
-                      checked={form.canInflictDamage || false}
-                      onChange={(e) => setForm({ ...form, canInflictDamage: e.target.checked })}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="canInflictDamage" className="text-sm">Inflict Damage</label>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="isContainer"
-                      checked={form.isContainer || false}
-                      onChange={(e) => setForm({ ...form, isContainer: e.target.checked })}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="isContainer" className="text-sm">Is Container</label>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="isFloating"
-                      checked={form.isFloating || false}
-                      onChange={(e) => setForm({ ...form, isFloating: e.target.checked })}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="isFloating" className="text-sm">Is Floating</label>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="placeable"
-                      checked={form.placeable || false}
-                      onChange={(e) => setForm({ ...form, placeable: e.target.checked, passable: e.target.checked ? form.passable : false })}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="placeable" className="text-sm">Placeable</label>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="passable"
-                      checked={form.passable || false}
-                      onChange={(e) => setForm({ ...form, passable: e.target.checked })}
-                      className="w-4 h-4"
-                      disabled={!form.placeable}
-                    />
-                    <label htmlFor="passable" className={cn("text-sm", !form.placeable && "text-muted-foreground")}>Passable</label>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">
-                      Health Gain (on consumption)
-                    </label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={form.healthGain || 0}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/[^0-9]/g, '');
-                        setForm({ ...form, healthGain: Math.max(0, parseInt(val) || 0) });
-                      }}
-                      className="input-field w-full"
-                      disabled={!form.consumable}
-                    />
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      Health gained when item is consumed
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Damage Amount</label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={form.damage || 0}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/[^0-9]/g, '');
-                        setForm({ ...form, damage: Math.max(0, parseInt(val) || 0) });
-                      }}
-                      className="input-field w-full"
-                      disabled={!form.canInflictDamage}
-                    />
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      Damage dealt when triggered
-                    </p>
-                  </div>
-                </div>
-              </div>
 
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Description</label>
@@ -578,6 +443,170 @@ const ResourceEditorModal = ({
                     <span>{form.category}</span>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'controls' && (
+            <div className="space-y-4">
+              {/* Spawn Settings */}
+              <div>
+                <h4 className="text-sm font-medium mb-3">Spawn Settings</h4>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Spawn Chance (%)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      step={0.01}
+                      value={Math.round(form.spawnChance * 10000) / 100}
+                      onChange={(e) => {
+                        const val = Math.min(100, Math.max(0, parseFloat(e.target.value) || 0));
+                        setForm({ ...form, spawnChance: Math.round(val * 100) / 10000 });
+                      }}
+                      className="input-field w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Spawns On Tiles</label>
+                    <div className="flex flex-wrap gap-1">
+                      {TILE_TYPES.filter(t => t.walkable).map((tile) => (
+                        <button
+                          key={tile.type}
+                          onClick={() => toggleSpawnTile(tile.type)}
+                          className={cn(
+                            'px-2 py-1 text-xs rounded flex items-center gap-1',
+                            form.spawnTiles.includes(tile.type) ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                          )}
+                        >
+                          <span className={cn('w-3 h-3 rounded-sm', tile.color)} />
+                          {tile.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Optional Properties */}
+              <div className="border-t border-border pt-4">
+                <h4 className="text-sm font-medium mb-3">Optional Properties</h4>
+                
+                {/* Checkboxes Grid */}
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="consumable"
+                      checked={form.consumable || false}
+                      onChange={(e) => setForm({ ...form, consumable: e.target.checked })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="consumable" className="text-sm">Consumable</label>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="canInflictDamage"
+                      checked={form.canInflictDamage || false}
+                      onChange={(e) => setForm({ ...form, canInflictDamage: e.target.checked })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="canInflictDamage" className="text-sm">Inflict Damage</label>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="isContainer"
+                      checked={form.isContainer || false}
+                      onChange={(e) => setForm({ ...form, isContainer: e.target.checked })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="isContainer" className="text-sm">Is Container</label>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="isFloating"
+                      checked={form.isFloating || false}
+                      onChange={(e) => setForm({ ...form, isFloating: e.target.checked })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="isFloating" className="text-sm">Is Floating</label>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="placeable"
+                      checked={form.placeable || false}
+                      onChange={(e) => setForm({ ...form, placeable: e.target.checked, passable: e.target.checked ? form.passable : false })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="placeable" className="text-sm">Placeable</label>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="passable"
+                      checked={form.passable || false}
+                      onChange={(e) => setForm({ ...form, passable: e.target.checked })}
+                      className="w-4 h-4"
+                      disabled={!form.placeable}
+                    />
+                    <label htmlFor="passable" className={cn("text-sm", !form.placeable && "text-muted-foreground")}>Passable</label>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">
+                      Health Gain (on consumption)
+                    </label>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      step="0.01"
+                      min="0"
+                      value={form.healthGain || 0}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value) || 0;
+                        setForm({ ...form, healthGain: Math.max(0, Math.round(val * 100) / 100) });
+                      }}
+                      className="input-field w-full"
+                      disabled={!form.consumable}
+                    />
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      Health gained when item is consumed
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Damage Amount</label>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      step="0.01"
+                      min="0"
+                      value={form.damage || 0}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value) || 0;
+                        setForm({ ...form, damage: Math.max(0, Math.round(val * 100) / 100) });
+                      }}
+                      className="input-field w-full"
+                      disabled={!form.canInflictDamage}
+                    />
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      Damage dealt when triggered
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
