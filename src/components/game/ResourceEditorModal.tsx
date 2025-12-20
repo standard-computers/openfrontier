@@ -482,6 +482,45 @@ const ResourceEditorModal = ({
                   </p>
                 </div>
               </div>
+
+              {/* Placeable Properties */}
+              <div className="border-t border-border pt-4 mt-4">
+                <h4 className="text-sm font-medium mb-3 text-muted-foreground">Placeable Properties</h4>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="placeable"
+                      checked={form.placeable || false}
+                      onChange={(e) => setForm({ ...form, placeable: e.target.checked, passable: e.target.checked ? form.passable : false })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="placeable" className="text-sm">Placeable</label>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="passable"
+                      checked={form.passable || false}
+                      onChange={(e) => setForm({ ...form, passable: e.target.checked })}
+                      className="w-4 h-4"
+                      disabled={!form.placeable}
+                    />
+                    <label htmlFor="passable" className={cn("text-sm", !form.placeable && "text-muted-foreground")}>Passable</label>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3 mt-2">
+                  <p className="text-[10px] text-muted-foreground">
+                    Item can be placed on a tile
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Players can walk through the placed item
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 

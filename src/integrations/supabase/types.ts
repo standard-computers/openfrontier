@@ -44,6 +44,8 @@ export type Database = {
           is_container: boolean
           is_floating: boolean
           name: string
+          passable: boolean
+          placeable: boolean
           rarity: string
           recipe: Json | null
           spawn_chance: number
@@ -60,6 +62,8 @@ export type Database = {
           is_container?: boolean
           is_floating?: boolean
           name: string
+          passable?: boolean
+          placeable?: boolean
           rarity?: string
           recipe?: Json | null
           spawn_chance?: number
@@ -76,6 +80,8 @@ export type Database = {
           is_container?: boolean
           is_floating?: boolean
           name?: string
+          passable?: boolean
+          placeable?: boolean
           rarity?: string
           recipe?: Json | null
           spawn_chance?: number
