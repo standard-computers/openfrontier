@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { GameWorld, Resource, Sovereignty, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap, TILE_TYPES } from '@/types/game';
+import { GameWorld, Resource, Sovereignty, Market, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap, TILE_TYPES } from '@/types/game';
 import type { Json } from '@/integrations/supabase/types';
 
 const getDefaultWorld = (): GameWorld => {
@@ -19,6 +19,8 @@ const getDefaultWorld = (): GameWorld => {
     coins: STARTING_COINS,
     createdAt: new Date().toISOString(),
     health: STARTING_HEALTH,
+    enableMarkets: false,
+    markets: [],
   };
 };
 
@@ -128,6 +130,8 @@ export const useGameWorld = () => {
           createdAt: worldData.created_at,
           health: playerData.health ?? STARTING_HEALTH,
           joinCode: worldData.join_code,
+          enableMarkets: worldData.enable_markets ?? false,
+          markets: (worldData.markets as unknown as Market[]) ?? [],
         });
       } catch (error) {
         console.error('Error loading world:', error);
@@ -673,6 +677,125 @@ export const useGameWorld = () => {
     return result;
   }, [saveMapData]);
 
+  const toggleEnableMarkets = useCallback(async (enabled: boolean) => {
+    if (!isOwner || !dbWorldId) return;
+    
+    // When enabling markets, add a default market near spawn if none exist
+    const defaultMarket: Market = {
+      id: `market-${Date.now()}`,
+      position: { x: world.map.spawnPoint.x + 5, y: world.map.spawnPoint.y + 5 },
+      name: 'Town Market',
+    };
+    
+    const newMarkets = enabled && (!world.markets || world.markets.length === 0) 
+      ? [defaultMarket] 
+      : (world.markets || []);
+    
+    setWorld(prev => ({ ...prev, enableMarkets: enabled, markets: newMarkets }));
+    
+    await supabase
+      .from('worlds')
+      .update({ 
+        enable_markets: enabled,
+        markets: JSON.parse(JSON.stringify(newMarkets)) as Json
+      })
+      .eq('id', dbWorldId);
+  }, [isOwner, dbWorldId, world.map.spawnPoint, world.markets]);
+
+  const addMarket = useCallback(async (market: Market) => {
+    if (!isOwner || !dbWorldId) return;
+    
+    setWorld(prev => {
+      const newMarkets = [...(prev.markets || []), market];
+      
+      // Save to database
+      supabase
+        .from('worlds')
+        .update({ markets: JSON.parse(JSON.stringify(newMarkets)) as Json })
+        .eq('id', dbWorldId);
+      
+      return { ...prev, markets: newMarkets };
+    });
+  }, [isOwner, dbWorldId]);
+
+  const removeMarket = useCallback(async (marketId: string) => {
+    if (!isOwner || !dbWorldId) return;
+    
+    setWorld(prev => {
+      const newMarkets = (prev.markets || []).filter(m => m.id !== marketId);
+      
+      // Save to database
+      supabase
+        .from('worlds')
+        .update({ markets: JSON.parse(JSON.stringify(newMarkets)) as Json })
+        .eq('id', dbWorldId);
+      
+      return { ...prev, markets: newMarkets };
+    });
+  }, [isOwner, dbWorldId]);
+
+  const buyFromMarket = useCallback((resource: Resource, cost: number): { success: boolean; message: string } => {
+    let result = { success: false, message: '' };
+    
+    setWorld(prev => {
+      if (prev.coins < cost) {
+        result = { success: false, message: 'Not enough coins' };
+        return prev;
+      }
+      
+      // Find empty slot or existing slot with same resource
+      const newInventory = [...prev.inventory];
+      let slotIndex = newInventory.findIndex(s => s.resourceId === resource.id && s.quantity < 99);
+      if (slotIndex === -1) {
+        slotIndex = newInventory.findIndex(s => !s.resourceId);
+      }
+      
+      if (slotIndex === -1) {
+        result = { success: false, message: 'Inventory full' };
+        return prev;
+      }
+      
+      if (newInventory[slotIndex].resourceId === resource.id) {
+        newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
+      } else {
+        newInventory[slotIndex] = { resourceId: resource.id, quantity: 1 };
+      }
+      
+      result = { success: true, message: `Purchased ${resource.name}!` };
+      return { ...prev, coins: prev.coins - cost, inventory: newInventory };
+    });
+    
+    return result;
+  }, []);
+
+  const sellToMarket = useCallback((resourceId: string, value: number): { success: boolean; message: string } => {
+    let result = { success: false, message: '' };
+    
+    setWorld(prev => {
+      const slotIndex = prev.inventory.findIndex(s => s.resourceId === resourceId && s.quantity > 0);
+      
+      if (slotIndex === -1) {
+        result = { success: false, message: "You don't have this item" };
+        return prev;
+      }
+      
+      const newInventory = [...prev.inventory];
+      newInventory[slotIndex] = { 
+        ...newInventory[slotIndex], 
+        quantity: newInventory[slotIndex].quantity - 1 
+      };
+      
+      if (newInventory[slotIndex].quantity === 0) {
+        newInventory[slotIndex] = { resourceId: null, quantity: 0 };
+      }
+      
+      result = { success: true, message: `Sold for ${value} coins!` };
+      return { ...prev, coins: prev.coins + value, inventory: newInventory };
+    });
+    
+    return result;
+  }, []);
+
   return {
     world,
     selectedTile,
@@ -696,5 +819,10 @@ export const useGameWorld = () => {
     consumeResource,
     takeDamage,
     placeItem,
+    toggleEnableMarkets,
+    addMarket,
+    removeMarket,
+    buyFromMarket,
+    sellToMarket,
   };
 };

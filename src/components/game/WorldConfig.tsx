@@ -16,11 +16,13 @@ interface WorldConfigProps {
   isOwner: boolean;
   resources: Resource[];
   userId?: string;
+  enableMarkets?: boolean;
   onUpdateWorldName: (name: string) => void;
   onAddResource: (resource: Resource) => void;
   onUpdateResource: (resource: Resource) => void;
   onDeleteResource: (id: string) => void;
   onRespawnResources: () => void;
+  onToggleMarkets?: (enabled: boolean) => void;
 }
 
 const WorldConfig = ({
@@ -31,11 +33,13 @@ const WorldConfig = ({
   isOwner,
   resources,
   userId,
+  enableMarkets,
   onUpdateWorldName,
   onAddResource,
   onUpdateResource,
   onDeleteResource,
   onRespawnResources,
+  onToggleMarkets,
 }: WorldConfigProps) => {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<'world' | 'resources'>('world');
@@ -187,6 +191,30 @@ const WorldConfig = ({
                       >
                         <RefreshCw className="w-4 h-4" /> Respawn All Resources
                       </button>
+                      
+                      <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl">🏪</span>
+                          <div>
+                            <div className="font-medium text-sm">Enable Markets</div>
+                            <div className="text-xs text-muted-foreground">Add marketplace buildings to the world</div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => onToggleMarkets?.(!enableMarkets)}
+                          className={cn(
+                            'w-12 h-6 rounded-full transition-colors relative',
+                            enableMarkets ? 'bg-primary' : 'bg-muted'
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              'w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform',
+                              enableMarkets ? 'translate-x-6' : 'translate-x-0.5'
+                            )}
+                          />
+                        </button>
+                      </div>
                     </div>
                   )}
 

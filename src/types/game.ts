@@ -68,6 +68,12 @@ export interface Sovereignty {
   foundedAt: number;
 }
 
+export interface Market {
+  id: string;
+  position: Position; // Top-left corner of the 3x3 market
+  name: string;
+}
+
 export interface GameWorld {
   id: string;
   name: string;
@@ -82,6 +88,8 @@ export interface GameWorld {
   createdAt: string;
   health: number;
   joinCode?: string;
+  enableMarkets?: boolean;
+  markets?: Market[];
 }
 
 export const TILE_TYPES: { type: TileType; label: string; walkable: boolean; color: string; baseValue: number }[] = [
