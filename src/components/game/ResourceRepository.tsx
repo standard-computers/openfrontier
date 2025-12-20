@@ -29,6 +29,11 @@ interface RepositoryResource {
   can_inflict_damage: boolean;
   damage: number;
   category: string | null;
+  gather_time: number;
+  has_limited_lifetime: boolean;
+  lifetime_hours: number | null;
+  tile_width: number;
+  tile_height: number;
 }
 
 interface ResourceRepositoryProps {
@@ -103,7 +108,7 @@ const ResourceRepository = ({
       iconType: repoResource.icon?.startsWith('http') ? 'image' : 'emoji',
       rarity: repoResource.rarity as Resource['rarity'],
       description: repoResource.description || '',
-      gatherTime: 1000,
+      gatherTime: repoResource.gather_time || 1000,
       spawnTiles: repoResource.spawn_tiles as Resource['spawnTiles'],
       spawnChance: Number(repoResource.spawn_chance),
       coinValue: repoResource.base_value,
@@ -116,6 +121,10 @@ const ResourceRepository = ({
       isFloating: repoResource.is_floating || false,
       placeable: repoResource.placeable || false,
       passable: repoResource.passable || false,
+      hasLimitedLifetime: repoResource.has_limited_lifetime || false,
+      lifetimeHours: repoResource.lifetime_hours ?? undefined,
+      tileWidth: repoResource.tile_width ?? 1,
+      tileHeight: repoResource.tile_height ?? 1,
     };
 
     onAddResource(newResource);
@@ -155,6 +164,11 @@ const ResourceRepository = ({
         can_inflict_damage: resource.canInflictDamage || false,
         damage: resource.damage || 0,
         category: resource.category || null,
+        gather_time: resource.gatherTime || 1000,
+        has_limited_lifetime: resource.hasLimitedLifetime || false,
+        lifetime_hours: resource.lifetimeHours,
+        tile_width: resource.tileWidth ?? 1,
+        tile_height: resource.tileHeight ?? 1,
       }]);
 
       if (error) throw error;
@@ -217,6 +231,11 @@ const ResourceRepository = ({
         can_inflict_damage: resource.canInflictDamage || false,
         damage: resource.damage || 0,
         category: resource.category || null,
+        gather_time: resource.gatherTime || 1000,
+        has_limited_lifetime: resource.hasLimitedLifetime || false,
+        lifetime_hours: resource.lifetimeHours,
+        tile_width: resource.tileWidth ?? 1,
+        tile_height: resource.tileHeight ?? 1,
       }]);
 
       if (error) throw error;
@@ -262,6 +281,11 @@ const ResourceRepository = ({
           can_inflict_damage: resource.canInflictDamage || false,
           damage: resource.damage || 0,
           category: resource.category || null,
+          gather_time: resource.gatherTime || 1000,
+          has_limited_lifetime: resource.hasLimitedLifetime || false,
+          lifetime_hours: resource.lifetimeHours,
+          tile_width: resource.tileWidth ?? 1,
+          tile_height: resource.tileHeight ?? 1,
         })
         .eq('id', editingRepoResource.id);
 

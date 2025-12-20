@@ -135,7 +135,7 @@ const WorldsDashboard = () => {
             iconType: repoResource.icon?.startsWith('http') ? 'image' : 'emoji',
             rarity: repoResource.rarity as Resource['rarity'],
             description: repoResource.description || '',
-            gatherTime: 1000,
+            gatherTime: repoResource.gather_time || 1000,
             spawnTiles: repoResource.spawn_tiles as Resource['spawnTiles'],
             spawnChance: Number(repoResource.spawn_chance),
             coinValue: repoResource.base_value,
@@ -148,8 +148,10 @@ const WorldsDashboard = () => {
             isFloating: repoResource.is_floating || false,
             placeable: repoResource.placeable || false,
             passable: repoResource.passable || false,
-            tileWidth: 1,
-            tileHeight: 1,
+            hasLimitedLifetime: repoResource.has_limited_lifetime || false,
+            lifetimeHours: repoResource.lifetime_hours ?? undefined,
+            tileWidth: repoResource.tile_width ?? 1,
+            tileHeight: repoResource.tile_height ?? 1,
           };
           setSelectedResources(prev => [...prev, newResource]);
           existingNames.add(repoResource.name.toLowerCase());

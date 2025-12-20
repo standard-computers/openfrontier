@@ -43,11 +43,14 @@ export type Database = {
           damage: number
           description: string | null
           download_count: number
+          gather_time: number
+          has_limited_lifetime: boolean
           health_gain: number
           icon: string
           id: string
           is_container: boolean
           is_floating: boolean
+          lifetime_hours: number | null
           name: string
           passable: boolean
           placeable: boolean
@@ -55,6 +58,8 @@ export type Database = {
           recipe: Json | null
           spawn_chance: number
           spawn_tiles: string[]
+          tile_height: number
+          tile_width: number
         }
         Insert: {
           base_value?: number
@@ -66,11 +71,14 @@ export type Database = {
           damage?: number
           description?: string | null
           download_count?: number
+          gather_time?: number
+          has_limited_lifetime?: boolean
           health_gain?: number
           icon?: string
           id?: string
           is_container?: boolean
           is_floating?: boolean
+          lifetime_hours?: number | null
           name: string
           passable?: boolean
           placeable?: boolean
@@ -78,6 +86,8 @@ export type Database = {
           recipe?: Json | null
           spawn_chance?: number
           spawn_tiles?: string[]
+          tile_height?: number
+          tile_width?: number
         }
         Update: {
           base_value?: number
@@ -89,11 +99,14 @@ export type Database = {
           damage?: number
           description?: string | null
           download_count?: number
+          gather_time?: number
+          has_limited_lifetime?: boolean
           health_gain?: number
           icon?: string
           id?: string
           is_container?: boolean
           is_floating?: boolean
+          lifetime_hours?: number | null
           name?: string
           passable?: boolean
           placeable?: boolean
@@ -101,6 +114,8 @@ export type Database = {
           recipe?: Json | null
           spawn_chance?: number
           spawn_tiles?: string[]
+          tile_height?: number
+          tile_width?: number
         }
         Relationships: []
       }
