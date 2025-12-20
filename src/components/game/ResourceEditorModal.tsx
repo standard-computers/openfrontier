@@ -365,21 +365,12 @@ const ResourceEditorModal = ({
                 </div>
               </div>
 
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Description</label>
-                <input
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className="input-field w-full"
-                  placeholder="Brief description"
-                />
-              </div>
-
-              {/* Health & Damage Properties */}
+              {/* Optional Properties */}
               <div className="border-t border-border pt-4 mt-4">
-                <h4 className="text-sm font-medium mb-3 text-muted-foreground">Health & Damage Properties</h4>
+                <h4 className="text-sm font-medium mb-3 text-muted-foreground">Optional Properties</h4>
                 
-                <div className="grid grid-cols-2 gap-3">
+                {/* Checkboxes Grid */}
+                <div className="grid grid-cols-2 gap-3 mb-4">
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
@@ -401,9 +392,55 @@ const ResourceEditorModal = ({
                     />
                     <label htmlFor="canInflictDamage" className="text-sm">Inflict Damage</label>
                   </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="isContainer"
+                      checked={form.isContainer || false}
+                      onChange={(e) => setForm({ ...form, isContainer: e.target.checked })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="isContainer" className="text-sm">Is Container</label>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="isFloating"
+                      checked={form.isFloating || false}
+                      onChange={(e) => setForm({ ...form, isFloating: e.target.checked })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="isFloating" className="text-sm">Is Floating</label>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="placeable"
+                      checked={form.placeable || false}
+                      onChange={(e) => setForm({ ...form, placeable: e.target.checked, passable: e.target.checked ? form.passable : false })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="placeable" className="text-sm">Placeable</label>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="passable"
+                      checked={form.passable || false}
+                      onChange={(e) => setForm({ ...form, passable: e.target.checked })}
+                      className="w-4 h-4"
+                      disabled={!form.placeable}
+                    />
+                    <label htmlFor="passable" className={cn("text-sm", !form.placeable && "text-muted-foreground")}>Passable</label>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 mt-3">
+                {/* Conditional Fields */}
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">
                       Health Gain {form.consumable ? '(on consume)' : '(per day)'}
@@ -445,81 +482,14 @@ const ResourceEditorModal = ({
                 </div>
               </div>
 
-              {/* Special Properties */}
-              <div className="border-t border-border pt-4 mt-4">
-                <h4 className="text-sm font-medium mb-3 text-muted-foreground">Special Properties</h4>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="isContainer"
-                      checked={form.isContainer || false}
-                      onChange={(e) => setForm({ ...form, isContainer: e.target.checked })}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="isContainer" className="text-sm">Is Container</label>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="isFloating"
-                      checked={form.isFloating || false}
-                      onChange={(e) => setForm({ ...form, isFloating: e.target.checked })}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="isFloating" className="text-sm">Is Floating</label>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3 mt-2">
-                  <p className="text-[10px] text-muted-foreground">
-                    Item can hold inventory (like a bag or chest)
-                  </p>
-                  <p className="text-[10px] text-muted-foreground">
-                    Visible on tile, gathered when walking over it
-                  </p>
-                </div>
-              </div>
-
-              {/* Placeable Properties */}
-              <div className="border-t border-border pt-4 mt-4">
-                <h4 className="text-sm font-medium mb-3 text-muted-foreground">Placeable Properties</h4>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="placeable"
-                      checked={form.placeable || false}
-                      onChange={(e) => setForm({ ...form, placeable: e.target.checked, passable: e.target.checked ? form.passable : false })}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="placeable" className="text-sm">Placeable</label>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="passable"
-                      checked={form.passable || false}
-                      onChange={(e) => setForm({ ...form, passable: e.target.checked })}
-                      className="w-4 h-4"
-                      disabled={!form.placeable}
-                    />
-                    <label htmlFor="passable" className={cn("text-sm", !form.placeable && "text-muted-foreground")}>Passable</label>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3 mt-2">
-                  <p className="text-[10px] text-muted-foreground">
-                    Item can be placed on a tile
-                  </p>
-                  <p className="text-[10px] text-muted-foreground">
-                    Players can walk through the placed item
-                  </p>
-                </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Description</label>
+                <input
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  className="input-field w-full"
+                  placeholder="Brief description"
+                />
               </div>
             </div>
           )}
