@@ -541,7 +541,7 @@ const ResourceRepository = ({
             iconType: r.icon?.startsWith('http') ? 'image' as const : 'emoji' as const,
             rarity: r.rarity as Resource['rarity'],
             description: r.description || '',
-            gatherTime: 1000,
+            gatherTime: r.gather_time || 1000,
             spawnTiles: r.spawn_tiles as Resource['spawnTiles'],
             spawnChance: Number(r.spawn_chance),
             coinValue: r.base_value,
@@ -555,6 +555,10 @@ const ResourceRepository = ({
             placeable: r.placeable || false,
             passable: r.passable || false,
             category: r.category || undefined,
+            hasLimitedLifetime: r.has_limited_lifetime || false,
+            lifetimeHours: r.lifetime_hours ?? undefined,
+            tileWidth: r.tile_width ?? 1,
+            tileHeight: r.tile_height ?? 1,
           }))}
           categories={categories}
           isNew={true}
@@ -576,7 +580,7 @@ const ResourceRepository = ({
             iconType: editingRepoResource.icon?.startsWith('http') ? 'image' : 'emoji',
             rarity: editingRepoResource.rarity as Resource['rarity'],
             description: editingRepoResource.description || '',
-            gatherTime: 1000,
+            gatherTime: editingRepoResource.gather_time || 1000,
             spawnTiles: editingRepoResource.spawn_tiles as Resource['spawnTiles'],
             spawnChance: Number(editingRepoResource.spawn_chance),
             coinValue: editingRepoResource.base_value,
@@ -590,6 +594,10 @@ const ResourceRepository = ({
             placeable: editingRepoResource.placeable || false,
             passable: editingRepoResource.passable || false,
             category: editingRepoResource.category || undefined,
+            hasLimitedLifetime: editingRepoResource.has_limited_lifetime || false,
+            lifetimeHours: editingRepoResource.lifetime_hours ?? undefined,
+            tileWidth: editingRepoResource.tile_width ?? 1,
+            tileHeight: editingRepoResource.tile_height ?? 1,
           }}
           allResources={resources.map(r => ({
             id: r.id,
@@ -598,7 +606,7 @@ const ResourceRepository = ({
             iconType: r.icon?.startsWith('http') ? 'image' as const : 'emoji' as const,
             rarity: r.rarity as Resource['rarity'],
             description: r.description || '',
-            gatherTime: 1000,
+            gatherTime: r.gather_time || 1000,
             spawnTiles: r.spawn_tiles as Resource['spawnTiles'],
             spawnChance: Number(r.spawn_chance),
             coinValue: r.base_value,
@@ -612,6 +620,10 @@ const ResourceRepository = ({
             placeable: r.placeable || false,
             passable: r.passable || false,
             category: r.category || undefined,
+            hasLimitedLifetime: r.has_limited_lifetime || false,
+            lifetimeHours: r.lifetime_hours ?? undefined,
+            tileWidth: r.tile_width ?? 1,
+            tileHeight: r.tile_height ?? 1,
           }))}
           categories={categories}
           isNew={false}
