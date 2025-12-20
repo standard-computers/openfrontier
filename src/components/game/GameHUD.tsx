@@ -167,7 +167,8 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, onSele
           {/* XP */}
           <div className="flex items-center gap-1 px-3 py-1 bg-purple-400/20 rounded">
             <Sparkles className="w-4 h-4 text-purple-400" />
-            <span className="font-bold text-purple-400 text-sm">{world.xp ?? 0} XP</span>
+            <span className="font-bold text-purple-400 text-sm">{world.xp ?? 0}</span>
+            <span className="text-purple-400 text-sm">XP</span>
           </div>
 
           {/* Coins */}

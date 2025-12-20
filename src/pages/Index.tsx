@@ -4,6 +4,7 @@ import { useGameWorld, WorldMember } from '@/hooks/useGameWorld';
 import { useAuth } from '@/hooks/useAuth';
 import { useTouchDevice } from '@/hooks/useTouchDevice';
 import GameMap from '@/components/game/GameMap';
+import Minimap from '@/components/game/Minimap';
 import GameHUD from '@/components/game/GameHUD';
 import TileInfoPanel from '@/components/game/TileInfoPanel';
 import WorldConfig from '@/components/game/WorldConfig';
@@ -263,6 +264,17 @@ const Index = () => {
           onZoom={handleZoom}
           onConsumeResource={consumeResource}
         />
+
+        {/* Minimap */}
+        <div className="absolute bottom-4 left-4 z-10 pointer-events-auto">
+          <Minimap
+            map={world.map}
+            playerPosition={world.playerPosition}
+            userColor={world.userColor}
+            userId={world.userId}
+            markets={world.markets}
+          />
+        </div>
 
         {isTouchDevice && (
           <TouchControls 
