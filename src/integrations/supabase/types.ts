@@ -164,33 +164,39 @@ export type Database = {
         Row: {
           created_at: string
           enable_markets: boolean
+          enable_npcs: boolean
           id: string
           join_code: string
           map_data: Json
           markets: Json
           name: string
+          npc_count: number
           resources: Json
           updated_at: string
         }
         Insert: {
           created_at?: string
           enable_markets?: boolean
+          enable_npcs?: boolean
           id?: string
           join_code?: string
           map_data: Json
           markets?: Json
           name: string
+          npc_count?: number
           resources: Json
           updated_at?: string
         }
         Update: {
           created_at?: string
           enable_markets?: boolean
+          enable_npcs?: boolean
           id?: string
           join_code?: string
           map_data?: Json
           markets?: Json
           name?: string
+          npc_count?: number
           resources?: Json
           updated_at?: string
         }

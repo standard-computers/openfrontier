@@ -75,6 +75,30 @@ export interface Sovereignty {
   foundedAt: number;
 }
 
+// NPC colors - distinct from user colors
+export const NPC_COLORS = [
+  '#dc2626', // red-600
+  '#ea580c', // orange-600
+  '#ca8a04', // yellow-600
+  '#16a34a', // green-600
+  '#0d9488', // teal-600
+  '#0284c7', // sky-600
+  '#7c3aed', // violet-600
+  '#c026d3', // fuchsia-600
+  '#e11d48', // rose-600
+  '#65a30d', // lime-600
+  '#06b6d4', // cyan-600
+  '#a855f7', // purple-500
+];
+
+export interface NPC {
+  id: string;
+  name: string;
+  color: string;
+  sovereignty: Sovereignty;
+  position: { x: number; y: number };
+}
+
 export interface Market {
   id: string;
   position: Position; // Position of the 1x1 market
@@ -98,6 +122,9 @@ export interface GameWorld {
   joinCode?: string;
   enableMarkets?: boolean;
   markets?: Market[];
+  enableNpcs?: boolean;
+  npcCount?: number;
+  npcs?: NPC[];
 }
 
 export const TILE_TYPES: { type: TileType; label: string; walkable: boolean; color: string; baseValue: number }[] = [

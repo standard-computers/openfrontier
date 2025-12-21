@@ -75,6 +75,8 @@ const Index = () => {
     removeMarket,
     buyFromMarket,
     sellToMarket,
+    toggleEnableNpcs,
+    updateNpcCount,
   } = useGameWorld();
 
   useEffect(() => {
@@ -402,12 +404,16 @@ const Index = () => {
         resources={world.resources}
         userId={world.userId}
         enableMarkets={world.enableMarkets}
+        enableNpcs={world.enableNpcs}
+        npcCount={world.npcCount}
         onUpdateWorldName={updateWorldName}
         onAddResource={addResource}
         onUpdateResource={updateResource}
         onDeleteResource={deleteResource}
         onRespawnResources={respawnResources}
         onToggleMarkets={toggleEnableMarkets}
+        onToggleNpcs={toggleEnableNpcs}
+        onUpdateNpcCount={updateNpcCount}
       />
 
       <WorldStatsPanel
