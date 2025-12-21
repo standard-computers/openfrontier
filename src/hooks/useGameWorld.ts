@@ -143,6 +143,8 @@ export const useGameWorld = () => {
           joinCode: worldData.join_code,
           enableMarkets: worldData.enable_markets ?? false,
           markets: (worldData.markets as unknown as Market[]) ?? [],
+          enableNpcs: (worldData as any).enable_npcs ?? false,
+          npcCount: (worldData as any).npc_count ?? 0,
         });
       } catch (error) {
         console.error('Error loading world:', error);
@@ -906,6 +908,42 @@ export const useGameWorld = () => {
     return result;
   }, []);
 
+  const toggleEnableNpcs = useCallback(async (enabled: boolean, count: number = 0) => {
+    if (!isOwner || !dbWorldId) return;
+    
+    const npcCount = enabled ? Math.min(Math.max(count, 1), 12) : 0;
+    
+    setWorld(prev => ({ ...prev, enableNpcs: enabled, npcCount }));
+    
+    await supabase
+      .from('worlds')
+      .update({ 
+        enable_npcs: enabled,
+        npc_count: npcCount
+      })
+      .eq('id', dbWorldId);
+  }, [isOwner, dbWorldId]);
+
+  const updateNpcCount = useCallback(async (count: number) => {
+    if (!isOwner || !dbWorldId) return;
+    
+    const npcCount = Math.min(Math.max(count, 0), 12);
+    
+    setWorld(prev => ({ 
+      ...prev, 
+      npcCount,
+      enableNpcs: npcCount > 0
+    }));
+    
+    await supabase
+      .from('worlds')
+      .update({ 
+        enable_npcs: npcCount > 0,
+        npc_count: npcCount
+      })
+      .eq('id', dbWorldId);
+  }, [isOwner, dbWorldId]);
+
   return {
     world,
     selectedTile,
@@ -935,5 +973,7 @@ export const useGameWorld = () => {
     removeMarket,
     buyFromMarket,
     sellToMarket,
+    toggleEnableNpcs,
+    updateNpcCount,
   };
 };

@@ -17,12 +17,16 @@ interface WorldConfigProps {
   resources: Resource[];
   userId?: string;
   enableMarkets?: boolean;
+  enableNpcs?: boolean;
+  npcCount?: number;
   onUpdateWorldName: (name: string) => void;
   onAddResource: (resource: Resource) => void;
   onUpdateResource: (resource: Resource) => void;
   onDeleteResource: (id: string) => void;
   onRespawnResources: () => void;
   onToggleMarkets?: (enabled: boolean) => void;
+  onToggleNpcs?: (enabled: boolean, count: number) => void;
+  onUpdateNpcCount?: (count: number) => void;
 }
 
 const WorldConfig = ({
@@ -34,12 +38,16 @@ const WorldConfig = ({
   resources,
   userId,
   enableMarkets,
+  enableNpcs,
+  npcCount,
   onUpdateWorldName,
   onAddResource,
   onUpdateResource,
   onDeleteResource,
   onRespawnResources,
   onToggleMarkets,
+  onToggleNpcs,
+  onUpdateNpcCount,
 }: WorldConfigProps) => {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<'world' | 'resources'>('world');
@@ -214,6 +222,51 @@ const WorldConfig = ({
                             )}
                           />
                         </button>
+                      </div>
+
+                      {/* NPC Settings */}
+                      <div className="p-3 bg-secondary/30 rounded-lg space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl">🤖</span>
+                            <div>
+                              <div className="font-medium text-sm">Enable NPCs</div>
+                              <div className="text-xs text-muted-foreground">Add AI characters to the world</div>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => onToggleNpcs?.(!enableNpcs, npcCount || 4)}
+                            className={cn(
+                              'w-12 h-6 rounded-full transition-colors relative',
+                              enableNpcs ? 'bg-primary' : 'bg-muted'
+                            )}
+                          >
+                            <div
+                              className={cn(
+                                'w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform',
+                                enableNpcs ? 'translate-x-6' : 'translate-x-0.5'
+                              )}
+                            />
+                          </button>
+                        </div>
+                        
+                        {enableNpcs && (
+                          <div className="flex items-center gap-3 pt-2 border-t border-border/50">
+                            <label className="text-sm text-muted-foreground">Number of NPCs:</label>
+                            <input
+                              type="number"
+                              min={1}
+                              max={12}
+                              value={npcCount || 4}
+                              onChange={(e) => {
+                                const value = Math.min(Math.max(parseInt(e.target.value) || 1, 1), 12);
+                                onUpdateNpcCount?.(value);
+                              }}
+                              className="input-field w-20 text-center"
+                            />
+                            <span className="text-xs text-muted-foreground">(max 12)</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
