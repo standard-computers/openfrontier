@@ -58,7 +58,7 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUse
 
   const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: 'Overview', icon: <Globe className="w-4 h-4" /> },
-    { id: 'players', label: `Population (${totalPopulation})`, icon: <Users className="w-4 h-4" /> },
+    { id: 'players', label: `Players (${totalPopulation})`, icon: <Users className="w-4 h-4" /> },
     { id: 'terrain', label: 'Terrain', icon: <Map className="w-4 h-4" /> },
     { id: 'resources', label: 'Resources', icon: <Package className="w-4 h-4" /> },
   ];
@@ -91,7 +91,7 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUse
               )}
             >
               {tab.icon}
-              <span className="hidden sm:inline">{tab.label}</span>
+              <span className="hidden sm:inline whitespace-nowrap">{tab.label}</span>
             </button>
           ))}
         </div>
@@ -167,6 +167,18 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUse
                             member.role === 'owner' ? "text-amber-400" : "text-muted-foreground"
                           )}>
                             {member.role === 'owner' ? 'Owner' : 'Player'}
+                            {(() => {
+                              // Find player position on map
+                              for (let y = 0; y < world.map.tiles.length; y++) {
+                                for (let x = 0; x < world.map.tiles[y].length; x++) {
+                                  const tile = world.map.tiles[y][x];
+                                  if (tile.claimedBy === member.userId) {
+                                    return <span className="ml-1 text-muted-foreground">• ({x}, {y})</span>;
+                                  }
+                                }
+                              }
+                              return null;
+                            })()}
                           </div>
                         </div>
                         <div className="text-xs text-muted-foreground">
@@ -210,6 +222,7 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUse
                               <div className="text-xs text-muted-foreground flex items-center gap-1">
                                 <span>{npc.sovereignty.flag}</span>
                                 <span>{npc.sovereignty.name}</span>
+                                <span>• ({npc.position.x}, {npc.position.y})</span>
                               </div>
                             </div>
                             <div 

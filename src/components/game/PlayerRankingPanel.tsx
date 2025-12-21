@@ -231,6 +231,23 @@ const PlayerRankingPanel = ({ isOpen, onClose, world, resources, members, onView
                       <Coins className="w-3 h-3 text-amber-400" />
                       {player.coins.toLocaleString()}
                     </span>
+                    <span className="text-muted-foreground/50">•</span>
+                    <span>
+                      {(() => {
+                        // Find position for NPCs
+                        const npc = world.npcs?.find(n => n.id === player.id);
+                        if (npc) return `(${npc.position.x}, ${npc.position.y})`;
+                        // Find first claimed tile for players
+                        for (let y = 0; y < world.map.tiles.length; y++) {
+                          for (let x = 0; x < world.map.tiles[y].length; x++) {
+                            if (world.map.tiles[y][x].claimedBy === player.id) {
+                              return `(${x}, ${y})`;
+                            }
+                          }
+                        }
+                        return 'N/A';
+                      })()}
+                    </span>
                   </div>
                 </div>
 
