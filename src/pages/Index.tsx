@@ -18,6 +18,7 @@ import CraftingPanel from '@/components/game/CraftingPanel';
 import UserProfilePanel from '@/components/game/UserProfilePanel';
 import ClaimedTilesPanel from '@/components/game/ClaimedTilesPanel';
 import MarketplacePanel from '@/components/game/MarketplacePanel';
+import PlayerRankingPanel from '@/components/game/PlayerRankingPanel';
 import { Market, Position, calculateTileValue } from '@/types/game';
 import { toast } from 'sonner';
 
@@ -39,6 +40,7 @@ const Index = () => {
   const [userProfileOpen, setUserProfileOpen] = useState(false);
   const [claimedTilesOpen, setClaimedTilesOpen] = useState(false);
   const [marketplaceOpen, setMarketplaceOpen] = useState(false);
+  const [rankingOpen, setRankingOpen] = useState(false);
   const [currentMarket, setCurrentMarket] = useState<Market | null>(null);
   const [selectedMember, setSelectedMember] = useState<WorldMember | null>(null);
   const [tileSize, setTileSize] = useState(DEFAULT_TILE_SIZE);
@@ -300,6 +302,7 @@ const Index = () => {
           username={username}
           selectedSlot={selectedSlot}
           multiSelectMode={multiSelectMode}
+          members={members}
           onSelectSlot={setSelectedSlot}
           onOpenConfig={() => setConfigOpen(true)}
           onOpenAccount={() => setAccountOpen(true)}
@@ -307,6 +310,7 @@ const Index = () => {
           onOpenStats={() => setStatsOpen(true)}
           onOpenCrafting={() => setCraftingOpen(true)}
           onOpenClaimedTiles={() => setClaimedTilesOpen(true)}
+          onOpenRanking={() => setRankingOpen(true)}
           onZoom={handleZoom}
           onConsumeResource={consumeResource}
           onToggleMultiSelect={() => {
@@ -471,6 +475,19 @@ const Index = () => {
         resources={world.resources}
         onBuyResource={buyFromMarket}
         onSellResource={sellToMarket}
+      />
+
+      <PlayerRankingPanel
+        isOpen={rankingOpen}
+        onClose={() => setRankingOpen(false)}
+        world={world}
+        resources={world.resources}
+        members={members}
+        onViewUser={(member) => {
+          setSelectedMember(member);
+          setUserProfileOpen(true);
+          setRankingOpen(false);
+        }}
       />
     </div>
   );
