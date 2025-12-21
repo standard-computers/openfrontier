@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { GameWorld, Resource, MAX_HEALTH } from '@/types/game';
-import { Settings, User, Coins, ChevronRight, Hammer, ZoomIn, ZoomOut, Crown, Clock, Heart, Sparkles, BoxSelect } from 'lucide-react';
+import { Settings, User, Coins, ChevronRight, Hammer, ZoomIn, ZoomOut, Crown, Clock, Heart, Sparkles, BoxSelect, Trophy } from 'lucide-react';
 import ResourceIcon from './ResourceIcon';
 import InventoryItemModal from './InventoryItemModal';
 import { cn } from '@/lib/utils';
+import { WorldMember } from '@/hooks/useGameWorld';
+import { getTopPlayer, RankedPlayer } from './PlayerRankingPanel';
 
 interface GameHUDProps {
   world: GameWorld;
@@ -12,6 +14,7 @@ interface GameHUDProps {
   username: string | null;
   selectedSlot: number;
   multiSelectMode: boolean;
+  members: WorldMember[];
   onSelectSlot: (slot: number) => void;
   onOpenConfig: () => void;
   onOpenAccount: () => void;
@@ -19,16 +22,18 @@ interface GameHUDProps {
   onOpenStats: () => void;
   onOpenCrafting: () => void;
   onOpenClaimedTiles: () => void;
+  onOpenRanking: () => void;
   onZoom: (delta: number) => void;
   onConsumeResource: (resourceId: string) => { success: boolean; message: string };
   onToggleMultiSelect: () => void;
 }
 
-const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiSelectMode, onSelectSlot, onOpenConfig, onOpenAccount, onOpenSovereignty, onOpenStats, onOpenCrafting, onOpenClaimedTiles, onZoom, onConsumeResource, onToggleMultiSelect }: GameHUDProps) => {
+const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiSelectMode, members, onSelectSlot, onOpenConfig, onOpenAccount, onOpenSovereignty, onOpenStats, onOpenCrafting, onOpenClaimedTiles, onOpenRanking, onZoom, onConsumeResource, onToggleMultiSelect }: GameHUDProps) => {
   const getResource = (id: string | null) => resources.find(r => r.id === id);
   const [worldTime, setWorldTime] = useState({ days: 0, hours: 0 });
   const [selectedItem, setSelectedItem] = useState<{ resourceId: string; quantity: number } | null>(null);
   
+  const topPlayer = useMemo(() => getTopPlayer(world, resources, members), [world, resources, members]);
   // Calculate world time: 1 real hour = 1 game day
   useEffect(() => {
     const calculateWorldTime = () => {
@@ -57,25 +62,43 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
     <>
       {/* Top bar */}
       <div className="absolute top-4 left-4 right-4 flex items-start justify-between pointer-events-none">
-        <button 
-          onClick={onOpenStats}
-          className="game-panel px-4 py-3 pointer-events-auto hover:bg-muted/50 transition-colors text-left"
-        >
-          <div className="flex items-center gap-2">
-            <h1 className="font-semibold text-foreground">{world.name}</h1>
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-          </div>
-          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              Day {worldTime.days}, {worldTime.hours}:00
-            </span>
-            <span>Pos: {world.playerPosition.x}, {world.playerPosition.y}</span>
-          </div>
-        </button>
+        <div className="flex items-center gap-2 pointer-events-auto">
+          <button 
+            onClick={onOpenStats}
+            className="game-panel px-4 py-3 hover:bg-muted/50 transition-colors text-left"
+          >
+            <div className="flex items-center gap-2">
+              <h1 className="font-semibold text-foreground">{world.name}</h1>
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                Day {worldTime.days}, {worldTime.hours}:00
+              </span>
+              <span>Pos: {world.playerPosition.x}, {world.playerPosition.y}</span>
+            </div>
+          </button>
 
-        {/* Empty space for balance */}
-        <div></div>
+          {/* Player ranking button */}
+          <button 
+            onClick={onOpenRanking}
+            className="game-panel px-3 py-2 hover:bg-muted/50 transition-colors flex items-center gap-2"
+            title="Leaderboard"
+          >
+            <Trophy className="w-4 h-4 text-amber-400" />
+            {topPlayer && (
+              <div className="flex items-center gap-2">
+                <div 
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: topPlayer.color }}
+                />
+                <span className="text-sm font-medium max-w-[80px] truncate">{topPlayer.name}</span>
+                <span className="text-xs text-amber-400">{topPlayer.netWorth.toLocaleString()}</span>
+              </div>
+            )}
+          </button>
+        </div>
 
         <div className="flex flex-col items-end gap-2 pointer-events-auto">
           <div className="flex items-center gap-2">
