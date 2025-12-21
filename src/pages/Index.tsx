@@ -147,6 +147,49 @@ const Index = () => {
     }
   };
 
+  // Gather all resources from selected tile
+  const handleGatherAll = useCallback(() => {
+    if (!selectedTile) {
+      toast.error('No tile selected');
+      return;
+    }
+    
+    const tile = world.map.tiles[selectedTile.y]?.[selectedTile.x];
+    if (!tile) return;
+    
+    // Check distance from player
+    const distance = Math.max(
+      Math.abs(selectedTile.x - world.playerPosition.x),
+      Math.abs(selectedTile.y - world.playerPosition.y)
+    );
+    const CLAIM_RADIUS = 6;
+    
+    if (distance > CLAIM_RADIUS) {
+      toast.error(`Too far away (${distance} tiles, max ${CLAIM_RADIUS})`);
+      return;
+    }
+    
+    // Check if tile is claimed by someone else
+    if (tile.claimedBy && tile.claimedBy !== world.userId) {
+      toast.error('Cannot gather from another player\'s tile');
+      return;
+    }
+    
+    // Gather all resources
+    if (tile.resources.length === 0) {
+      toast.info('No resources to gather');
+      return;
+    }
+    
+    let gatheredCount = 0;
+    for (const resourceId of [...tile.resources]) {
+      gatherFromTile(selectedTile.x, selectedTile.y, resourceId);
+      gatheredCount++;
+    }
+    
+    toast.success(`Gathered ${gatheredCount} resource${gatheredCount > 1 ? 's' : ''}`);
+  }, [selectedTile, world.map.tiles, world.playerPosition, world.userId, gatherFromTile]);
+
   const handleRenameTile = (name: string) => {
     if (selectedTile) {
       renameTile(selectedTile.x, selectedTile.y, name);
@@ -267,11 +310,17 @@ const Index = () => {
         e.preventDefault();
         handleOpenMarketplace();
       }
+      
+      // G key for gathering all resources from selected tile
+      if (e.key.toLowerCase() === 'g') {
+        e.preventDefault();
+        handleGatherAll();
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleOpenMarketplace]);
+  }, [handleOpenMarketplace, handleGatherAll]);
 
   const zoomPercent = Math.round((tileSize / DEFAULT_TILE_SIZE) * 100);
 
