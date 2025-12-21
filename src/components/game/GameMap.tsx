@@ -1,8 +1,9 @@
 import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
-import { WorldMap, Position, Resource, TILE_COLORS, TileType, TILE_TYPES, Market, NPC, Area } from '@/types/game';
+import { WorldMap, Position, Resource, TileType, TILE_TYPES, Market, NPC, Area } from '@/types/game';
 import { cn } from '@/lib/utils';
 import ResourceIcon from './ResourceIcon';
 import PixelCharacter from './PixelCharacter';
+import CanvasTileRenderer from './CanvasTileRenderer';
 
 type FacingDirection = 'north' | 'south' | 'east' | 'west';
 
@@ -225,6 +226,14 @@ const GameMap = ({
       tabIndex={0}
       onWheel={handleWheel}
     >
+      {/* Canvas-based tile renderer for modern pixel art look */}
+      <CanvasTileRenderer
+        map={map}
+        viewportOffset={viewportOffset}
+        viewportSize={viewportSize}
+        tileSize={tileSize}
+      />
+      {/* Interactive overlay grid */}
       <div
         className="absolute inset-0 grid"
         style={{
@@ -310,10 +319,9 @@ const GameMap = ({
             <div
               key={`${x}-${y}`}
               className={cn(
-                'tile cursor-pointer relative box-border select-none',
-                marketOnTile ? 'bg-amber-800' : TILE_COLORS[tile.type],
-                !isWalkable && !marketOnTile && 'brightness-75',
-                (isInDragSelection || isMultiSelected) && isWalkable && 'brightness-110'
+                'cursor-pointer relative box-border select-none',
+                marketOnTile && 'bg-amber-800/80',
+                (isInDragSelection || isMultiSelected) && isWalkable && 'bg-blue-500/20'
               )}
               style={{
                 gridColumn: screenX + 1,
