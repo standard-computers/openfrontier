@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { X, Globe, Users, Map, Flag, Package, Coins, Crown, Bot } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { X, Globe, Users, Map, Flag, Package, Coins, Crown, Bot, Heart } from 'lucide-react';
 import { GameWorld, Resource, TILE_TYPES, calculateTileValue, RARITY_COLORS, NPC } from '@/types/game';
 import { WorldMember } from '@/hooks/useGameWorld';
 import { cn } from '@/lib/utils';
@@ -44,6 +44,17 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUse
 
   const npcs = world.npcs || [];
   const totalPopulation = members.length + npcs.length;
+
+  // Calculate claimed tiles per NPC
+  const npcClaimedTiles = useMemo(() => {
+    const counts: Record<string, number> = {};
+    world.map.tiles.flat().forEach(tile => {
+      if (tile.claimedBy?.startsWith('npc-')) {
+        counts[tile.claimedBy] = (counts[tile.claimedBy] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [world.map.tiles]);
 
   const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: 'Overview', icon: <Globe className="w-4 h-4" /> },
@@ -178,31 +189,57 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUse
                     <Bot className="w-4 h-4" /> NPCs ({npcs.length})
                   </h3>
                   <div className="space-y-2">
-                    {npcs.map(npc => (
-                      <div
-                        key={npc.id}
-                        className="w-full bg-secondary/30 rounded-lg p-3 flex items-center gap-3"
-                      >
-                        <div 
-                          className="w-10 h-10 rounded-full flex items-center justify-center"
-                          style={{ backgroundColor: `${npc.color}20` }}
+                    {npcs.map(npc => {
+                      const claimedCount = npcClaimedTiles[npc.id] || 0;
+                      const inventoryItems = npc.inventory?.filter(s => s.resourceId).length || 0;
+                      
+                      return (
+                        <div
+                          key={npc.id}
+                          className="w-full bg-secondary/30 rounded-lg p-3"
                         >
-                          <Bot className="w-5 h-5" style={{ color: npc.color }} />
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-medium">{npc.name}</div>
-                          <div className="text-xs text-muted-foreground flex items-center gap-1">
-                            <span>{npc.sovereignty.flag}</span>
-                            <span>{npc.sovereignty.name}</span>
+                          <div className="flex items-center gap-3 mb-2">
+                            <div 
+                              className="w-10 h-10 rounded-full flex items-center justify-center"
+                              style={{ backgroundColor: `${npc.color}20` }}
+                            >
+                              <Bot className="w-5 h-5" style={{ color: npc.color }} />
+                            </div>
+                            <div className="flex-1">
+                              <div className="font-medium">{npc.name}</div>
+                              <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                <span>{npc.sovereignty.flag}</span>
+                                <span>{npc.sovereignty.name}</span>
+                              </div>
+                            </div>
+                            <div 
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: npc.color }}
+                              title={`Territory color: ${npc.color}`}
+                            />
+                          </div>
+                          {/* NPC Stats */}
+                          <div className="grid grid-cols-4 gap-2 text-xs">
+                            <div className="bg-secondary/50 rounded px-2 py-1 flex items-center gap-1">
+                              <Coins className="w-3 h-3 text-amber-400" />
+                              <span>{npc.coins?.toLocaleString() || 0}</span>
+                            </div>
+                            <div className="bg-secondary/50 rounded px-2 py-1 flex items-center gap-1">
+                              <Heart className="w-3 h-3 text-red-400" />
+                              <span>{Math.round(npc.health || 0)}</span>
+                            </div>
+                            <div className="bg-secondary/50 rounded px-2 py-1 flex items-center gap-1">
+                              <Flag className="w-3 h-3 text-primary" />
+                              <span>{claimedCount}</span>
+                            </div>
+                            <div className="bg-secondary/50 rounded px-2 py-1 flex items-center gap-1">
+                              <Package className="w-3 h-3 text-muted-foreground" />
+                              <span>{inventoryItems}</span>
+                            </div>
                           </div>
                         </div>
-                        <div 
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: npc.color }}
-                          title={`Territory color: ${npc.color}`}
-                        />
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}

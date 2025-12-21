@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameWorld, WorldMember } from '@/hooks/useGameWorld';
+import { useNPCBehavior } from '@/hooks/useNPCBehavior';
 import { useAuth } from '@/hooks/useAuth';
 import { useTouchDevice } from '@/hooks/useTouchDevice';
 import GameMap from '@/components/game/GameMap';
@@ -49,6 +50,7 @@ const Index = () => {
   
   const {
     world,
+    setWorld,
     selectedTile,
     isOwner,
     members,
@@ -77,7 +79,11 @@ const Index = () => {
     sellToMarket,
     toggleEnableNpcs,
     updateNpcCount,
+    saveMapData,
   } = useGameWorld();
+
+  // Enable NPC behavior
+  useNPCBehavior({ world, setWorld, saveMapData });
 
   useEffect(() => {
     if (!loading && !user) {
