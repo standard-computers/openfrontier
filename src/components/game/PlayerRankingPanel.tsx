@@ -178,10 +178,9 @@ const PlayerRankingPanel = ({ isOpen, onClose, world, resources, members, onView
         {/* Rankings */}
         <div className="p-4 overflow-auto flex-1 space-y-2">
           {rankedPlayers.map((player, index) => (
-            <button
+            <div
               key={player.id}
               onClick={() => player.member && onViewUser(player.member)}
-              disabled={!player.member}
               className={cn(
                 "w-full rounded-lg p-3 text-left transition-colors",
                 player.member ? "hover:bg-secondary/50 cursor-pointer" : "cursor-default",
@@ -240,6 +239,7 @@ const PlayerRankingPanel = ({ isOpen, onClose, world, resources, members, onView
                         const npc = world.npcs?.find(n => n.id === player.id);
                         if (npc) {
                           onNavigateToPosition(npc.position);
+                          onClose();
                           return;
                         }
                         // Find first claimed tile for players
@@ -247,6 +247,7 @@ const PlayerRankingPanel = ({ isOpen, onClose, world, resources, members, onView
                           for (let x = 0; x < world.map.tiles[y].length; x++) {
                             if (world.map.tiles[y][x].claimedBy === player.id) {
                               onNavigateToPosition({ x, y });
+                              onClose();
                               return;
                             }
                           }
@@ -279,7 +280,7 @@ const PlayerRankingPanel = ({ isOpen, onClose, world, resources, members, onView
                   <div className="text-xs text-muted-foreground">net worth</div>
                 </div>
               </div>
-            </button>
+            </div>
           ))}
 
           {rankedPlayers.length === 0 && (
