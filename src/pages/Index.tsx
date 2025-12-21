@@ -329,6 +329,7 @@ const Index = () => {
           onOpenCrafting={() => setCraftingOpen(true)}
           onOpenClaimedTiles={() => setClaimedTilesOpen(true)}
           onOpenRanking={() => setRankingOpen(true)}
+          onOpenMarketplace={() => setMarketplaceOpen(true)}
           onZoom={handleZoom}
           onConsumeResource={consumeResource}
           onToggleMultiSelect={() => {

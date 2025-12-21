@@ -147,6 +147,7 @@ export interface GameWorld {
   xp: number; // Experience points - gains 1 per game day
   joinCode?: string;
   enableMarkets?: boolean;
+  openMarkets?: boolean; // If true, show market button in HUD (default: true)
   markets?: Market[];
   enableNpcs?: boolean;
   npcCount?: number;
