@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { MapTile, Resource, RARITY_COLORS, TILE_TYPES, calculateTileValue, Position } from '@/types/game';
-import { X, Flag, Package, Coins, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react';
+import { MapTile, Resource, RARITY_COLORS, TILE_TYPES, calculateTileValue, Position, AREA_COLORS } from '@/types/game';
+import { X, Flag, Package, Coins, ChevronDown, ChevronRight, AlertTriangle, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ResourceIcon from './ResourceIcon';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -20,6 +20,7 @@ interface MultiTileInfoPanelProps {
   onClose: () => void;
   onClaimAll: () => void;
   onGather: (x: number, y: number, resourceId: string) => void;
+  onCreateArea?: (name: string, color: string, tiles: Position[]) => { success: boolean; message: string };
 }
 
 const CLAIM_RADIUS = 6;
@@ -34,12 +35,17 @@ const MultiTileInfoPanel = ({
   onClose,
   onClaimAll,
   onGather,
+  onCreateArea,
 }: MultiTileInfoPanelProps) => {
+  const [showAreaForm, setShowAreaForm] = useState(false);
+  const [areaName, setAreaName] = useState('');
+  const [areaColor, setAreaColor] = useState(AREA_COLORS[0]);
   // Calculate totals and check for issues
   const analysis = useMemo(() => {
     let totalValue = 0;
     let claimableTiles: TileWithPosition[] = [];
     let alreadyClaimedTiles: TileWithPosition[] = [];
+    let ownClaimedTiles: TileWithPosition[] = [];
     let outOfRangeTiles: TileWithPosition[] = [];
     
     for (const { tile, position } of tiles) {
@@ -49,7 +55,9 @@ const MultiTileInfoPanel = ({
       );
       const isWithinRange = distance <= CLAIM_RADIUS;
       
-      if (tile.claimedBy) {
+      if (tile.claimedBy === userId) {
+        ownClaimedTiles.push({ tile, position });
+      } else if (tile.claimedBy) {
         alreadyClaimedTiles.push({ tile, position });
       } else if (!isWithinRange) {
         outOfRangeTiles.push({ tile, position });
@@ -59,15 +67,20 @@ const MultiTileInfoPanel = ({
       }
     }
     
+    // Check if all tiles are owned by user (for area creation)
+    const allOwnedByUser = tiles.every(({ tile }) => tile.claimedBy === userId);
+    
     return {
       totalValue,
       claimableTiles,
       alreadyClaimedTiles,
+      ownClaimedTiles,
       outOfRangeTiles,
+      allOwnedByUser,
       hasClaimedLand: alreadyClaimedTiles.length > 0,
       hasOutOfRange: outOfRangeTiles.length > 0,
     };
-  }, [tiles, playerPosition, resources]);
+  }, [tiles, playerPosition, resources, userId]);
 
   const canAfford = userCoins >= analysis.totalValue;
   const canClaim = analysis.claimableTiles.length > 0 && canAfford && !analysis.hasClaimedLand;
@@ -79,10 +92,19 @@ const MultiTileInfoPanel = ({
     if (!canAfford) {
       return `Not enough coins (need ${analysis.totalValue}, have ${userCoins})`;
     }
-    if (analysis.claimableTiles.length === 0) {
+    if (analysis.claimableTiles.length === 0 && !analysis.allOwnedByUser) {
       return 'No claimable tiles in selection';
     }
     return null;
+  };
+
+  const handleCreateArea = () => {
+    if (!onCreateArea || !areaName.trim()) return;
+    const result = onCreateArea(areaName.trim(), areaColor, tiles.map(t => t.position));
+    if (result.success) {
+      setShowAreaForm(false);
+      setAreaName('');
+    }
   };
 
   return (
@@ -131,21 +153,76 @@ const MultiTileInfoPanel = ({
           </div>
         )}
 
-        {/* Claim button */}
-        <button 
-          onClick={onClaimAll}
-          disabled={!canClaim}
-          className={cn(
-            "btn w-full flex items-center justify-center gap-2",
-            canClaim ? "btn-primary" : "opacity-50 cursor-not-allowed"
-          )}
-        >
-          <Flag className="w-4 h-4" />
-          {canClaim 
-            ? `Claim ${analysis.claimableTiles.length} tiles for ${analysis.totalValue} coins`
-            : getDisabledReason()
-          }
-        </button>
+        {/* Claim button - only show if there are claimable tiles */}
+        {analysis.claimableTiles.length > 0 && (
+          <button 
+            onClick={onClaimAll}
+            disabled={!canClaim}
+            className={cn(
+              "btn w-full flex items-center justify-center gap-2",
+              canClaim ? "btn-primary" : "opacity-50 cursor-not-allowed"
+            )}
+          >
+            <Flag className="w-4 h-4" />
+            {canClaim 
+              ? `Claim ${analysis.claimableTiles.length} tiles for ${analysis.totalValue} coins`
+              : getDisabledReason()
+            }
+          </button>
+        )}
+
+        {/* Create Area button - show when all tiles are owned by user */}
+        {analysis.allOwnedByUser && onCreateArea && (
+          <>
+            {!showAreaForm ? (
+              <button 
+                onClick={() => setShowAreaForm(true)}
+                className="btn btn-secondary w-full flex items-center justify-center gap-2"
+              >
+                <MapPin className="w-4 h-4" />
+                Create Area ({tiles.length} tiles)
+              </button>
+            ) : (
+              <div className="space-y-2 p-2 bg-secondary/30 rounded-lg">
+                <input
+                  value={areaName}
+                  onChange={(e) => setAreaName(e.target.value)}
+                  placeholder="Area name..."
+                  className="input-field w-full text-sm"
+                  autoFocus
+                />
+                <div className="flex flex-wrap gap-1">
+                  {AREA_COLORS.map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => setAreaColor(color)}
+                      className={cn(
+                        'w-6 h-6 rounded transition-all',
+                        areaColor === color && 'ring-2 ring-white ring-offset-1 ring-offset-card'
+                      )}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowAreaForm(false)}
+                    className="btn btn-ghost flex-1 text-sm py-1"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCreateArea}
+                    disabled={!areaName.trim()}
+                    className="btn btn-primary flex-1 text-sm py-1"
+                  >
+                    Create
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* Tiles accordion */}
