@@ -49,6 +49,7 @@ const Index = () => {
   const [isMoving, setIsMoving] = useState(false);
   const [multiSelectMode, setMultiSelectMode] = useState(false);
   const [selectedTiles, setSelectedTiles] = useState<Position[]>([]);
+  const [cameraPosition, setCameraPosition] = useState<Position | null>(null); // null = follow player
   
   const {
     world,
@@ -162,10 +163,21 @@ const Index = () => {
     
     setIsMoving(true);
     movePlayer(dx, dy);
+    setCameraPosition(null); // Reset camera to follow player when moving
     
     // Stop moving animation after a short delay
     setTimeout(() => setIsMoving(false), 200);
   }, [movePlayer]);
+
+  // Navigate camera to a specific position
+  const handleNavigateToPosition = useCallback((position: Position) => {
+    setCameraPosition(position);
+  }, []);
+
+  // Return camera to player
+  const handleReturnToPlayer = useCallback(() => {
+    setCameraPosition(null);
+  }, []);
 
   // Get current selected resource
   const selectedResource = world.inventory[selectedSlot]?.resourceId 
@@ -277,6 +289,7 @@ const Index = () => {
         <GameMap
           map={world.map}
           playerPosition={world.playerPosition}
+          cameraPosition={cameraPosition}
           resources={world.resources}
           selectedTile={selectedTile}
           selectedTiles={selectedTiles}
@@ -303,6 +316,7 @@ const Index = () => {
           selectedSlot={selectedSlot}
           multiSelectMode={multiSelectMode}
           members={members}
+          cameraOffset={cameraPosition !== null}
           onSelectSlot={setSelectedSlot}
           onOpenConfig={() => setConfigOpen(true)}
           onOpenAccount={() => setAccountOpen(true)}
@@ -317,6 +331,7 @@ const Index = () => {
             setMultiSelectMode(prev => !prev);
             setSelectedTiles([]);
           }}
+          onReturnToPlayer={handleReturnToPlayer}
         />
 
         {/* Minimap */}
@@ -437,6 +452,10 @@ const Index = () => {
           setSelectedMember(member);
           setUserProfileOpen(true);
         }}
+        onNavigateToPosition={(pos) => {
+          handleNavigateToPosition(pos);
+          setStatsOpen(false);
+        }}
       />
 
       <CraftingPanel
@@ -486,6 +505,10 @@ const Index = () => {
         onViewUser={(member) => {
           setSelectedMember(member);
           setUserProfileOpen(true);
+          setRankingOpen(false);
+        }}
+        onNavigateToPosition={(pos) => {
+          handleNavigateToPosition(pos);
           setRankingOpen(false);
         }}
       />
