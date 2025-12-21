@@ -278,6 +278,7 @@ const Index = () => {
           tileSize={tileSize}
           markets={world.markets}
           enableMarkets={world.enableMarkets}
+          npcs={world.npcs}
           facingDirection={facingDirection}
           isMoving={isMoving}
           onMove={handleMove}

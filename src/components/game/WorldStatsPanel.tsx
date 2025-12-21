@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { X, Globe, Users, Map, Flag, Package, Coins, Crown } from 'lucide-react';
-import { GameWorld, Resource, TILE_TYPES, calculateTileValue, RARITY_COLORS } from '@/types/game';
+import { X, Globe, Users, Map, Flag, Package, Coins, Crown, Bot } from 'lucide-react';
+import { GameWorld, Resource, TILE_TYPES, calculateTileValue, RARITY_COLORS, NPC } from '@/types/game';
 import { WorldMember } from '@/hooks/useGameWorld';
 import { cn } from '@/lib/utils';
 import ResourceIcon from './ResourceIcon';
@@ -42,9 +42,12 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUse
     tileTypeCounts[tile.type] = (tileTypeCounts[tile.type] || 0) + 1;
   });
 
+  const npcs = world.npcs || [];
+  const totalPopulation = members.length + npcs.length;
+
   const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: 'Overview', icon: <Globe className="w-4 h-4" /> },
-    { id: 'players', label: `Players (${members.length})`, icon: <Users className="w-4 h-4" /> },
+    { id: 'players', label: `Population (${totalPopulation})`, icon: <Users className="w-4 h-4" /> },
     { id: 'terrain', label: 'Terrain', icon: <Map className="w-4 h-4" /> },
     { id: 'resources', label: 'Resources', icon: <Package className="w-4 h-4" /> },
   ];
@@ -94,6 +97,12 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUse
               </div>
               <div className="bg-secondary/50 rounded-lg p-3">
                 <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+                  <Bot className="w-3 h-3" /> NPCs
+                </div>
+                <div className="text-2xl font-bold">{npcs.length}</div>
+              </div>
+              <div className="bg-secondary/50 rounded-lg p-3">
+                <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
                   <Map className="w-3 h-3" /> Total Tiles
                 </div>
                 <div className="text-2xl font-bold">{totalTiles.toLocaleString()}</div>
@@ -105,7 +114,7 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUse
                 <div className="text-2xl font-bold">{claimedTiles.toLocaleString()}</div>
                 <div className="text-xs text-muted-foreground">{claimedPercent}% of world</div>
               </div>
-              <div className="bg-secondary/50 rounded-lg p-3">
+              <div className="bg-secondary/50 rounded-lg p-3 col-span-2">
                 <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
                   <Coins className="w-3 h-3" /> World Value
                 </div>
@@ -116,41 +125,85 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUse
 
           {/* Players Tab */}
           {activeTab === 'players' && (
-            <div className="space-y-2">
-              {members.length > 0 ? (
-              members.map(member => (
-                  <button
-                    key={member.id}
-                    onClick={() => onViewUser(member)}
-                    className="w-full bg-secondary/30 rounded-lg p-3 flex items-center gap-3 hover:bg-secondary/50 transition-colors text-left"
-                  >
-                    <div className={cn(
-                      "w-10 h-10 rounded-full flex items-center justify-center",
-                      member.role === 'owner' ? "bg-amber-500/20" : "bg-primary/20"
-                    )}>
-                      {member.role === 'owner' ? (
-                        <Crown className="w-5 h-5 text-amber-500" />
-                      ) : (
-                        <Users className="w-5 h-5 text-primary" />
-                      )}
+            <div className="space-y-4">
+              {/* Human Players Section */}
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
+                  <Users className="w-4 h-4" /> Players ({members.length})
+                </h3>
+                <div className="space-y-2">
+                  {members.length > 0 ? (
+                    members.map(member => (
+                      <button
+                        key={member.id}
+                        onClick={() => onViewUser(member)}
+                        className="w-full bg-secondary/30 rounded-lg p-3 flex items-center gap-3 hover:bg-secondary/50 transition-colors text-left"
+                      >
+                        <div className={cn(
+                          "w-10 h-10 rounded-full flex items-center justify-center",
+                          member.role === 'owner' ? "bg-amber-500/20" : "bg-primary/20"
+                        )}>
+                          {member.role === 'owner' ? (
+                            <Crown className="w-5 h-5 text-amber-500" />
+                          ) : (
+                            <Users className="w-5 h-5 text-primary" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium">{member.username}</div>
+                          <div className={cn(
+                            "text-xs",
+                            member.role === 'owner' ? "text-amber-400" : "text-muted-foreground"
+                          )}>
+                            {member.role === 'owner' ? 'Owner' : 'Player'}
+                          </div>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Joined {new Date(member.joinedAt).toLocaleDateString()}
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="text-center text-muted-foreground py-4 text-sm">
+                      No players in this world yet
                     </div>
-                    <div className="flex-1">
-                      <div className="font-medium">{member.username}</div>
-                      <div className={cn(
-                        "text-xs",
-                        member.role === 'owner' ? "text-amber-400" : "text-muted-foreground"
-                      )}>
-                        {member.role === 'owner' ? 'Owner' : 'Player'}
+                  )}
+                </div>
+              </div>
+
+              {/* NPCs Section */}
+              {npcs.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
+                    <Bot className="w-4 h-4" /> NPCs ({npcs.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {npcs.map(npc => (
+                      <div
+                        key={npc.id}
+                        className="w-full bg-secondary/30 rounded-lg p-3 flex items-center gap-3"
+                      >
+                        <div 
+                          className="w-10 h-10 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: `${npc.color}20` }}
+                        >
+                          <Bot className="w-5 h-5" style={{ color: npc.color }} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium">{npc.name}</div>
+                          <div className="text-xs text-muted-foreground flex items-center gap-1">
+                            <span>{npc.sovereignty.flag}</span>
+                            <span>{npc.sovereignty.name}</span>
+                          </div>
+                        </div>
+                        <div 
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: npc.color }}
+                          title={`Territory color: ${npc.color}`}
+                        />
                       </div>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Joined {new Date(member.joinedAt).toLocaleDateString()}
-                    </div>
-                  </button>
-                ))
-              ) : (
-                <div className="text-center text-muted-foreground py-8">
-                  No players in this world yet
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

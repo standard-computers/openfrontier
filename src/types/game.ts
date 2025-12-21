@@ -520,3 +520,83 @@ export const STARTING_COINS = 500;
 export const STARTING_HEALTH = 80;
 export const MAX_HEALTH = 100;
 export const HEALTH_DECAY_PER_DAY = 5;
+
+// NPC name prefixes and suffixes for generating names
+const NPC_NAME_PREFIXES = ['Sir', 'Lady', 'Lord', 'Baron', 'Duke', 'Captain', 'Elder', 'Chief', 'Master', 'Scholar', 'Merchant', 'Sage'];
+const NPC_NAME_ROOTS = ['Oak', 'Stone', 'River', 'Mountain', 'Forest', 'Storm', 'Shadow', 'Bright', 'Iron', 'Gold', 'Silver', 'Frost'];
+const NPC_NAME_SUFFIXES = ['wood', 'vale', 'brook', 'field', 'haven', 'ridge', 'cliff', 'ford', 'wick', 'holm', 'mere', 'dale'];
+
+// Sovereignty mottos for NPCs
+const NPC_MOTTOS = [
+  'Through adversity, strength',
+  'Unity in purpose',
+  'Knowledge is power',
+  'Honor above all',
+  'Prosperity for all',
+  'Strength through wisdom',
+  'Together we stand',
+  'Fortune favors the bold',
+  'Peace through vigilance',
+  'In trade we trust',
+  'Nature provides',
+  'Industry and honor',
+];
+
+// Flags for NPCs
+const NPC_FLAGS = ['🏴', '🚩', '🏳️', '⚔️', '🛡️', '⚜️', '🦅', '🦁', '🐉', '🌟', '🔱', '👑'];
+
+export const generateNPCs = (
+  count: number, 
+  map: WorldMap,
+  existingNPCs?: NPC[]
+): NPC[] => {
+  // If we already have NPCs, just return them (to maintain consistency)
+  if (existingNPCs && existingNPCs.length === count) {
+    return existingNPCs;
+  }
+
+  const npcs: NPC[] = [];
+  const usedPositions: Set<string> = new Set();
+  
+  for (let i = 0; i < count; i++) {
+    // Generate unique name
+    const prefix = NPC_NAME_PREFIXES[i % NPC_NAME_PREFIXES.length];
+    const root = NPC_NAME_ROOTS[(i * 3) % NPC_NAME_ROOTS.length];
+    const suffix = NPC_NAME_SUFFIXES[(i * 7) % NPC_NAME_SUFFIXES.length];
+    const name = `${prefix} ${root}${suffix}`;
+    
+    // Find a walkable position
+    let position = { x: 0, y: 0 };
+    let attempts = 0;
+    while (attempts < 100) {
+      const x = Math.floor(Math.random() * map.width);
+      const y = Math.floor(Math.random() * map.height);
+      const key = `${x},${y}`;
+      const tile = map.tiles[y]?.[x];
+      if (tile?.walkable && !usedPositions.has(key)) {
+        position = { x, y };
+        usedPositions.add(key);
+        break;
+      }
+      attempts++;
+    }
+    
+    // Create sovereignty for this NPC
+    const sovereignty: Sovereignty = {
+      name: `${root}${suffix} Realm`,
+      flag: NPC_FLAGS[i % NPC_FLAGS.length],
+      motto: NPC_MOTTOS[i % NPC_MOTTOS.length],
+      foundedAt: Date.now() - (Math.random() * 86400000 * 30), // Random founding time up to 30 days ago
+    };
+    
+    npcs.push({
+      id: `npc-${i}`,
+      name,
+      color: NPC_COLORS[i % NPC_COLORS.length],
+      sovereignty,
+      position,
+    });
+  }
+  
+  return npcs;
+};

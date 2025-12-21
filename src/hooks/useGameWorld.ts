@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { GameWorld, Resource, Sovereignty, Market, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap, TILE_TYPES } from '@/types/game';
+import { GameWorld, Resource, Sovereignty, Market, NPC, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap, TILE_TYPES, generateNPCs } from '@/types/game';
 import type { Json } from '@/integrations/supabase/types';
 
 // Hook version marker for HMR compatibility
@@ -126,6 +126,14 @@ export const useGameWorld = () => {
         const gameDays = Math.floor(elapsedMs / 3600000); // 1 real hour = 1 game day
         const calculatedXp = Math.max(playerData.xp ?? 0, gameDays);
 
+        const enableNpcs = (worldData as any).enable_npcs ?? false;
+        const npcCount = (worldData as any).npc_count ?? 0;
+        
+        // Generate NPCs if enabled
+        const npcs = enableNpcs && npcCount > 0 
+          ? generateNPCs(npcCount, mapData)
+          : [];
+
         setWorld({
           id: worldId,
           name: worldData.name,
@@ -143,8 +151,9 @@ export const useGameWorld = () => {
           joinCode: worldData.join_code,
           enableMarkets: worldData.enable_markets ?? false,
           markets: (worldData.markets as unknown as Market[]) ?? [],
-          enableNpcs: (worldData as any).enable_npcs ?? false,
-          npcCount: (worldData as any).npc_count ?? 0,
+          enableNpcs,
+          npcCount,
+          npcs,
         });
       } catch (error) {
         console.error('Error loading world:', error);
@@ -913,7 +922,12 @@ export const useGameWorld = () => {
     
     const npcCount = enabled ? Math.min(Math.max(count, 1), 12) : 0;
     
-    setWorld(prev => ({ ...prev, enableNpcs: enabled, npcCount }));
+    setWorld(prev => {
+      const npcs = enabled && npcCount > 0 
+        ? generateNPCs(npcCount, prev.map, prev.npcs)
+        : [];
+      return { ...prev, enableNpcs: enabled, npcCount, npcs };
+    });
     
     await supabase
       .from('worlds')
@@ -929,11 +943,17 @@ export const useGameWorld = () => {
     
     const npcCount = Math.min(Math.max(count, 0), 12);
     
-    setWorld(prev => ({ 
-      ...prev, 
-      npcCount,
-      enableNpcs: npcCount > 0
-    }));
+    setWorld(prev => {
+      const npcs = npcCount > 0 
+        ? generateNPCs(npcCount, prev.map)
+        : [];
+      return { 
+        ...prev, 
+        npcCount,
+        enableNpcs: npcCount > 0,
+        npcs,
+      };
+    });
     
     await supabase
       .from('worlds')

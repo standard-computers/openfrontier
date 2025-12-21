@@ -1,5 +1,5 @@
 import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
-import { WorldMap, Position, Resource, TILE_COLORS, TileType, TILE_TYPES, Market } from '@/types/game';
+import { WorldMap, Position, Resource, TILE_COLORS, TileType, TILE_TYPES, Market, NPC } from '@/types/game';
 import { cn } from '@/lib/utils';
 import ResourceIcon from './ResourceIcon';
 import PixelCharacter from './PixelCharacter';
@@ -18,6 +18,7 @@ interface GameMapProps {
   tileSize: number;
   markets?: Market[];
   enableMarkets?: boolean;
+  npcs?: NPC[];
   facingDirection: FacingDirection;
   isMoving: boolean;
   onMove: (dx: number, dy: number) => void;
@@ -38,6 +39,7 @@ const GameMap = ({
   tileSize,
   markets = [],
   enableMarkets = false,
+  npcs = [],
   facingDirection,
   isMoving,
   onMove,
@@ -231,6 +233,9 @@ const GameMap = ({
           const tileTypeInfo = TILE_TYPES.find(t => t.type === tile.type);
           const isWalkable = tileTypeInfo?.walkable ?? tile.walkable;
 
+          // Check if an NPC is on this tile
+          const npcOnTile = npcs.find(npc => npc.position.x === x && npc.position.y === y);
+
           // Get floating resources on this tile
           const floatingResources = tile.resources
             .map(resId => resources.find(r => r.id === resId))
@@ -241,11 +246,20 @@ const GameMap = ({
             x === m.position.x && y === m.position.y
           ) : null;
 
+          // Check if this tile is claimed by an NPC
+          const npcClaimOwner = tile.claimedBy?.startsWith('npc-') 
+            ? npcs.find(npc => npc.id === tile.claimedBy)
+            : null;
+
           // Calculate which borders to show for claimed tiles
           // Only show border on edges that don't have an adjacent tile claimed by the same owner
           let borderStyles: React.CSSProperties = {};
           if (isClaimed && !isSelected && !isMultiSelected) {
-            const claimColor = isOwnClaim ? userColor : '#888';
+            const claimColor = isOwnClaim 
+              ? userColor 
+              : npcClaimOwner 
+                ? npcClaimOwner.color 
+                : '#888';
             const borderWidth = 2;
             
             // Check adjacent tiles
@@ -326,6 +340,7 @@ const GameMap = ({
                   />
                 </span>
               )}
+              {/* Show player character */}
               {isPlayerHere && (
                 <div 
                   className="absolute z-20 flex items-end justify-center pointer-events-none"
@@ -344,11 +359,35 @@ const GameMap = ({
                   />
                 </div>
               )}
-              {isClaimed && !isPlayerHere && (
+              {/* Show NPC character */}
+              {npcOnTile && !isPlayerHere && (
+                <div 
+                  className="absolute z-15 flex items-end justify-center pointer-events-none"
+                  style={{
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    height: tileSize * 2,
+                  }}
+                >
+                  <PixelCharacter 
+                    direction="south" 
+                    isMoving={false} 
+                    size={tileSize} 
+                    userColor={npcOnTile.color}
+                  />
+                </div>
+              )}
+              {/* Show claim indicator */}
+              {isClaimed && !isPlayerHere && !npcOnTile && (
                 <div 
                   className="absolute top-0.5 right-0.5 rounded-full"
                   style={{ 
-                    backgroundColor: isOwnClaim ? userColor : '#888',
+                    backgroundColor: isOwnClaim 
+                      ? userColor 
+                      : npcClaimOwner 
+                        ? npcClaimOwner.color 
+                        : '#888',
                     width: Math.max(4, tileSize * 0.15),
                     height: Math.max(4, tileSize * 0.15),
                   }}
