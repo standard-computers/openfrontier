@@ -19,6 +19,17 @@ type TabType = 'overview' | 'players' | 'terrain' | 'resources';
 const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUser }: WorldStatsPanelProps) => {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
 
+  // Calculate claimed tiles per NPC - must be before any early returns
+  const npcClaimedTiles = useMemo(() => {
+    const counts: Record<string, number> = {};
+    world.map.tiles.flat().forEach(tile => {
+      if (tile.claimedBy?.startsWith('npc-')) {
+        counts[tile.claimedBy] = (counts[tile.claimedBy] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [world.map.tiles]);
+
   if (!isOpen) return null;
 
   const totalTiles = world.map.width * world.map.height;
@@ -44,17 +55,6 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUse
 
   const npcs = world.npcs || [];
   const totalPopulation = members.length + npcs.length;
-
-  // Calculate claimed tiles per NPC
-  const npcClaimedTiles = useMemo(() => {
-    const counts: Record<string, number> = {};
-    world.map.tiles.flat().forEach(tile => {
-      if (tile.claimedBy?.startsWith('npc-')) {
-        counts[tile.claimedBy] = (counts[tile.claimedBy] || 0) + 1;
-      }
-    });
-    return counts;
-  }, [world.map.tiles]);
 
   const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: 'Overview', icon: <Globe className="w-4 h-4" /> },
