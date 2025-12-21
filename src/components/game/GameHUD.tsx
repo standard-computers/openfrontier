@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { GameWorld, Resource, MAX_HEALTH } from '@/types/game';
-import { Settings, User, Coins, ChevronRight, Hammer, ZoomIn, ZoomOut, Crown, Clock, Heart, Sparkles, BoxSelect, Trophy } from 'lucide-react';
+import { Settings, User, Coins, ChevronRight, Hammer, ZoomIn, ZoomOut, Crown, Clock, Heart, Sparkles, BoxSelect, Trophy, Locate } from 'lucide-react';
 import ResourceIcon from './ResourceIcon';
 import InventoryItemModal from './InventoryItemModal';
 import { cn } from '@/lib/utils';
@@ -15,6 +15,7 @@ interface GameHUDProps {
   selectedSlot: number;
   multiSelectMode: boolean;
   members: WorldMember[];
+  cameraOffset: boolean;
   onSelectSlot: (slot: number) => void;
   onOpenConfig: () => void;
   onOpenAccount: () => void;
@@ -26,9 +27,10 @@ interface GameHUDProps {
   onZoom: (delta: number) => void;
   onConsumeResource: (resourceId: string) => { success: boolean; message: string };
   onToggleMultiSelect: () => void;
+  onReturnToPlayer: () => void;
 }
 
-const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiSelectMode, members, onSelectSlot, onOpenConfig, onOpenAccount, onOpenSovereignty, onOpenStats, onOpenCrafting, onOpenClaimedTiles, onOpenRanking, onZoom, onConsumeResource, onToggleMultiSelect }: GameHUDProps) => {
+const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiSelectMode, members, cameraOffset, onSelectSlot, onOpenConfig, onOpenAccount, onOpenSovereignty, onOpenStats, onOpenCrafting, onOpenClaimedTiles, onOpenRanking, onZoom, onConsumeResource, onToggleMultiSelect, onReturnToPlayer }: GameHUDProps) => {
   const getResource = (id: string | null) => resources.find(r => r.id === id);
   const [worldTime, setWorldTime] = useState({ days: 0, hours: 0 });
   const [selectedItem, setSelectedItem] = useState<{ resourceId: string; quantity: number } | null>(null);
@@ -178,6 +180,19 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
           </div>
         </div>
       </div>
+
+      {/* Return to player button - shown when camera is offset */}
+      {cameraOffset && (
+        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 pointer-events-auto">
+          <button
+            onClick={onReturnToPlayer}
+            className="game-panel px-4 py-2 hover:bg-muted/50 transition-colors flex items-center gap-2 bg-primary/20 border border-primary/30"
+          >
+            <Locate className="w-4 h-4 text-primary" />
+            <span className="text-sm font-medium">Return to Player</span>
+          </button>
+        </div>
+      )}
 
       {/* Inventory bar with tiles, health, xp, coins */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 game-panel p-2 pointer-events-auto">

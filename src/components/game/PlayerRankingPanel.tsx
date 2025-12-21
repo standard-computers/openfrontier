@@ -1,5 +1,5 @@
-import { X, Trophy, Coins, Crown, Bot, Users } from 'lucide-react';
-import { GameWorld, Resource, calculateTileValue, NPC } from '@/types/game';
+import { X, Trophy, Coins, Crown, Bot, Users, MapPin } from 'lucide-react';
+import { GameWorld, Resource, calculateTileValue, NPC, Position } from '@/types/game';
 import { WorldMember } from '@/hooks/useGameWorld';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
@@ -11,6 +11,7 @@ interface PlayerRankingPanelProps {
   resources: Resource[];
   members: WorldMember[];
   onViewUser: (member: WorldMember) => void;
+  onNavigateToPosition: (position: Position) => void;
 }
 
 export interface RankedPlayer {
@@ -69,7 +70,7 @@ export const calculateNetWorth = (
   };
 };
 
-const PlayerRankingPanel = ({ isOpen, onClose, world, resources, members, onViewUser }: PlayerRankingPanelProps) => {
+const PlayerRankingPanel = ({ isOpen, onClose, world, resources, members, onViewUser, onNavigateToPosition }: PlayerRankingPanelProps) => {
   const rankedPlayers = useMemo(() => {
     const players: RankedPlayer[] = [];
 
@@ -232,7 +233,28 @@ const PlayerRankingPanel = ({ isOpen, onClose, world, resources, members, onView
                       {player.coins.toLocaleString()}
                     </span>
                     <span className="text-muted-foreground/50">•</span>
-                    <span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // Find position for NPCs
+                        const npc = world.npcs?.find(n => n.id === player.id);
+                        if (npc) {
+                          onNavigateToPosition(npc.position);
+                          return;
+                        }
+                        // Find first claimed tile for players
+                        for (let y = 0; y < world.map.tiles.length; y++) {
+                          for (let x = 0; x < world.map.tiles[y].length; x++) {
+                            if (world.map.tiles[y][x].claimedBy === player.id) {
+                              onNavigateToPosition({ x, y });
+                              return;
+                            }
+                          }
+                        }
+                      }}
+                      className="flex items-center gap-0.5 hover:text-primary transition-colors"
+                    >
+                      <MapPin className="w-3 h-3" />
                       {(() => {
                         // Find position for NPCs
                         const npc = world.npcs?.find(n => n.id === player.id);
@@ -247,7 +269,7 @@ const PlayerRankingPanel = ({ isOpen, onClose, world, resources, members, onView
                         }
                         return 'N/A';
                       })()}
-                    </span>
+                    </button>
                   </div>
                 </div>
 

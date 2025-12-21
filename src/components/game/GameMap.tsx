@@ -9,6 +9,7 @@ type FacingDirection = 'north' | 'south' | 'east' | 'west';
 interface GameMapProps {
   map: WorldMap;
   playerPosition: Position;
+  cameraPosition: Position | null; // null = follow player
   resources: Resource[];
   selectedTile: Position | null;
   selectedTiles: Position[];
@@ -30,6 +31,7 @@ interface GameMapProps {
 const GameMap = ({
   map,
   playerPosition,
+  cameraPosition,
   resources,
   selectedTile,
   selectedTiles,
@@ -144,17 +146,20 @@ const GameMap = ({
     return selectedTiles.some(t => t.x === x && t.y === y);
   }, [selectedTiles]);
 
+  // Use camera position if set, otherwise follow player
+  const centerPosition = cameraPosition || playerPosition;
+  
   const viewportOffset = useMemo(() => {
     const offsetX = Math.max(0, Math.min(
-      playerPosition.x - Math.floor(viewportSize.tilesX / 2),
+      centerPosition.x - Math.floor(viewportSize.tilesX / 2),
       map.width - viewportSize.tilesX
     ));
     const offsetY = Math.max(0, Math.min(
-      playerPosition.y - Math.floor(viewportSize.tilesY / 2),
+      centerPosition.y - Math.floor(viewportSize.tilesY / 2),
       map.height - viewportSize.tilesY
     ));
     return { x: Math.max(0, offsetX), y: Math.max(0, offsetY) };
-  }, [playerPosition, map.width, map.height, viewportSize]);
+  }, [centerPosition, map.width, map.height, viewportSize]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

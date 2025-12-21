@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { X, Globe, Users, Map, Flag, Package, Coins, Crown, Bot, Heart } from 'lucide-react';
-import { GameWorld, Resource, TILE_TYPES, calculateTileValue, RARITY_COLORS, NPC } from '@/types/game';
+import { X, Globe, Users, Map, Flag, Package, Coins, Crown, Bot, Heart, MapPin } from 'lucide-react';
+import { GameWorld, Resource, TILE_TYPES, calculateTileValue, RARITY_COLORS, NPC, Position } from '@/types/game';
 import { WorldMember } from '@/hooks/useGameWorld';
 import { cn } from '@/lib/utils';
 import ResourceIcon from './ResourceIcon';
@@ -12,11 +12,12 @@ interface WorldStatsPanelProps {
   resources: Resource[];
   members: WorldMember[];
   onViewUser: (member: WorldMember) => void;
+  onNavigateToPosition: (position: Position) => void;
 }
 
 type TabType = 'overview' | 'players' | 'terrain' | 'resources';
 
-const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUser }: WorldStatsPanelProps) => {
+const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUser, onNavigateToPosition }: WorldStatsPanelProps) => {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
 
   // Calculate claimed tiles per NPC - must be before any early returns
@@ -163,7 +164,7 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUse
                         <div className="flex-1">
                           <div className="font-medium">{member.username}</div>
                           <div className={cn(
-                            "text-xs",
+                            "text-xs flex items-center gap-1",
                             member.role === 'owner' ? "text-amber-400" : "text-muted-foreground"
                           )}>
                             {member.role === 'owner' ? 'Owner' : 'Player'}
@@ -173,7 +174,18 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUse
                                 for (let x = 0; x < world.map.tiles[y].length; x++) {
                                   const tile = world.map.tiles[y][x];
                                   if (tile.claimedBy === member.userId) {
-                                    return <span className="ml-1 text-muted-foreground">• ({x}, {y})</span>;
+                                    return (
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          onNavigateToPosition({ x, y });
+                                        }}
+                                        className="ml-1 text-muted-foreground hover:text-primary transition-colors flex items-center gap-0.5"
+                                      >
+                                        <MapPin className="w-3 h-3" />
+                                        ({x}, {y})
+                                      </button>
+                                    );
                                   }
                                 }
                               }
@@ -222,7 +234,13 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUse
                               <div className="text-xs text-muted-foreground flex items-center gap-1">
                                 <span>{npc.sovereignty.flag}</span>
                                 <span>{npc.sovereignty.name}</span>
-                                <span>• ({npc.position.x}, {npc.position.y})</span>
+                                <button
+                                  onClick={() => onNavigateToPosition(npc.position)}
+                                  className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-0.5"
+                                >
+                                  <MapPin className="w-3 h-3" />
+                                  ({npc.position.x}, {npc.position.y})
+                                </button>
                               </div>
                             </div>
                             <div 
