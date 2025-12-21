@@ -97,6 +97,10 @@ export interface NPC {
   color: string;
   sovereignty: Sovereignty;
   position: { x: number; y: number };
+  coins: number;
+  inventory: InventorySlot[];
+  health: number;
+  lastActionTime?: number;
 }
 
 export interface Market {
@@ -550,8 +554,8 @@ export const generateNPCs = (
   map: WorldMap,
   existingNPCs?: NPC[]
 ): NPC[] => {
-  // If we already have NPCs, just return them (to maintain consistency)
-  if (existingNPCs && existingNPCs.length === count) {
+  // If we already have NPCs with the right count and they have the new properties, return them
+  if (existingNPCs && existingNPCs.length === count && existingNPCs[0]?.coins !== undefined) {
     return existingNPCs;
   }
 
@@ -589,12 +593,18 @@ export const generateNPCs = (
       foundedAt: Date.now() - (Math.random() * 86400000 * 30), // Random founding time up to 30 days ago
     };
     
+    // Create empty inventory for NPC (10 slots)
+    const inventory: InventorySlot[] = Array.from({ length: 10 }, () => ({ resourceId: null, quantity: 0 }));
+    
     npcs.push({
       id: `npc-${i}`,
       name,
       color: NPC_COLORS[i % NPC_COLORS.length],
       sovereignty,
       position,
+      coins: 200 + Math.floor(Math.random() * 300), // Start with 200-500 coins
+      inventory,
+      health: 70 + Math.floor(Math.random() * 30), // Start with 70-100 health
     });
   }
   

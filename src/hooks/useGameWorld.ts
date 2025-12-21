@@ -966,6 +966,7 @@ export const useGameWorld = () => {
 
   return {
     world,
+    setWorld,
     selectedTile,
     isOwner,
     members,
@@ -995,5 +996,6 @@ export const useGameWorld = () => {
     sellToMarket,
     toggleEnableNpcs,
     updateNpcCount,
+    saveMapData,
   };
 };
