@@ -1,5 +1,5 @@
 import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
-import { WorldMap, Position, Resource, TILE_COLORS, TileType, TILE_TYPES, Market, NPC } from '@/types/game';
+import { WorldMap, Position, Resource, TILE_COLORS, TileType, TILE_TYPES, Market, NPC, Area } from '@/types/game';
 import { cn } from '@/lib/utils';
 import ResourceIcon from './ResourceIcon';
 import PixelCharacter from './PixelCharacter';
@@ -20,6 +20,7 @@ interface GameMapProps {
   markets?: Market[];
   enableMarkets?: boolean;
   npcs?: NPC[];
+  areas?: Area[];
   facingDirection: FacingDirection;
   isMoving: boolean;
   onMove: (dx: number, dy: number) => void;
@@ -42,6 +43,7 @@ const GameMap = ({
   markets = [],
   enableMarkets = false,
   npcs = [],
+  areas = [],
   facingDirection,
   isMoving,
   onMove,
@@ -145,6 +147,11 @@ const GameMap = ({
   const isTileMultiSelected = useCallback((x: number, y: number): boolean => {
     return selectedTiles.some(t => t.x === x && t.y === y);
   }, [selectedTiles]);
+
+  // Get area for a tile position
+  const getAreaForTile = useCallback((x: number, y: number): Area | undefined => {
+    return areas.find(area => area.tiles.some(t => t.x === x && t.y === y));
+  }, [areas]);
 
   // Use camera position if set, otherwise follow player
   const centerPosition = cameraPosition || playerPosition;
@@ -256,6 +263,9 @@ const GameMap = ({
             ? npcs.find(npc => npc.id === tile.claimedBy)
             : null;
 
+          // Check if tile belongs to an area
+          const tileArea = getAreaForTile(x, y);
+
           // Calculate which borders to show for claimed tiles
           // Only show border on edges that don't have an adjacent tile claimed by the same owner
           let borderStyles: React.CSSProperties = {};
@@ -322,6 +332,16 @@ const GameMap = ({
                 }
               }}
             >
+              {/* Area color overlay */}
+              {tileArea && (
+                <div 
+                  className="absolute inset-0 pointer-events-none z-5"
+                  style={{ 
+                    backgroundColor: tileArea.color,
+                    opacity: 0.25,
+                  }}
+                />
+              )}
               {/* Show market icon */}
               {marketOnTile && (
                 <span 

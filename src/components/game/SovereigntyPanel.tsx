@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Sovereignty, USER_COLORS } from '@/types/game';
-import { X, Flag, Crown, Palette, Coins, Info, Settings, Plus } from 'lucide-react';
+import { Sovereignty, USER_COLORS, Area, AREA_COLORS } from '@/types/game';
+import { X, Flag, Crown, Palette, Coins, Info, Settings, Plus, MapPin, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const FLAG_OPTIONS = ['🏴', '🏳️', '🚩', '⚔️', '🛡️', '👑', '🦁', '🦅', '🐉', '🌟', '⭐', '🔱', '🏰', '⚜️', '🗡️', '🎭'];
@@ -13,9 +13,12 @@ interface SovereigntyPanelProps {
   claimedTiles: number;
   username: string | null;
   sovereignty?: Sovereignty;
+  areas?: Area[];
   onColorChange: (color: string) => void;
   onCreateSovereignty: (name: string, flag: string, motto: string) => void;
   onUpdateSovereignty: (updates: Partial<Sovereignty>) => void;
+  onDeleteArea?: (areaId: string) => void;
+  onUpdateArea?: (areaId: string, updates: Partial<Omit<Area, 'id' | 'createdAt'>>) => void;
 }
 
 const SovereigntyPanel = ({
@@ -26,11 +29,14 @@ const SovereigntyPanel = ({
   claimedTiles,
   username,
   sovereignty,
+  areas = [],
   onColorChange,
   onCreateSovereignty,
   onUpdateSovereignty,
+  onDeleteArea,
+  onUpdateArea,
 }: SovereigntyPanelProps) => {
-  const [activeTab, setActiveTab] = useState<'general' | 'controls'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'areas' | 'controls'>('general');
   const [isCreating, setIsCreating] = useState(false);
   const [newName, setNewName] = useState('');
   const [newFlag, setNewFlag] = useState('🏴');
@@ -176,7 +182,7 @@ const SovereigntyPanel = ({
           <button
             onClick={() => setActiveTab('general')}
             className={cn(
-              'flex-1 px-4 py-2 text-sm font-medium transition-colors flex items-center justify-center gap-2',
+              'flex-1 px-3 py-2 text-sm font-medium transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap',
               activeTab === 'general' 
                 ? 'bg-secondary text-foreground' 
                 : 'text-muted-foreground hover:text-foreground'
@@ -185,9 +191,23 @@ const SovereigntyPanel = ({
             <Info className="w-4 h-4" /> General
           </button>
           <button
+            onClick={() => setActiveTab('areas')}
+            className={cn(
+              'flex-1 px-3 py-2 text-sm font-medium transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap',
+              activeTab === 'areas' 
+                ? 'bg-secondary text-foreground' 
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <MapPin className="w-4 h-4" /> Areas
+            {areas.length > 0 && (
+              <span className="text-xs bg-primary/20 text-primary px-1.5 rounded-full">{areas.length}</span>
+            )}
+          </button>
+          <button
             onClick={() => setActiveTab('controls')}
             className={cn(
-              'flex-1 px-4 py-2 text-sm font-medium transition-colors flex items-center justify-center gap-2',
+              'flex-1 px-3 py-2 text-sm font-medium transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap',
               activeTab === 'controls' 
                 ? 'bg-secondary text-foreground' 
                 : 'text-muted-foreground hover:text-foreground'
@@ -197,8 +217,7 @@ const SovereigntyPanel = ({
           </button>
         </div>
 
-        {/* Tab Content */}
-        <div className="p-4">
+        <div className="p-4 max-h-[350px] overflow-y-auto">
           {activeTab === 'general' && (
             <div className="space-y-4">
               {/* Stats */}
@@ -228,7 +247,67 @@ const SovereigntyPanel = ({
                   <span className="text-muted-foreground">Ruler</span>
                   <span>{username || 'Unknown'}</span>
                 </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Areas</span>
+                  <span>{areas.length}</span>
+                </div>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'areas' && (
+            <div className="space-y-3">
+              {areas.length === 0 ? (
+                <div className="text-center py-6">
+                  <MapPin className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">No areas created yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Select multiple owned tiles to create an area
+                  </p>
+                </div>
+              ) : (
+                areas.map((area) => (
+                  <div 
+                    key={area.id}
+                    className="bg-secondary/30 rounded-lg p-3"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <div 
+                        className="w-4 h-4 rounded"
+                        style={{ backgroundColor: area.color }}
+                      />
+                      <span className="font-medium flex-1">{area.name}</span>
+                      {onDeleteArea && (
+                        <button
+                          onClick={() => onDeleteArea(area.id)}
+                          className="btn btn-ghost p-1 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground flex justify-between">
+                      <span>{area.tiles.length} tiles</span>
+                      <span>{new Date(area.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    {onUpdateArea && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {AREA_COLORS.map((color) => (
+                          <button
+                            key={color}
+                            onClick={() => onUpdateArea(area.id, { color })}
+                            className={cn(
+                              'w-5 h-5 rounded transition-all',
+                              area.color === color && 'ring-2 ring-white ring-offset-1 ring-offset-card'
+                            )}
+                            style={{ backgroundColor: color }}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
           )}
 

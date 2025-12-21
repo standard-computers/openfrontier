@@ -75,6 +75,27 @@ export interface Sovereignty {
   foundedAt: number;
 }
 
+export interface Area {
+  id: string;
+  name: string;
+  color: string;
+  tiles: Position[];
+  createdAt: number;
+}
+
+export const AREA_COLORS = [
+  '#ef4444', // red
+  '#f97316', // orange
+  '#eab308', // yellow
+  '#22c55e', // green
+  '#06b6d4', // cyan
+  '#3b82f6', // blue
+  '#8b5cf6', // violet
+  '#ec4899', // pink
+  '#f43f5e', // rose
+  '#84cc16', // lime
+];
+
 // NPC colors - distinct from user colors
 export const NPC_COLORS = [
   '#dc2626', // red-600
@@ -120,6 +141,7 @@ export interface GameWorld {
   userColor: string;
   coins: number;
   sovereignty?: Sovereignty;
+  areas?: Area[];
   createdAt: string;
   health: number;
   xp: number; // Experience points - gains 1 per game day

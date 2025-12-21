@@ -73,6 +73,9 @@ const Index = () => {
     consumeResource,
     createSovereignty,
     updateSovereignty,
+    createArea,
+    deleteArea,
+    updateArea,
     renameTile,
     placeItem,
     toggleEnableMarkets,
@@ -300,6 +303,7 @@ const Index = () => {
           markets={world.markets}
           enableMarkets={world.enableMarkets}
           npcs={world.npcs}
+          areas={world.areas}
           facingDirection={facingDirection}
           isMoving={isMoving}
           onMove={handleMove}
@@ -394,6 +398,7 @@ const Index = () => {
             onClose={() => setSelectedTiles([])}
             onClaimAll={handleClaimAll}
             onGather={handleMultiGather}
+            onCreateArea={createArea}
           />
         </div>
       )}
@@ -416,9 +421,12 @@ const Index = () => {
         claimedTiles={claimedCount}
         username={username}
         sovereignty={world.sovereignty}
+        areas={world.areas}
         onColorChange={setUserColor}
         onCreateSovereignty={createSovereignty}
         onUpdateSovereignty={updateSovereignty}
+        onDeleteArea={deleteArea}
+        onUpdateArea={updateArea}
       />
 
       <WorldConfig

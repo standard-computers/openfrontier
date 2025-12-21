@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { GameWorld, Resource, Sovereignty, Market, NPC, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap, TILE_TYPES, generateNPCs } from '@/types/game';
+import { GameWorld, Resource, Sovereignty, Market, NPC, Area, Position, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap, TILE_TYPES, generateNPCs } from '@/types/game';
 import type { Json } from '@/integrations/supabase/types';
 
 // Hook version marker for HMR compatibility
@@ -100,6 +100,7 @@ export const useGameWorld = () => {
           coins?: number;
           userColor?: string;
           sovereignty?: Sovereignty;
+          areas?: Area[];
           health?: number;
           xp?: number;
         };
@@ -145,6 +146,7 @@ export const useGameWorld = () => {
           userColor: playerData.userColor || USER_COLORS[0],
           coins: playerData.coins ?? STARTING_COINS,
           sovereignty: playerData.sovereignty,
+          areas: playerData.areas ?? [],
           createdAt: worldData.created_at,
           health: playerData.health ?? STARTING_HEALTH,
           xp: calculatedXp,
@@ -179,6 +181,7 @@ export const useGameWorld = () => {
         coins: world.coins,
         userColor: world.userColor,
         sovereignty: world.sovereignty,
+        areas: world.areas,
         health: world.health,
         xp: world.xp,
       };
@@ -192,7 +195,7 @@ export const useGameWorld = () => {
 
     const timeoutId = setTimeout(savePlayerData, 1000);
     return () => clearTimeout(timeoutId);
-  }, [dbWorldId, world.playerPosition, world.inventory, world.coins, world.userColor, world.sovereignty, world.health, world.xp, loading]);
+  }, [dbWorldId, world.playerPosition, world.inventory, world.coins, world.userColor, world.sovereignty, world.areas, world.health, world.xp, loading]);
 
   // Health decay: -5 health per world day (1 real hour)
   useEffect(() => {
@@ -584,6 +587,46 @@ export const useGameWorld = () => {
         sovereignty: { ...prev.sovereignty, ...updates },
       };
     });
+  }, []);
+
+  const createArea = useCallback((name: string, color: string, tiles: Position[]): { success: boolean; message: string } => {
+    if (!name.trim()) {
+      return { success: false, message: 'Area name is required' };
+    }
+    if (tiles.length === 0) {
+      return { success: false, message: 'No tiles selected' };
+    }
+    
+    const newArea: Area = {
+      id: `area-${Date.now()}`,
+      name: name.trim(),
+      color,
+      tiles: tiles.map(t => ({ x: t.x, y: t.y })),
+      createdAt: Date.now(),
+    };
+    
+    setWorld(prev => ({
+      ...prev,
+      areas: [...(prev.areas || []), newArea],
+    }));
+    
+    return { success: true, message: `Created area "${name}" with ${tiles.length} tiles` };
+  }, []);
+
+  const deleteArea = useCallback((areaId: string) => {
+    setWorld(prev => ({
+      ...prev,
+      areas: (prev.areas || []).filter(a => a.id !== areaId),
+    }));
+  }, []);
+
+  const updateArea = useCallback((areaId: string, updates: Partial<Omit<Area, 'id' | 'createdAt'>>) => {
+    setWorld(prev => ({
+      ...prev,
+      areas: (prev.areas || []).map(a => 
+        a.id === areaId ? { ...a, ...updates } : a
+      ),
+    }));
   }, []);
 
   const craftResource = useCallback((resourceId: string, recipeId: string): { success: boolean; message: string } => {
@@ -985,6 +1028,9 @@ export const useGameWorld = () => {
     craftResource,
     createSovereignty,
     updateSovereignty,
+    createArea,
+    deleteArea,
+    updateArea,
     renameTile,
     consumeResource,
     takeDamage,
