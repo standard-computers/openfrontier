@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { GameWorld, Resource, MAX_HEALTH } from '@/types/game';
-import { Settings, User, Coins, ChevronRight, Hammer, ZoomIn, ZoomOut, Crown, Clock, Heart, Sparkles, BoxSelect, Trophy, Locate } from 'lucide-react';
+import { Settings, User, Coins, ChevronRight, Hammer, ZoomIn, ZoomOut, Crown, Clock, Heart, Sparkles, BoxSelect, Trophy, Locate, Store } from 'lucide-react';
 import ResourceIcon from './ResourceIcon';
 import InventoryItemModal from './InventoryItemModal';
 import { cn } from '@/lib/utils';
@@ -24,13 +24,14 @@ interface GameHUDProps {
   onOpenCrafting: () => void;
   onOpenClaimedTiles: () => void;
   onOpenRanking: () => void;
+  onOpenMarketplace: () => void;
   onZoom: (delta: number) => void;
   onConsumeResource: (resourceId: string) => { success: boolean; message: string };
   onToggleMultiSelect: () => void;
   onReturnToPlayer: () => void;
 }
 
-const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiSelectMode, members, cameraOffset, onSelectSlot, onOpenConfig, onOpenAccount, onOpenSovereignty, onOpenStats, onOpenCrafting, onOpenClaimedTiles, onOpenRanking, onZoom, onConsumeResource, onToggleMultiSelect, onReturnToPlayer }: GameHUDProps) => {
+const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiSelectMode, members, cameraOffset, onSelectSlot, onOpenConfig, onOpenAccount, onOpenSovereignty, onOpenStats, onOpenCrafting, onOpenClaimedTiles, onOpenRanking, onOpenMarketplace, onZoom, onConsumeResource, onToggleMultiSelect, onReturnToPlayer }: GameHUDProps) => {
   const getResource = (id: string | null) => resources.find(r => r.id === id);
   const [worldTime, setWorldTime] = useState({ days: 0, hours: 0 });
   const [selectedItem, setSelectedItem] = useState<{ resourceId: string; quantity: number } | null>(null);
@@ -100,6 +101,18 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
               </div>
             )}
           </button>
+
+          {/* Market button - shown when openMarkets is enabled */}
+          {(world.openMarkets !== false) && world.enableMarkets && (
+            <button 
+              onClick={onOpenMarketplace}
+              className="game-panel px-3 py-2 hover:bg-muted/50 transition-colors flex items-center gap-2"
+              title="Open Marketplace"
+            >
+              <Store className="w-4 h-4 text-emerald-400" />
+              <span className="text-sm font-medium">Market</span>
+            </button>
+          )}
         </div>
 
         <div className="flex flex-col items-end gap-2 pointer-events-auto">

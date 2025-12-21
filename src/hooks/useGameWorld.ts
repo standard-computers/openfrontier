@@ -23,6 +23,7 @@ const getDefaultWorld = (): GameWorld => {
     health: STARTING_HEALTH,
     xp: 0,
     enableMarkets: true,
+    openMarkets: true,
     markets: [],
   };
 };
@@ -152,6 +153,7 @@ export const useGameWorld = () => {
           xp: calculatedXp,
           joinCode: worldData.join_code,
           enableMarkets: worldData.enable_markets ?? false,
+          openMarkets: (worldData as any).open_markets ?? true,
           markets: (worldData.markets as unknown as Market[]) ?? [],
           enableNpcs,
           npcCount,
