@@ -165,7 +165,7 @@ const TileInfoPanel = ({
         <div className="flex items-center gap-2 mb-2">
           <Package className="w-4 h-4 text-muted-foreground" />
           <span className="text-sm font-medium">
-            {isClaimed ? 'Resources (collected)' : 'Available Resources'}
+            {tileResources.length > 0 ? 'Available Resources' : (isClaimed ? 'Resources (collected)' : 'No Resources')}
           </span>
         </div>
         
@@ -192,13 +192,15 @@ const TileInfoPanel = ({
                     </div>
                   </div>
                 </div>
-                {!isClaimed && canGather && (
+                {canGather ? (
                   <button
                     onClick={() => onGather(resource.id)}
                     className="btn btn-accent text-xs py-1 px-2"
                   >
                     Gather
                   </button>
+                ) : (
+                  <span className="text-xs text-muted-foreground">Not yours</span>
                 )}
               </div>
             ))}

@@ -236,6 +236,7 @@ const MultiTileInfoPanel = ({
             const tileValue = calculateTileValue(tile, resources);
             const isClaimed = !!tile.claimedBy;
             const isOwnClaim = tile.claimedBy === userId;
+            const canGather = !isClaimed || isOwnClaim; // Can gather from unclaimed or own tiles
             const distance = Math.max(
               Math.abs(position.x - playerPosition.x),
               Math.abs(position.y - playerPosition.y)
@@ -289,7 +290,7 @@ const MultiTileInfoPanel = ({
                               <ResourceIcon icon={resource.icon} iconType={resource.iconType} size="sm" />
                               <span className="text-xs">{resource.name}</span>
                             </div>
-                            {!isClaimed && (
+                            {canGather ? (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -299,6 +300,8 @@ const MultiTileInfoPanel = ({
                               >
                                 Gather
                               </button>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">Not yours</span>
                             )}
                           </div>
                         ))}
