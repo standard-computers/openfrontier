@@ -917,11 +917,15 @@ export const useGameWorld = () => {
       let newTiles = prev.map.tiles;
       let destroyedMessage = '';
       
-      // Handle useLife for the held item
-      if (heldResource.useLife) {
-        const lifeDecrease = heldResource.lifeDecreasePerUse ?? 100;
-        const currentLife = newInventory[selectedSlot].life ?? 100;
-        const newItemLife = currentLife - lifeDecrease;
+      // Handle durability loss for the held item (useLife or canInflictDamage items)
+      if (heldResource.useLife || heldResource.canInflictDamage) {
+        // For damage-dealing items, life decreases by the damage amount
+        // For useLife items, use lifeDecreasePerUse
+        const lifeDecrease = heldResource.canInflictDamage 
+          ? damageAmount 
+          : (heldResource.lifeDecreasePerUse ?? 100);
+        const currentItemLife = newInventory[selectedSlot].life ?? 100;
+        const newItemLife = currentItemLife - lifeDecrease;
         
         if (newItemLife <= 0) {
           // Item is fully consumed, decrease quantity
@@ -1100,7 +1104,7 @@ export const useGameWorld = () => {
       if (newInventory[slotIndex].resourceId === resource.id) {
         newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
       } else {
-        newInventory[slotIndex] = { resourceId: resource.id, quantity: 1 };
+        newInventory[slotIndex] = { resourceId: resource.id, quantity: 1, life: 100 };
       }
       
       result = { success: true, message: `Purchased ${resource.name}!` };
