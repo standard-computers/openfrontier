@@ -405,135 +405,244 @@ export const generateMap = (width: number, height: number, resources: Resource[]
   // Use provided probabilities or default
   const probs = tileProbabilities || DEFAULT_TILE_PROBABILITIES;
   
-  // Get active tile types sorted by probability
+  // Get active tile types sorted by probability (excluding water which is handled specially for rivers)
   const activeTiles = Object.entries(probs)
     .filter(([_, prob]) => prob > 0)
     .sort((a, b) => b[1] - a[1])
     .map(([type, prob]) => ({ type: type as TileType, probability: prob }));
   
-  // Create multiple noise layers for biome-like clustering
+  // Create noise layers with LARGER scales for tighter clustering
   const primaryNoise = createNoise(seed);
   const secondaryNoise = createNoise(seed + 1000);
-  const tertiaryNoise = createNoise(seed + 2000);
   const moistureNoise = createNoise(seed + 3000);
   const temperatureNoise = createNoise(seed + 4000);
+  const riverNoise = createNoise(seed + 5000);
+  const riverNoise2 = createNoise(seed + 6000);
   
-  // Scale factors for natural biome sizes
-  const primaryScale = 0.015; // Large biomes
-  const secondaryScale = 0.04; // Medium features
-  const tertiaryScale = 0.08; // Small details
+  // MUCH smaller scale factors = larger, tighter biome clusters
+  const primaryScale = 0.008; // Very large biomes
+  const secondaryScale = 0.015; // Large features
+  const riverScale = 0.025; // River meandering
   
-  // Assign each tile type a "biome signature" based on noise thresholds
-  // This maps noise values to tile types based on their probabilities
-  const assignTileType = (elevation: number, moisture: number, temperature: number, detail: number): TileType => {
-    // Normalize values to 0-1 range
+  // Pre-compute elevation map for river carving
+  const elevationMap: number[][] = [];
+  for (let y = 0; y < height; y++) {
+    elevationMap[y] = [];
+    for (let x = 0; x < width; x++) {
+      elevationMap[y][x] = fractalNoise(primaryNoise, x * primaryScale, y * primaryScale, 6, 0.45);
+    }
+  }
+  
+  // Generate rivers that flow from high to low elevation
+  const riverMap: boolean[][] = [];
+  for (let y = 0; y < height; y++) {
+    riverMap[y] = new Array(width).fill(false);
+  }
+  
+  // Calculate water percentage target
+  const waterProb = probs.water || 0;
+  const targetWaterTiles = Math.floor((waterProb / 100) * width * height);
+  let waterTilesPlaced = 0;
+  
+  // Generate river sources at high elevation points
+  const riverSources: { x: number; y: number }[] = [];
+  const numRivers = Math.max(3, Math.floor(Math.sqrt(width * height) / 8));
+  
+  for (let i = 0; i < numRivers * 3; i++) { // Generate more candidates than needed
+    const x = Math.floor(Math.random() * width);
+    const y = Math.floor(Math.random() * height);
+    if (elevationMap[y][x] > 0.3) { // High elevation
+      riverSources.push({ x, y });
+    }
+  }
+  
+  // Sort by elevation and take top sources
+  riverSources.sort((a, b) => elevationMap[b.y][b.x] - elevationMap[a.y][a.x]);
+  const selectedSources = riverSources.slice(0, numRivers);
+  
+  // Carve rivers from each source
+  for (const source of selectedSources) {
+    let { x, y } = source;
+    const maxLength = Math.max(width, height) * 2;
+    let length = 0;
+    const visited = new Set<string>();
+    
+    while (length < maxLength && waterTilesPlaced < targetWaterTiles * 0.7) {
+      const key = `${x},${y}`;
+      if (visited.has(key)) break;
+      visited.add(key);
+      
+      // Mark river tile with some width variation
+      const riverWidth = 1 + Math.floor(Math.random() * 2);
+      for (let dy = -riverWidth; dy <= riverWidth; dy++) {
+        for (let dx = -riverWidth; dx <= riverWidth; dx++) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist <= riverWidth && !riverMap[ny][nx]) {
+              riverMap[ny][nx] = true;
+              waterTilesPlaced++;
+            }
+          }
+        }
+      }
+      
+      // Find lowest neighboring cell with some randomness for meandering
+      let lowestElev = elevationMap[y][x];
+      let nextX = x, nextY = y;
+      const meander = fractalNoise(riverNoise, x * riverScale, y * riverScale, 2, 0.5);
+      const meander2 = fractalNoise(riverNoise2, x * riverScale * 1.5, y * riverScale * 1.5, 2, 0.5);
+      
+      // Check neighbors with preference for downhill
+      const neighbors = [
+        { dx: -1, dy: 0 }, { dx: 1, dy: 0 },
+        { dx: 0, dy: -1 }, { dx: 0, dy: 1 },
+        { dx: -1, dy: -1 }, { dx: 1, dy: -1 },
+        { dx: -1, dy: 1 }, { dx: 1, dy: 1 }
+      ];
+      
+      // Add meandering bias
+      const biasX = meander > 0 ? 1 : -1;
+      const biasY = meander2 > 0 ? 1 : -1;
+      
+      let found = false;
+      for (const { dx, dy } of neighbors) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+        
+        const neighborElev = elevationMap[ny][nx];
+        // Prefer downhill, but allow slight uphill with meander
+        const elevWithBias = neighborElev - (dx === biasX ? 0.05 : 0) - (dy === biasY ? 0.05 : 0);
+        
+        if (elevWithBias < lowestElev || (Math.random() < 0.1 && neighborElev < lowestElev + 0.1)) {
+          lowestElev = elevWithBias;
+          nextX = nx;
+          nextY = ny;
+          found = true;
+        }
+      }
+      
+      // Stop if we can't flow anymore or reached very low elevation
+      if (!found || elevationMap[y][x] < -0.4) break;
+      
+      x = nextX;
+      y = nextY;
+      length++;
+    }
+  }
+  
+  // Add lakes at low elevation areas to fill remaining water quota
+  if (waterTilesPlaced < targetWaterTiles) {
+    const lakesToAdd = targetWaterTiles - waterTilesPlaced;
+    const lowPoints: { x: number; y: number; elev: number }[] = [];
+    
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        if (!riverMap[y][x] && elevationMap[y][x] < -0.1) {
+          lowPoints.push({ x, y, elev: elevationMap[y][x] });
+        }
+      }
+    }
+    
+    lowPoints.sort((a, b) => a.elev - b.elev);
+    
+    for (let i = 0; i < Math.min(lowPoints.length, lakesToAdd); i++) {
+      const { x, y } = lowPoints[i];
+      riverMap[y][x] = true;
+    }
+  }
+  
+  // Assign tile type based on biome logic with TIGHT clustering
+  const assignTileType = (x: number, y: number): TileType => {
+    // If marked as river/water, return water
+    if (riverMap[y][x]) return 'water';
+    
+    const elevation = elevationMap[y][x];
+    const moisture = fractalNoise(moistureNoise, x * secondaryScale, y * secondaryScale, 5, 0.5);
+    
+    // Temperature varies with latitude
+    const latitudeTemp = 1 - Math.abs(y / height - 0.5) * 2;
+    const tempNoise = fractalNoise(temperatureNoise, x * primaryScale, y * primaryScale, 4, 0.45);
+    const temperature = latitudeTemp * 0.6 + tempNoise * 0.4;
+    
+    // Normalize values
     const e = (elevation + 1) / 2;
     const m = (moisture + 1) / 2;
     const t = (temperature + 1) / 2;
     
-    // Build weighted selection based on biome logic
-    const scores: { type: TileType; score: number }[] = [];
+    // Use HARD thresholds for tighter biome clustering (deterministic, no randomness)
+    // This creates distinct, well-defined biome regions
     
-    for (const { type, probability } of activeTiles) {
-      let score = probability; // Base score from probability
-      
-      // Apply biome-appropriate modifiers
-      switch (type) {
-        case 'water':
-          score *= e < 0.35 ? 3 : e < 0.45 ? 1.5 : 0.1; // Low elevation
-          break;
-        case 'sand':
-          score *= (e > 0.35 && e < 0.5) ? 2.5 : 0.5; // Coastal/low
-          score *= t > 0.5 ? 1.5 : 0.7; // Warmer areas
-          break;
-        case 'grass':
-          score *= (e > 0.4 && e < 0.7) ? 2 : 0.5; // Mid elevation
-          score *= (m > 0.3 && m < 0.7) ? 1.5 : 0.7; // Moderate moisture
-          break;
-        case 'forest':
-          score *= (e > 0.4 && e < 0.75) ? 2 : 0.4; // Mid elevation
-          score *= m > 0.5 ? 2 : 0.5; // High moisture
-          break;
-        case 'jungle':
-          score *= (e > 0.35 && e < 0.65) ? 2 : 0.3; // Lower-mid elevation
-          score *= m > 0.6 ? 2.5 : 0.3; // Very high moisture
-          score *= t > 0.6 ? 2 : 0.3; // Hot
-          break;
-        case 'swamp':
-          score *= e < 0.45 ? 2 : 0.3; // Low elevation
-          score *= m > 0.6 ? 2.5 : 0.2; // Very high moisture
-          break;
-        case 'dirt':
-          score *= (e > 0.4 && e < 0.6) ? 1.5 : 0.6; // Mid elevation
-          score *= (m > 0.2 && m < 0.5) ? 1.5 : 0.7; // Low-moderate moisture
-          break;
-        case 'stone':
-          score *= e > 0.6 ? 2.5 : 0.4; // High elevation
-          break;
-        case 'mountain':
-          score *= e > 0.75 ? 3 : e > 0.6 ? 1.5 : 0.1; // Very high elevation
-          break;
-        case 'snow':
-          score *= e > 0.6 ? 2 : 0.3; // High elevation
-          score *= t < 0.35 ? 3 : 0.2; // Cold
-          break;
-        case 'ice':
-          score *= e < 0.4 ? 1.5 : 0.5; // Can be low (frozen water)
-          score *= t < 0.25 ? 4 : 0.1; // Very cold
-          break;
-        case 'lava':
-          score *= e > 0.7 ? 2 : 0.2; // High elevation (volcanic)
-          score *= t > 0.8 ? 3 : 0.1; // Very hot
-          score *= detail > 0.6 ? 2 : 0.3; // Rare spots
-          break;
-      }
-      
-      scores.push({ type, score: Math.max(0.01, score) });
+    // Very high elevation = mountains
+    if (e > 0.72) return probs.mountain > 0 ? 'mountain' : 'stone';
+    
+    // High elevation
+    if (e > 0.62) {
+      if (t < 0.3 && probs.snow > 0) return 'snow';
+      return probs.stone > 0 ? 'stone' : 'mountain';
     }
     
-    // Weighted random selection based on scores
-    const totalScore = scores.reduce((sum, s) => sum + s.score, 0);
-    let pick = Math.random() * totalScore;
-    
-    for (const { type, score } of scores) {
-      pick -= score;
-      if (pick <= 0) return type;
+    // Very cold regions
+    if (t < 0.22) {
+      if (e < 0.35 && probs.ice > 0) return 'ice';
+      return probs.snow > 0 ? 'snow' : 'stone';
     }
     
-    return activeTiles[0]?.type || 'grass';
+    // Very hot regions
+    if (t > 0.78) {
+      if (e > 0.65 && probs.lava > 0 && m < 0.3) return 'lava';
+      if (m > 0.65 && probs.jungle > 0) return 'jungle';
+      if (m > 0.5 && probs.swamp > 0) return 'swamp';
+      if (m < 0.35 && probs.sand > 0) return 'sand';
+    }
+    
+    // Mid elevations - main land biomes
+    if (e > 0.45) {
+      if (m > 0.6 && probs.forest > 0) return 'forest';
+      if (m > 0.4 && probs.grass > 0) return 'grass';
+      if (m < 0.35 && probs.dirt > 0) return 'dirt';
+      return probs.grass > 0 ? 'grass' : 'dirt';
+    }
+    
+    // Lower elevations
+    if (e > 0.35) {
+      if (m > 0.65 && probs.swamp > 0) return 'swamp';
+      if (m > 0.5 && probs.forest > 0) return 'forest';
+      if (m < 0.3 && probs.sand > 0) return 'sand';
+      return probs.grass > 0 ? 'grass' : 'dirt';
+    }
+    
+    // Coastal/low areas
+    if (e > 0.28) {
+      if (probs.sand > 0) return 'sand';
+      return probs.grass > 0 ? 'grass' : 'dirt';
+    }
+    
+    // Very low = water (but already handled by riverMap mostly)
+    return probs.water > 0 ? 'water' : 'sand';
   };
   
-  // Generate initial tiles using biome logic
+  // Generate tiles
   for (let y = 0; y < height; y++) {
     const row: MapTile[] = [];
     for (let x = 0; x < width; x++) {
-      // Generate layered noise values
-      const elevation = fractalNoise(primaryNoise, x * primaryScale, y * primaryScale, 5, 0.5);
-      const moisture = fractalNoise(moistureNoise, x * secondaryScale, y * secondaryScale, 4, 0.6);
-      
-      // Temperature varies with latitude (y position)
-      const latitudeTemp = 1 - Math.abs(y / height - 0.5) * 2;
-      const tempNoise = fractalNoise(temperatureNoise, x * primaryScale, y * primaryScale, 3, 0.5);
-      const temperature = latitudeTemp * 0.7 + tempNoise * 0.3;
-      
-      const detail = fractalNoise(tertiaryNoise, x * tertiaryScale, y * tertiaryScale, 2, 0.4);
-      
-      const type = assignTileType(elevation, moisture, temperature, detail);
+      const type = assignTileType(x, y);
       const tileInfo = TILE_TYPES.find(t => t.type === type)!;
       row.push({ type, walkable: tileInfo.walkable, resources: [] });
     }
     tiles.push(row);
   }
   
-  // Apply cellular automata smoothing for natural biome edges
-  smoothTerrain(tiles, 4);
+  // Apply stronger cellular automata smoothing for even tighter clusters
+  smoothTerrainStrong(tiles, 5);
   
-  // Post-process: adjust tile distribution to match target probabilities
+  // Fine-tune distribution towards target probabilities
   adjustDistribution(tiles, probs);
   
   seedResources(tiles, resources);
   
-  // Find a valid spawn point (walkable tile near center)
   const spawnPoint = findSpawnPoint(tiles, width, height);
   
   return {
@@ -544,6 +653,61 @@ export const generateMap = (width: number, height: number, resources: Resource[]
     tiles,
     spawnPoint,
   };
+};
+
+// Stronger smoothing that enforces tighter clusters
+const smoothTerrainStrong = (tiles: MapTile[][], iterations: number) => {
+  const height = tiles.length;
+  const width = tiles[0].length;
+  
+  for (let iter = 0; iter < iterations; iter++) {
+    const changes: { x: number; y: number; type: TileType }[] = [];
+    
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        const neighbors: TileType[] = [];
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            if (dx !== 0 || dy !== 0) {
+              neighbors.push(tiles[y + dy][x + dx].type);
+            }
+          }
+        }
+        
+        // Count occurrences of each type
+        const counts = new Map<TileType, number>();
+        neighbors.forEach(t => counts.set(t, (counts.get(t) || 0) + 1));
+        
+        const currentType = tiles[y][x].type;
+        const currentCount = counts.get(currentType) || 0;
+        
+        // If current tile has fewer than 3 same-type neighbors, consider changing
+        if (currentCount < 3) {
+          let maxCount = 0;
+          let dominantType = currentType;
+          
+          counts.forEach((count, type) => {
+            // Prefer similar tile types for transitions
+            if (count > maxCount) {
+              maxCount = count;
+              dominantType = type;
+            }
+          });
+          
+          // Change if dominant type has strong presence
+          if (maxCount >= 4 && dominantType !== currentType) {
+            changes.push({ x, y, type: dominantType });
+          }
+        }
+      }
+    }
+    
+    // Apply changes
+    for (const { x, y, type } of changes) {
+      const tileInfo = TILE_TYPES.find(t => t.type === type)!;
+      tiles[y][x] = { type, walkable: tileInfo.walkable, resources: [] };
+    }
+  }
 };
 
 // Adjust tile distribution to better match target probabilities while preserving clusters
