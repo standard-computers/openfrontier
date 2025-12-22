@@ -1,20 +1,109 @@
 import { useEffect, useCallback, useRef } from 'react';
-import { GameWorld, Stranger, WorldMap, Resource, TILE_TYPES, MAX_HEALTH } from '@/types/game';
+import { GameWorld, Stranger, WorldMap, Resource, TILE_TYPES, MAX_HEALTH, calculateTileValue, StrangerAllegiance, Sovereignty } from '@/types/game';
 
 const STRANGER_ACTION_INTERVAL = 3000; // Strangers act every 3 seconds (slower than NPCs)
 const STRANGER_GATHER_CHANCE = 0.4; // 40% chance to gather resources
 const STRANGER_CONSUME_CHANCE = 0.3; // 30% chance to consume food when low health
 const STRANGER_MOVE_CHANCE = 0.8; // 80% chance to move (they wander more)
+const STRANGER_ALLEGIANCE_CHANCE = 0.05; // 5% chance per tick to evaluate allegiance
+const ALLEGIANCE_VALUE_THRESHOLD = 100; // Minimum territory value to attract allegiance
+
+interface SovereigntyInfo {
+  userId: string;
+  username: string;
+  sovereignty: Sovereignty;
+  totalValue: number;
+  tileCount: number;
+}
 
 interface UseStrangerBehaviorProps {
   world: GameWorld;
   setWorld: React.Dispatch<React.SetStateAction<GameWorld>>;
   saveMapData: (mapData?: WorldMap) => Promise<void>;
+  memberSovereignties?: Map<string, { username: string; sovereignty?: Sovereignty }>;
 }
 
-export const useStrangerBehavior = ({ world, setWorld, saveMapData }: UseStrangerBehaviorProps) => {
+export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovereignties }: UseStrangerBehaviorProps) => {
   const lastUpdateRef = useRef<number>(0);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Calculate sovereignty values from map claims
+  const calculateSovereigntyValues = useCallback((map: WorldMap, resources: Resource[]): SovereigntyInfo[] => {
+    if (!memberSovereignties || memberSovereignties.size === 0) return [];
+    
+    // Calculate total value for each claimant
+    const claimValues = new Map<string, { totalValue: number; tileCount: number }>();
+    
+    for (let y = 0; y < map.height; y++) {
+      for (let x = 0; x < map.width; x++) {
+        const tile = map.tiles[y]?.[x];
+        if (tile?.claimedBy && !tile.claimedBy.startsWith('npc-')) {
+          const current = claimValues.get(tile.claimedBy) || { totalValue: 0, tileCount: 0 };
+          const tileValue = calculateTileValue(tile, resources);
+          claimValues.set(tile.claimedBy, {
+            totalValue: current.totalValue + tileValue,
+            tileCount: current.tileCount + 1,
+          });
+        }
+      }
+    }
+    
+    // Build sovereignty info array
+    const sovereigntyInfos: SovereigntyInfo[] = [];
+    claimValues.forEach((value, claimerId) => {
+      const memberInfo = memberSovereignties.get(claimerId);
+      if (memberInfo?.sovereignty) {
+        sovereigntyInfos.push({
+          userId: claimerId,
+          username: memberInfo.username,
+          sovereignty: memberInfo.sovereignty,
+          totalValue: value.totalValue,
+          tileCount: value.tileCount,
+        });
+      }
+    });
+    
+    return sovereigntyInfos.sort((a, b) => b.totalValue - a.totalValue);
+  }, [memberSovereignties]);
+
+  // Evaluate if stranger should pledge allegiance
+  const evaluateAllegiance = useCallback((stranger: Stranger, map: WorldMap, resources: Resource[]): Stranger => {
+    // Only evaluate sometimes
+    if (Math.random() > STRANGER_ALLEGIANCE_CHANCE) return stranger;
+    
+    const sovereignties = calculateSovereigntyValues(map, resources);
+    if (sovereignties.length === 0) return stranger;
+    
+    // Find the most valuable sovereignty that meets threshold
+    const topSovereignty = sovereignties[0];
+    if (topSovereignty.totalValue < ALLEGIANCE_VALUE_THRESHOLD) {
+      // No sovereignty is valuable enough, possibly remove allegiance
+      if (stranger.allegiance && Math.random() < 0.1) {
+        return { ...stranger, allegiance: undefined };
+      }
+      return stranger;
+    }
+    
+    // Already pledged to this sovereignty?
+    if (stranger.allegiance?.userId === topSovereignty.userId) {
+      return stranger;
+    }
+    
+    // Weight by value - higher value = more likely to attract allegiance
+    const attractionChance = Math.min(0.8, topSovereignty.totalValue / 1000);
+    if (Math.random() < attractionChance) {
+      const newAllegiance: StrangerAllegiance = {
+        userId: topSovereignty.userId,
+        username: topSovereignty.username,
+        sovereigntyName: topSovereignty.sovereignty.name,
+        sovereigntyFlag: topSovereignty.sovereignty.flag,
+        pledgedAt: Date.now(),
+      };
+      return { ...stranger, allegiance: newAllegiance };
+    }
+    
+    return stranger;
+  }, [calculateSovereigntyValues]);
 
   // Find adjacent walkable tiles
   const getAdjacentTiles = useCallback((x: number, y: number, map: WorldMap): { x: number; y: number }[] => {
@@ -152,8 +241,11 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData }: UseStrange
       updatedStranger = strangerMove(updatedStranger, currentMap);
     }
     
+    // Priority 4: Evaluate allegiance to sovereignties
+    updatedStranger = evaluateAllegiance(updatedStranger, currentMap, resources);
+    
     return { stranger: updatedStranger, mapTiles: newMapTiles };
-  }, [strangerGatherFromTile, strangerConsumeResource, strangerMove]);
+  }, [strangerGatherFromTile, strangerConsumeResource, strangerMove, evaluateAllegiance]);
 
   // Main stranger behavior loop
   useEffect(() => {

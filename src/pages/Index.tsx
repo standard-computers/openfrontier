@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameWorld, WorldMember } from '@/hooks/useGameWorld';
 import { useNPCBehavior } from '@/hooks/useNPCBehavior';
@@ -20,7 +20,8 @@ import UserProfilePanel from '@/components/game/UserProfilePanel';
 import ClaimedTilesPanel from '@/components/game/ClaimedTilesPanel';
 import MarketplacePanel from '@/components/game/MarketplacePanel';
 import PlayerRankingPanel from '@/components/game/PlayerRankingPanel';
-import { Market, Position, calculateTileValue } from '@/types/game';
+import StrangerInfoPanel from '@/components/game/StrangerInfoPanel';
+import { Market, Position, calculateTileValue, Sovereignty, Stranger } from '@/types/game';
 import { toast } from 'sonner';
 
 const MIN_TILE_SIZE = 12;
@@ -51,6 +52,7 @@ const Index = () => {
   const [multiSelectMode, setMultiSelectMode] = useState(false);
   const [selectedTiles, setSelectedTiles] = useState<Position[]>([]);
   const [cameraPosition, setCameraPosition] = useState<Position | null>(null); // null = follow player
+  const [selectedStranger, setSelectedStranger] = useState<Stranger | null>(null);
   
   const {
     world,
@@ -91,11 +93,30 @@ const Index = () => {
     saveMapData,
   } = useGameWorld();
 
+  // Build member sovereignty map for stranger allegiance
+  const memberSovereignties = useMemo(() => {
+    const map = new Map<string, { username: string; sovereignty?: Sovereignty }>();
+    // Add current player's sovereignty
+    if (world.userId && world.sovereignty) {
+      map.set(world.userId, { username: username || 'Player', sovereignty: world.sovereignty });
+    }
+    // Add other members (they would need to have their sovereignty loaded separately)
+    // For now we only track the current player's sovereignty since that's what we have access to
+    members.forEach(member => {
+      if (member.userId !== world.userId) {
+        // We don't have direct access to other members' sovereignties from here
+        // but we include them so the system knows about them
+        map.set(member.userId, { username: member.username });
+      }
+    });
+    return map;
+  }, [world.userId, world.sovereignty, username, members]);
+
   // Enable NPC behavior
   useNPCBehavior({ world, setWorld, saveMapData });
   
   // Enable Stranger behavior
-  useStrangerBehavior({ world, setWorld, saveMapData });
+  useStrangerBehavior({ world, setWorld, saveMapData, memberSovereignties });
 
   useEffect(() => {
     if (!loading && !user) {
@@ -366,6 +387,7 @@ const Index = () => {
           onTileSelect={selectTile}
           onMultiTileSelect={handleMultiTileSelect}
           onZoom={handleZoom}
+          onStrangerClick={setSelectedStranger}
         />
         
         <GameHUD
@@ -583,6 +605,13 @@ const Index = () => {
           setRankingOpen(false);
         }}
       />
+
+      {selectedStranger && (
+        <StrangerInfoPanel
+          stranger={selectedStranger}
+          onClose={() => setSelectedStranger(null)}
+        />
+      )}
     </div>
   );
 };

@@ -29,6 +29,7 @@ interface GameMapProps {
   onTileSelect: (x: number, y: number) => void;
   onMultiTileSelect: (tiles: Position[]) => void;
   onZoom: (delta: number) => void;
+  onStrangerClick?: (stranger: Stranger) => void;
 }
 
 const GameMap = ({
@@ -53,12 +54,14 @@ const GameMap = ({
   onTileSelect,
   onMultiTileSelect,
   onZoom,
+  onStrangerClick,
 }: GameMapProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewportSize, setViewportSize] = useState({ tilesX: 30, tilesY: 20 });
   const [dragStart, setDragStart] = useState<Position | null>(null);
   const [dragEnd, setDragEnd] = useState<Position | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [hoveredStranger, setHoveredStranger] = useState<Stranger | null>(null);
 
   const updateViewport = useCallback(() => {
     if (containerRef.current) {
@@ -449,20 +452,47 @@ const GameMap = ({
               {/* Render stranger on tile */}
               {strangerOnTile && !isPlayerHere && !npcOnTile && (
                 <div 
-                  className="absolute z-14 flex items-end justify-center pointer-events-none opacity-80"
+                  className="absolute z-14 flex items-end justify-center cursor-pointer group"
                   style={{
                     left: 0,
                     right: 0,
                     bottom: 0,
                     height: tileSize * 2,
                   }}
+                  onMouseEnter={() => setHoveredStranger(strangerOnTile)}
+                  onMouseLeave={() => setHoveredStranger(null)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStrangerClick?.(strangerOnTile);
+                  }}
                 >
-                  <PixelCharacter 
-                    direction="south" 
-                    isMoving={false} 
-                    size={tileSize} 
-                    userColor={strangerOnTile.color}
-                  />
+                  <div className="opacity-80 group-hover:opacity-100 transition-opacity">
+                    <PixelCharacter 
+                      direction="south" 
+                      isMoving={false} 
+                      size={tileSize} 
+                      userColor={strangerOnTile.color}
+                    />
+                  </div>
+                  {/* Hover tooltip */}
+                  {hoveredStranger?.id === strangerOnTile.id && (
+                    <div 
+                      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-card/95 border border-border rounded shadow-lg text-xs whitespace-nowrap z-50 pointer-events-none"
+                      style={{ minWidth: '120px' }}
+                    >
+                      <div className="font-medium text-foreground text-center">{strangerOnTile.name}</div>
+                      <div className="text-muted-foreground text-center mt-0.5">
+                        {strangerOnTile.allegiance ? (
+                          <span className="flex items-center justify-center gap-1">
+                            <span>{strangerOnTile.allegiance.sovereigntyFlag}</span>
+                            <span>{strangerOnTile.allegiance.sovereigntyName}</span>
+                          </span>
+                        ) : (
+                          <span className="italic">No Allegiance</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
               {/* Show claim indicator */}
