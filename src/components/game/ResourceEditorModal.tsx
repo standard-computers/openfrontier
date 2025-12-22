@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react';
 import { Resource, Recipe, RecipeIngredient, TileType, TILE_TYPES, RARITY_COLORS } from '@/types/game';
-import { X, Save, Trash2, Plus, ChevronRight, Upload, Smile, Image, ChevronDown, Tag, Copy } from 'lucide-react';
+import { X, Save, Trash2, Plus, ChevronRight, Upload, Smile, Image, ChevronDown, Tag, Copy, ClipboardPaste } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,9 +37,78 @@ const ResourceEditorModal = ({
   const [uploading, setUploading] = useState(false);
   const [newCategoryInput, setNewCategoryInput] = useState('');
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [showCopyFromIdDialog, setShowCopyFromIdDialog] = useState(false);
+  const [copyFromIdInput, setCopyFromIdInput] = useState('');
+  const [loadingCopyFrom, setLoadingCopyFrom] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getResource = (id: string) => allResources.find(r => r.id === id);
+
+  const handleCopyFromId = async () => {
+    const resourceId = copyFromIdInput.trim();
+    if (!resourceId) {
+      toast.error('Please enter a resource ID');
+      return;
+    }
+
+    setLoadingCopyFrom(true);
+    try {
+      const { data, error } = await supabase
+        .from('resource_marketplace')
+        .select('*')
+        .eq('id', resourceId)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!data) {
+        toast.error('Resource not found with that ID');
+        return;
+      }
+
+      // Prefill form with copied resource data (keep the new resource's ID)
+      setForm({
+        ...form,
+        name: data.name + ' (Copy)',
+        icon: data.icon,
+        iconType: data.icon?.startsWith('http') ? 'image' : 'emoji',
+        rarity: data.rarity as Resource['rarity'],
+        description: data.description || '',
+        gatherTime: data.gather_time || 1000,
+        spawnTiles: data.spawn_tiles as Resource['spawnTiles'],
+        spawnChance: Number(data.spawn_chance),
+        coinValue: data.base_value,
+        consumable: data.consumable || false,
+        healthGain: data.health_gain || 0,
+        canInflictDamage: data.can_inflict_damage || false,
+        damage: data.damage || 0,
+        recipes: data.recipe ? [data.recipe as unknown as Recipe] : [],
+        isContainer: data.is_container || false,
+        isFloating: data.is_floating || false,
+        display: data.display || false,
+        placeable: data.placeable || false,
+        passable: data.passable || false,
+        category: data.category || undefined,
+        hasLimitedLifetime: data.has_limited_lifetime || false,
+        lifetimeHours: data.lifetime_hours ?? undefined,
+        tileWidth: data.tile_width ?? 1,
+        tileHeight: data.tile_height ?? 1,
+        useLife: data.use_life || false,
+        lifeDecreasePerUse: data.life_decrease_per_use ?? 100,
+      });
+
+      // Update icon mode based on copied resource
+      setIconMode(data.icon?.startsWith('http') ? 'image' : 'emoji');
+
+      toast.success(`Copied values from "${data.name}"`);
+      setShowCopyFromIdDialog(false);
+      setCopyFromIdInput('');
+    } catch (err: any) {
+      toast.error('Failed to fetch resource: ' + err.message);
+    } finally {
+      setLoadingCopyFrom(false);
+    }
+  };
 
   const toggleSpawnTile = (tileType: TileType) => {
     const tiles = form.spawnTiles.includes(tileType)
@@ -179,9 +249,20 @@ const ResourceEditorModal = ({
             <ResourceIcon icon={form.icon} iconType={form.iconType} size="lg" />
             <h2 className="font-semibold">{isNew ? 'New Resource' : form.name}</h2>
           </div>
-          <button onClick={onClose} className="btn btn-ghost p-1">
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {isNew && (
+              <button
+                onClick={() => setShowCopyFromIdDialog(true)}
+                className="btn btn-ghost p-1.5 text-muted-foreground hover:text-foreground"
+                title="Copy from Resource ID"
+              >
+                <ClipboardPaste className="w-5 h-5" />
+              </button>
+            )}
+            <button onClick={onClose} className="btn btn-ghost p-1">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -990,6 +1071,45 @@ const ResourceEditorModal = ({
           )}
         </div>
       </div>
+
+      {/* Copy from ID Dialog */}
+      <Dialog open={showCopyFromIdDialog} onOpenChange={setShowCopyFromIdDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Copy from Resource ID</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              Paste a resource ID to copy all its values into this new resource.
+            </p>
+            <input
+              value={copyFromIdInput}
+              onChange={(e) => setCopyFromIdInput(e.target.value)}
+              placeholder="Paste resource ID here..."
+              className="input-field w-full font-mono text-sm"
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => {
+                setShowCopyFromIdDialog(false);
+                setCopyFromIdInput('');
+              }}
+              className="btn btn-ghost"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCopyFromId}
+              disabled={loadingCopyFrom || !copyFromIdInput.trim()}
+              className="btn btn-primary"
+            >
+              {loadingCopyFrom ? 'Loading...' : 'Copy Values'}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
