@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useWorlds } from '@/hooks/useWorlds';
 import ResourceRepository from '@/components/game/ResourceRepository';
 import ResourceIcon from '@/components/game/ResourceIcon';
-import { Resource } from '@/types/game';
+import { Resource, TileProbabilities, DEFAULT_TILE_PROBABILITIES, TILE_TYPES, TileType } from '@/types/game';
 import { supabase } from '@/integrations/supabase/client';
 
 const WorldsDashboard = () => {
@@ -22,7 +22,7 @@ const WorldsDashboard = () => {
   const [isJoining, setIsJoining] = useState(false);
   const [joinCode, setJoinCode] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [createTab, setCreateTab] = useState<'settings' | 'resources'>('settings');
+  const [createTab, setCreateTab] = useState<'settings' | 'resources' | 'terrain'>('settings');
   const [selectedResources, setSelectedResources] = useState<Resource[]>([]);
   const [repositoryOpen, setRepositoryOpen] = useState(false);
   const [addingAllResources, setAddingAllResources] = useState(false);
@@ -33,6 +33,23 @@ const WorldsDashboard = () => {
   const [npcCount, setNpcCount] = useState(4);
   const [enableStrangers, setEnableStrangers] = useState(false);
   const [strangerDensity, setStrangerDensity] = useState(0.02);
+  
+  // Tile probabilities
+  const [tileProbabilities, setTileProbabilities] = useState<TileProbabilities>({ ...DEFAULT_TILE_PROBABILITIES });
+  
+  // Calculate total allocation
+  const totalAllocation = Object.values(tileProbabilities).reduce((sum, v) => sum + v, 0);
+  
+  const handleTileProbabilityChange = (tileType: TileType, value: number) => {
+    setTileProbabilities(prev => ({
+      ...prev,
+      [tileType]: Math.max(0, Math.min(100, value))
+    }));
+  };
+  
+  const resetProbabilities = () => {
+    setTileProbabilities({ ...DEFAULT_TILE_PROBABILITIES });
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -57,6 +74,7 @@ const WorldsDashboard = () => {
         npcCount: enableNpcs ? npcCount : 0,
         enableStrangers,
         strangerDensity: enableStrangers ? strangerDensity : 0.02,
+        tileProbabilities: totalAllocation === 100 ? tileProbabilities : undefined,
       });
       localStorage.setItem('currentWorldId', worldId);
       toast.success(`World created! (${width}×${height} tiles)`);
@@ -277,6 +295,22 @@ const WorldsDashboard = () => {
                 {selectedResources.length > 0 && (
                   <span className="bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full">
                     {selectedResources.length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setCreateTab('terrain')}
+                className={cn(
+                  "px-4 py-2 text-sm font-medium rounded-t transition-colors flex items-center gap-2",
+                  createTab === 'terrain' 
+                    ? "bg-primary/20 text-primary border-b-2 border-primary" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                🗺️ Terrain
+                {totalAllocation !== 100 && (
+                  <span className="bg-destructive text-destructive-foreground text-xs px-1.5 py-0.5 rounded-full">
+                    !
                   </span>
                 )}
               </button>
@@ -504,6 +538,77 @@ const WorldsDashboard = () => {
                       ))}
                     </div>
                   </div>
+                )}
+              </div>
+            )}
+
+            {createTab === 'terrain' && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    Adjust tile type distribution (must total 100%).
+                  </p>
+                  <button
+                    onClick={resetProbabilities}
+                    className="btn text-xs"
+                  >
+                    Reset to Default
+                  </button>
+                </div>
+                
+                {/* Total indicator */}
+                <div className={cn(
+                  "p-3 rounded-lg flex items-center justify-between",
+                  totalAllocation === 100 ? "bg-primary/20" : "bg-destructive/20"
+                )}>
+                  <span className="text-sm font-medium">Total Allocation:</span>
+                  <span className={cn(
+                    "font-bold",
+                    totalAllocation === 100 ? "text-primary" : "text-destructive"
+                  )}>
+                    {totalAllocation}%
+                    {totalAllocation !== 100 && (
+                      <span className="text-xs font-normal ml-2">
+                        ({totalAllocation > 100 ? `${totalAllocation - 100}% over` : `${100 - totalAllocation}% remaining`})
+                      </span>
+                    )}
+                  </span>
+                </div>
+                
+                {/* Tile type sliders */}
+                <div className="grid grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2">
+                  {TILE_TYPES.map(tile => (
+                    <div key={tile.type} className="p-2 bg-secondary/30 rounded-lg space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className={cn("w-4 h-4 rounded", tile.color)} />
+                          <span className="text-sm font-medium capitalize">{tile.type}</span>
+                        </div>
+                        <input
+                          type="number"
+                          min={0}
+                          max={100}
+                          value={tileProbabilities[tile.type]}
+                          onChange={(e) => handleTileProbabilityChange(tile.type, parseInt(e.target.value) || 0)}
+                          className="input-field w-16 text-center text-sm py-1"
+                        />
+                      </div>
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={tileProbabilities[tile.type]}
+                        onChange={(e) => handleTileProbabilityChange(tile.type, parseInt(e.target.value))}
+                        className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                      />
+                    </div>
+                  ))}
+                </div>
+                
+                {!TILE_TYPES.find(t => !t.walkable && tileProbabilities[t.type] > 0) && (
+                  <p className="text-xs text-muted-foreground">
+                    💡 Tip: Water and lava are not walkable - use them as natural barriers.
+                  </p>
                 )}
               </div>
             )}

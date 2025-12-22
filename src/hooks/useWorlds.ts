@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { generateMap, Resource } from '@/types/game';
+import { generateMap, Resource, TileProbabilities } from '@/types/game';
 import type { Json } from '@/integrations/supabase/types';
 
 interface WorldMembership {
@@ -87,13 +87,14 @@ export const useWorlds = (userId: string | undefined) => {
       npcCount?: number;
       enableStrangers?: boolean;
       strangerDensity?: number;
+      tileProbabilities?: TileProbabilities;
     }
   ) => {
     if (!userId) throw new Error('Not authenticated');
 
     // Use custom resources if provided, otherwise empty array
     const resources = customResources;
-    const map = generateMap(width, height, resources);
+    const map = generateMap(width, height, resources, options?.tileProbabilities);
 
     const playerData = {
       position: map.spawnPoint,

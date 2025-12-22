@@ -1,5 +1,24 @@
 export type TileType = 'grass' | 'water' | 'sand' | 'stone' | 'dirt' | 'forest' | 'snow' | 'swamp' | 'lava' | 'ice' | 'mountain' | 'jungle';
 
+// Tile type probabilities (must sum to 100)
+export type TileProbabilities = Record<TileType, number>;
+
+// Default Earth-like distribution
+export const DEFAULT_TILE_PROBABILITIES: TileProbabilities = {
+  water: 30,
+  grass: 25,
+  forest: 15,
+  sand: 8,
+  dirt: 5,
+  stone: 5,
+  mountain: 4,
+  snow: 3,
+  swamp: 2,
+  jungle: 1,
+  ice: 1,
+  lava: 1,
+};
+
 export interface Position {
   x: number;
   y: number;
@@ -379,37 +398,53 @@ const fractalNoise = (noise: (x: number, y: number) => number, x: number, y: num
   return total / maxValue;
 };
 
-export const generateMap = (width: number, height: number, resources: Resource[]): WorldMap => {
+export const generateMap = (width: number, height: number, resources: Resource[], tileProbabilities?: TileProbabilities): WorldMap => {
   const tiles: MapTile[][] = [];
   const seed = Math.floor(Math.random() * 2147483647);
   
-  // Create different noise layers for terrain features
-  const elevationNoise = createNoise(seed);
-  const moistureNoise = createNoise(seed + 1000);
-  const temperatureNoise = createNoise(seed + 2000);
-  const detailNoise = createNoise(seed + 3000);
+  // Use provided probabilities or default
+  const probs = tileProbabilities || DEFAULT_TILE_PROBABILITIES;
   
-  // Scale factors for natural-looking terrain
-  const elevationScale = 0.02;
-  const moistureScale = 0.015;
-  const temperatureScale = 0.01;
+  // Build cumulative probability distribution
+  const sortedTiles = Object.entries(probs)
+    .filter(([_, prob]) => prob > 0)
+    .sort((a, b) => b[1] - a[1]); // Sort by probability descending for efficiency
+  
+  let cumulative = 0;
+  const distribution: { type: TileType; threshold: number }[] = [];
+  for (const [type, prob] of sortedTiles) {
+    cumulative += prob;
+    distribution.push({ type: type as TileType, threshold: cumulative });
+  }
+  
+  // Create noise layers for natural clustering
+  const clusterNoise = createNoise(seed);
+  const detailNoise = createNoise(seed + 1000);
+  const clusterScale = 0.03;
   const detailScale = 0.08;
   
+  // Generate tiles based on probability with noise-based clustering
   for (let y = 0; y < height; y++) {
     const row: MapTile[] = [];
     for (let x = 0; x < width; x++) {
-      // Generate multi-layered noise values
-      const elevation = fractalNoise(elevationNoise, x * elevationScale, y * elevationScale, 5, 0.5);
-      const moisture = fractalNoise(moistureNoise, x * moistureScale, y * moistureScale, 4, 0.6);
-      const detail = fractalNoise(detailNoise, x * detailScale, y * detailScale, 2, 0.4);
+      // Use noise to create natural clusters
+      const clusterValue = fractalNoise(clusterNoise, x * clusterScale, y * clusterScale, 4, 0.5);
+      const detailValue = fractalNoise(detailNoise, x * detailScale, y * detailScale, 2, 0.4);
       
-      // Temperature based on latitude (y position) with noise variation
-      const latitudeTemp = 1 - Math.abs(y / height - 0.5) * 2; // Warmer in middle
-      const tempVariation = fractalNoise(temperatureNoise, x * temperatureScale, y * temperatureScale, 3, 0.5) * 0.3;
-      const temperature = latitudeTemp + tempVariation;
+      // Combine noise with random value for probability selection
+      // This creates clusters while respecting overall probabilities
+      const baseRandom = Math.random() * 100;
+      const noiseInfluence = (clusterValue + 1) * 25; // 0-50 range
+      const adjustedRandom = (baseRandom + noiseInfluence + detailValue * 10) % 100;
       
-      // Determine tile type based on biome logic
-      let type: TileType = determineBiome(elevation, moisture, temperature, detail);
+      // Select tile type based on cumulative probability
+      let type: TileType = 'grass';
+      for (const { type: tileType, threshold } of distribution) {
+        if (adjustedRandom <= threshold) {
+          type = tileType;
+          break;
+        }
+      }
       
       const tileInfo = TILE_TYPES.find(t => t.type === type)!;
       row.push({ type, walkable: tileInfo.walkable, resources: [] });
@@ -418,7 +453,7 @@ export const generateMap = (width: number, height: number, resources: Resource[]
   }
   
   // Apply cellular automata smoothing for more natural edges
-  smoothTerrain(tiles, 2);
+  smoothTerrain(tiles, 3);
   
   seedResources(tiles, resources);
   
