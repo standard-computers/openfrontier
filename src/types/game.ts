@@ -35,6 +35,7 @@ export interface Resource {
   damage?: number;
   isContainer?: boolean; // Can hold inventory
   isFloating?: boolean; // Visible on tile, gathered when entering
+  display?: boolean; // Always display on tile visually (even if not floating)
   placeable?: boolean; // Can be placed on a tile
   passable?: boolean; // If placeable, can players walk through it
   category?: string; // Resource category for filtering
