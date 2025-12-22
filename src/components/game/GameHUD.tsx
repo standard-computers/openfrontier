@@ -277,8 +277,8 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
                           {slot.quantity}
                         </span>
                       )}
-                      {/* Durability bar for items with useLife */}
-                      {resource.useLife && slot.life !== undefined && slot.life < 100 && (
+                      {/* Durability bar for items with useLife or damage-dealing items */}
+                      {(resource.useLife || resource.canInflictDamage) && slot.life !== undefined && slot.life < 100 && (
                         <div className="absolute bottom-0 left-0.5 right-0.5 h-1 bg-muted/50 rounded-full overflow-hidden">
                           <div 
                             className={`h-full transition-all duration-300 ${

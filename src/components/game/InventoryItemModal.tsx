@@ -28,7 +28,7 @@ const InventoryItemModal = ({
 }: InventoryItemModalProps) => {
   if (!resource) return null;
   
-  const showLife = resource.useLife && life !== undefined;
+  const showLife = (resource.useLife || resource.canInflictDamage) && life !== undefined;
 
   const handleConsume = () => {
     const result = onConsume(resource.id);
