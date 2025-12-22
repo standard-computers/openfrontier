@@ -364,7 +364,7 @@ export const useGameWorld = () => {
           if (newInventory[slotIndex].resourceId === resourceId) {
             newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
           } else {
-            newInventory[slotIndex] = { resourceId, quantity: 1 };
+            newInventory[slotIndex] = { resourceId, quantity: 1, life: 100 };
           }
         }
       }
@@ -485,7 +485,7 @@ export const useGameWorld = () => {
       if (newInventory[slotIndex].resourceId === resourceId) {
         newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
       } else {
-        newInventory[slotIndex] = { resourceId, quantity: 1 };
+        newInventory[slotIndex] = { resourceId, quantity: 1, life: 100 };
       }
       
       return {
@@ -698,7 +698,7 @@ export const useGameWorld = () => {
       for (let i = 0; i < newInventory.length && outputRemaining > 0; i++) {
         if (newInventory[i].resourceId === null) {
           const add = Math.min(99, outputRemaining);
-          newInventory[i] = { resourceId, quantity: add };
+          newInventory[i] = { resourceId, quantity: add, life: 100 };
           outputRemaining -= add;
         }
       }
@@ -920,17 +920,26 @@ export const useGameWorld = () => {
       // Handle useLife for the held item
       if (heldResource.useLife) {
         const lifeDecrease = heldResource.lifeDecreasePerUse ?? 100;
-        // For simplicity, we consume the item if lifeDecrease >= 100
-        if (lifeDecrease >= 100) {
+        const currentLife = newInventory[selectedSlot].life ?? 100;
+        const newItemLife = currentLife - lifeDecrease;
+        
+        if (newItemLife <= 0) {
+          // Item is fully consumed, decrease quantity
           newInventory[selectedSlot] = {
             ...newInventory[selectedSlot],
-            quantity: newInventory[selectedSlot].quantity - 1
+            quantity: newInventory[selectedSlot].quantity - 1,
+            life: 100 // Reset life for the next item in stack
           };
           if (newInventory[selectedSlot].quantity <= 0) {
             newInventory[selectedSlot] = { resourceId: null, quantity: 0 };
           }
+        } else {
+          // Just decrease life
+          newInventory[selectedSlot] = {
+            ...newInventory[selectedSlot],
+            life: newItemLife
+          };
         }
-        // TODO: Implement partial life tracking for held items if needed
       }
       
       if (newLife <= 0) {
@@ -961,7 +970,7 @@ export const useGameWorld = () => {
                 if (newInventory[slotIndex].resourceId === ingredient.resourceId) {
                   newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
                 } else {
-                  newInventory[slotIndex] = { resourceId: ingredient.resourceId, quantity: 1 };
+                  newInventory[slotIndex] = { resourceId: ingredient.resourceId, quantity: 1, life: 100 };
                 }
               }
             }
@@ -977,7 +986,7 @@ export const useGameWorld = () => {
             if (newInventory[slotIndex].resourceId === destructibleResourceId) {
               newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
             } else {
-              newInventory[slotIndex] = { resourceId: destructibleResourceId, quantity: 1 };
+              newInventory[slotIndex] = { resourceId: destructibleResourceId, quantity: 1, life: 100 };
             }
           }
           destroyedMessage = ` Collected!`;

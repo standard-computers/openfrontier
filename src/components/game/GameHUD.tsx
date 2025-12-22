@@ -34,7 +34,7 @@ interface GameHUDProps {
 const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiSelectMode, members, cameraOffset, onSelectSlot, onOpenConfig, onOpenAccount, onOpenSovereignty, onOpenStats, onOpenCrafting, onOpenClaimedTiles, onOpenRanking, onOpenMarketplace, onZoom, onConsumeResource, onToggleMultiSelect, onReturnToPlayer }: GameHUDProps) => {
   const getResource = (id: string | null) => resources.find(r => r.id === id);
   const [worldTime, setWorldTime] = useState({ days: 0, hours: 0 });
-  const [selectedItem, setSelectedItem] = useState<{ resourceId: string; quantity: number } | null>(null);
+  const [selectedItem, setSelectedItem] = useState<{ resourceId: string; quantity: number; life?: number } | null>(null);
   
   const topPlayer = useMemo(() => getTopPlayer(world, resources, members), [world, resources, members]);
   // Calculate world time: 1 real hour = 1 game day
@@ -261,7 +261,7 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
                   onClick={() => {
                     onSelectSlot(i);
                     if (slot.resourceId) {
-                      setSelectedItem({ resourceId: slot.resourceId, quantity: slot.quantity });
+                      setSelectedItem({ resourceId: slot.resourceId, quantity: slot.quantity, life: slot.life });
                     }
                   }}
                 >
@@ -276,6 +276,18 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
                         <span className="absolute bottom-0 right-0.5 text-[10px] font-medium bg-card px-0.5 rounded">
                           {slot.quantity}
                         </span>
+                      )}
+                      {/* Durability bar for items with useLife */}
+                      {resource.useLife && slot.life !== undefined && slot.life < 100 && (
+                        <div className="absolute bottom-0 left-0.5 right-0.5 h-1 bg-muted/50 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full transition-all duration-300 ${
+                              slot.life > 50 ? 'bg-blue-400' : 
+                              slot.life > 25 ? 'bg-amber-400' : 'bg-red-400'
+                            }`}
+                            style={{ width: `${slot.life}%` }}
+                          />
+                        </div>
                       )}
                     </>
                   )}
@@ -292,6 +304,7 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
         onOpenChange={(open) => !open && setSelectedItem(null)}
         resource={selectedItem ? getResource(selectedItem.resourceId) || null : null}
         quantity={selectedItem?.quantity || 0}
+        life={selectedItem?.life}
         onConsume={onConsumeResource}
       />
     </>
