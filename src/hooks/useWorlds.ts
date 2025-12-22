@@ -76,7 +76,19 @@ export const useWorlds = (userId: string | undefined) => {
     fetchWorlds();
   }, [fetchWorlds]);
 
-  const createWorld = async (name: string, width: number, height: number, customResources: Resource[] = []) => {
+  const createWorld = async (
+    name: string, 
+    width: number, 
+    height: number, 
+    customResources: Resource[] = [],
+    options?: {
+      enableMarkets?: boolean;
+      enableNpcs?: boolean;
+      npcCount?: number;
+      enableStrangers?: boolean;
+      strangerDensity?: number;
+    }
+  ) => {
     if (!userId) throw new Error('Not authenticated');
 
     // Use custom resources if provided, otherwise empty array
@@ -101,6 +113,23 @@ export const useWorlds = (userId: string | undefined) => {
       });
 
     if (error) throw error;
+
+    // Update world with additional settings if provided
+    if (options && worldId) {
+      const updateData: Record<string, any> = {};
+      if (options.enableMarkets !== undefined) updateData.enable_markets = options.enableMarkets;
+      if (options.enableNpcs !== undefined) updateData.enable_npcs = options.enableNpcs;
+      if (options.npcCount !== undefined) updateData.npc_count = options.npcCount;
+      if (options.enableStrangers !== undefined) updateData.enable_strangers = options.enableStrangers;
+      if (options.strangerDensity !== undefined) updateData.stranger_density = options.strangerDensity;
+
+      if (Object.keys(updateData).length > 0) {
+        await supabase
+          .from('worlds')
+          .update(updateData)
+          .eq('id', worldId);
+      }
+    }
 
     await fetchWorlds();
     return worldId as string;
