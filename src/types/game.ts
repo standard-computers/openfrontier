@@ -131,6 +131,15 @@ export interface Market {
   name: string;
 }
 
+// Stranger allegiance to a player's sovereignty
+export interface StrangerAllegiance {
+  userId: string;
+  username: string;
+  sovereigntyName: string;
+  sovereigntyFlag: string;
+  pledgedAt: number;
+}
+
 // Stranger - like NPC but doesn't claim territory
 export interface Stranger {
   id: string;
@@ -140,6 +149,7 @@ export interface Stranger {
   inventory: InventorySlot[];
   health: number;
   lastActionTime?: number;
+  allegiance?: StrangerAllegiance;
 }
 
 export interface GameWorld {
