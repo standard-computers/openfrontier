@@ -385,7 +385,7 @@ const GameMap = ({
                     left: 0,
                     width: isMultiTileResource ? tileSize * resourceWidth : tileSize,
                     height: isMultiTileResource ? tileSize * resourceHeight : tileSize,
-                    opacity: playerBehindResource ? 0.4 : 1,
+                    opacity: playerBehindResource ? 0.7 : 1,
                     zIndex: 5, // Lower z-index to stay below HUD elements
                   }}
                 >
