@@ -1,5 +1,5 @@
 import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
-import { WorldMap, Position, Resource, TileType, TILE_TYPES, Market, NPC, Area } from '@/types/game';
+import { WorldMap, Position, Resource, TileType, TILE_TYPES, Market, NPC, Area, Stranger } from '@/types/game';
 import { cn } from '@/lib/utils';
 import ResourceIcon from './ResourceIcon';
 import PixelCharacter from './PixelCharacter';
@@ -21,6 +21,7 @@ interface GameMapProps {
   markets?: Market[];
   enableMarkets?: boolean;
   npcs?: NPC[];
+  strangers?: Stranger[];
   areas?: Area[];
   facingDirection: FacingDirection;
   isMoving: boolean;
@@ -44,6 +45,7 @@ const GameMap = ({
   markets = [],
   enableMarkets = false,
   npcs = [],
+  strangers = [],
   areas = [],
   facingDirection,
   isMoving,
@@ -256,6 +258,9 @@ const GameMap = ({
 
           // Check if an NPC is on this tile
           const npcOnTile = npcs.find(npc => npc.position.x === x && npc.position.y === y);
+          
+          // Check if a stranger is on this tile
+          const strangerOnTile = strangers.find(s => s.position.x === x && s.position.y === y);
 
           // Get displayable resources on this tile (floating OR display enabled)
           const displayableResources = tile.resources
@@ -437,6 +442,26 @@ const GameMap = ({
                     isMoving={false} 
                     size={tileSize} 
                     userColor={npcOnTile.color}
+                  />
+                </div>
+              )}
+
+              {/* Render stranger on tile */}
+              {strangerOnTile && !isPlayerHere && !npcOnTile && (
+                <div 
+                  className="absolute z-14 flex items-end justify-center pointer-events-none opacity-80"
+                  style={{
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    height: tileSize * 2,
+                  }}
+                >
+                  <PixelCharacter 
+                    direction="south" 
+                    isMoving={false} 
+                    size={tileSize} 
+                    userColor={strangerOnTile.color}
                   />
                 </div>
               )}

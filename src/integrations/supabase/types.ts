@@ -165,6 +165,7 @@ export type Database = {
           created_at: string
           enable_markets: boolean
           enable_npcs: boolean
+          enable_strangers: boolean
           id: string
           join_code: string
           map_data: Json
@@ -172,12 +173,14 @@ export type Database = {
           name: string
           npc_count: number
           resources: Json
+          stranger_density: number
           updated_at: string
         }
         Insert: {
           created_at?: string
           enable_markets?: boolean
           enable_npcs?: boolean
+          enable_strangers?: boolean
           id?: string
           join_code?: string
           map_data: Json
@@ -185,12 +188,14 @@ export type Database = {
           name: string
           npc_count?: number
           resources: Json
+          stranger_density?: number
           updated_at?: string
         }
         Update: {
           created_at?: string
           enable_markets?: boolean
           enable_npcs?: boolean
+          enable_strangers?: boolean
           id?: string
           join_code?: string
           map_data?: Json
@@ -198,6 +203,7 @@ export type Database = {
           name?: string
           npc_count?: number
           resources?: Json
+          stranger_density?: number
           updated_at?: string
         }
         Relationships: []
