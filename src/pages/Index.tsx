@@ -456,7 +456,7 @@ const Index = () => {
 
       {/* Tile info panel - single tile */}
       {selectedTile && selectedTileData && !multiSelectMode && (
-        <div className="absolute right-4 top-20 z-20">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20">
           <TileInfoPanel
             tile={selectedTileData}
             position={selectedTile}
@@ -480,7 +480,7 @@ const Index = () => {
 
       {/* Multi-tile info panel */}
       {multiSelectMode && selectedTiles.length > 0 && (
-        <div className="absolute right-4 top-20 z-20">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20">
           <MultiTileInfoPanel
             tiles={selectedTiles.map(pos => ({
               tile: world.map.tiles[pos.y][pos.x],
