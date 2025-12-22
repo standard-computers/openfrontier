@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Resource, Recipe, RecipeIngredient, TileType, TILE_TYPES, RARITY_COLORS } from '@/types/game';
-import { X, Save, Trash2, Plus, ChevronRight, Upload, Smile, Image, ChevronDown, Tag } from 'lucide-react';
+import { X, Save, Trash2, Plus, ChevronRight, Upload, Smile, Image, ChevronDown, Tag, Copy } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -428,6 +428,27 @@ const ResourceEditorModal = ({
                     <span>{form.category}</span>
                   </div>
                 )}
+              </div>
+
+              {/* Resource ID */}
+              <div className="border-t border-border pt-4">
+                <label className="text-xs text-muted-foreground mb-1 block">Resource ID</label>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 px-3 py-2 bg-muted rounded text-xs font-mono text-muted-foreground overflow-x-auto">
+                    {resource.id}
+                  </code>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(resource.id);
+                      toast.success('Resource ID copied to clipboard');
+                    }}
+                    className="btn btn-ghost p-2 shrink-0"
+                    title="Copy Resource ID"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           )}
