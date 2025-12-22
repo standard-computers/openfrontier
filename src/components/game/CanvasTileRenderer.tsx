@@ -8,127 +8,88 @@ interface CanvasTileRendererProps {
   tileSize: number;
 }
 
-// Stardew Valley-inspired palette with richer color variation
+// Enhanced pixel art palette with more color depth
 const TILE_PALETTES: Record<TileType, { 
-  base: string; 
-  light: string; 
-  lighter: string;
-  dark: string; 
-  darker: string;
+  colors: string[];
+  highlight: string;
+  shadow: string;
   accent: string;
-  accent2: string;
 }> = {
   grass: { 
-    base: '#5a9b5e', 
-    light: '#6eb872', 
-    lighter: '#8ed090',
-    dark: '#4a8550', 
-    darker: '#3a6840',
-    accent: '#7cc97f', 
-    accent2: '#4a7850'
+    colors: ['#3d8c40', '#4a9e4d', '#5ab85d', '#6bc96c', '#4d8b4f', '#3a7a3c', '#2d6930'],
+    highlight: '#8ed890',
+    shadow: '#2a5a2c',
+    accent: '#7cc97f'
   },
   water: { 
-    base: '#4a9fc4', 
-    light: '#6bb8d8', 
-    lighter: '#8cd0eb',
-    dark: '#3a7fa0', 
-    darker: '#2a6080',
-    accent: '#9be0ff', 
-    accent2: '#357090'
+    colors: ['#2878a8', '#3a90c0', '#4da8d8', '#60c0f0', '#3580b0', '#2068a0', '#185090'],
+    highlight: '#90e0ff',
+    shadow: '#103860',
+    accent: '#70d0ff'
   },
   sand: { 
-    base: '#e0c890', 
-    light: '#f0dca8', 
-    lighter: '#fff0c0',
-    dark: '#c8b078', 
-    darker: '#a89058',
-    accent: '#fff5d0', 
-    accent2: '#d0b080'
+    colors: ['#d4b070', '#e0c080', '#ecd090', '#f8e0a0', '#c8a060', '#b89050', '#a88040'],
+    highlight: '#fff0c0',
+    shadow: '#8a6830',
+    accent: '#f0d898'
   },
   stone: { 
-    base: '#7a8590', 
-    light: '#95a0ab', 
-    lighter: '#b0bbc5',
-    dark: '#5a6570', 
-    darker: '#404a55',
-    accent: '#c0cad5', 
-    accent2: '#6a7580'
+    colors: ['#606878', '#707888', '#808898', '#9098a8', '#585868', '#484858', '#383848'],
+    highlight: '#b0b8c8',
+    shadow: '#282830',
+    accent: '#a0a8b8'
   },
   dirt: { 
-    base: '#9a7855', 
-    light: '#b8906a', 
-    lighter: '#d0a880',
-    dark: '#7a5840', 
-    darker: '#5a4030',
-    accent: '#c8a070', 
-    accent2: '#8a6848'
+    colors: ['#8a6040', '#9a7050', '#aa8060', '#ba9070', '#7a5030', '#6a4020', '#5a3010'],
+    highlight: '#c8a080',
+    shadow: '#3a2008',
+    accent: '#b89068'
   },
   forest: { 
-    base: '#3a6848', 
-    light: '#4a8058', 
-    lighter: '#5a9868',
-    dark: '#2a5038', 
-    darker: '#1a3828',
-    accent: '#5aa068', 
-    accent2: '#2a4838'
+    colors: ['#1a4828', '#2a5838', '#3a6848', '#4a7858', '#204030', '#183828', '#102820'],
+    highlight: '#6a9868',
+    shadow: '#081810',
+    accent: '#5a8858'
   },
   snow: { 
-    base: '#e8f0f8', 
-    light: '#f0f8ff', 
-    lighter: '#ffffff',
-    dark: '#d0e0f0', 
-    darker: '#b8d0e8',
-    accent: '#ffffff', 
-    accent2: '#c8d8e8'
+    colors: ['#d8e8f8', '#e0f0ff', '#e8f8ff', '#f0ffff', '#d0e0f0', '#c8d8e8', '#c0d0e0'],
+    highlight: '#ffffff',
+    shadow: '#a0b8d0',
+    accent: '#f8ffff'
   },
   ice: { 
-    base: '#b0e0f0', 
-    light: '#c8f0ff', 
-    lighter: '#e0ffff',
-    dark: '#90c8e0', 
-    darker: '#70a8c8',
-    accent: '#e8ffff', 
-    accent2: '#80b8d0'
+    colors: ['#80c8e8', '#90d8f0', '#a0e8f8', '#b0f0ff', '#70b8e0', '#60a8d8', '#5098c8'],
+    highlight: '#e0ffff',
+    shadow: '#4080a0',
+    accent: '#c0f0ff'
   },
   swamp: { 
-    base: '#5a6848', 
-    light: '#6a7858', 
-    lighter: '#7a8868',
-    dark: '#4a5838', 
-    darker: '#3a4828',
-    accent: '#708060', 
-    accent2: '#506040'
+    colors: ['#3a5030', '#4a6040', '#5a7050', '#6a8060', '#304828', '#284020', '#203818'],
+    highlight: '#7a9868',
+    shadow: '#182810',
+    accent: '#608050'
   },
   lava: { 
-    base: '#e05020', 
-    light: '#ff7040', 
-    lighter: '#ff9060',
-    dark: '#c03810', 
-    darker: '#a02808',
-    accent: '#ffb080', 
-    accent2: '#ff5030'
+    colors: ['#c02000', '#e03010', '#f04820', '#ff6030', '#a01000', '#800800', '#600000'],
+    highlight: '#ffa060',
+    shadow: '#400000',
+    accent: '#ff8040'
   },
   mountain: { 
-    base: '#686878', 
-    light: '#808898', 
-    lighter: '#98a0b0',
-    dark: '#505060', 
-    darker: '#383848',
-    accent: '#a8b0c0', 
-    accent2: '#585868'
+    colors: ['#505058', '#606068', '#707078', '#808088', '#404048', '#303038', '#202028'],
+    highlight: '#a0a0a8',
+    shadow: '#101018',
+    accent: '#909098'
   },
   jungle: { 
-    base: '#2a5838', 
-    light: '#3a7048', 
-    lighter: '#4a8858',
-    dark: '#1a4028', 
-    darker: '#0a2818',
-    accent: '#4a9058', 
-    accent2: '#204830'
+    colors: ['#0a3818', '#1a4828', '#2a5838', '#3a6848', '#083010', '#062808', '#042000'],
+    highlight: '#5a8858',
+    shadow: '#021008',
+    accent: '#4a7848'
   },
 };
 
-// Improved noise with multiple octaves for natural variation
+// Deterministic noise functions
 const noise = (x: number, y: number, seed: number = 0): number => {
   const n = Math.sin(x * 12.9898 + y * 78.233 + seed) * 43758.5453;
   return n - Math.floor(n);
@@ -139,8 +100,8 @@ const noise2 = (x: number, y: number, seed: number = 0): number => {
   return n - Math.floor(n);
 };
 
-// Fractal noise for more organic patterns
-const fractalNoise = (x: number, y: number, seed: number, octaves: number = 3): number => {
+// Multi-octave fractal noise
+const fractalNoise = (x: number, y: number, seed: number, octaves: number = 4): number => {
   let value = 0;
   let amplitude = 1;
   let frequency = 1;
@@ -156,151 +117,508 @@ const fractalNoise = (x: number, y: number, seed: number, octaves: number = 3): 
   return value / maxValue;
 };
 
-// Draw decorative elements on tiles
-const drawDecorations = (
+// Draw detailed grass tile
+const drawGrassTile = (
   ctx: CanvasRenderingContext2D,
   px: number,
   py: number,
-  type: TileType,
   tileSize: number,
   worldX: number,
   worldY: number,
   palette: typeof TILE_PALETTES.grass
 ) => {
-  const decorSeed = worldX * 1000 + worldY;
-  const decorNoise = noise(worldX * 3.7, worldY * 3.7, decorSeed);
   const pixelSize = Math.max(2, Math.floor(tileSize / 16));
   
-  if (type === 'grass') {
-    // Draw grass tufts
-    if (decorNoise > 0.7) {
-      const tufts = Math.floor(noise2(worldX, worldY, 50) * 4) + 2;
-      for (let i = 0; i < tufts; i++) {
-        const tx = noise(worldX + i, worldY, 10) * (tileSize - pixelSize * 3) + pixelSize;
-        const ty = noise(worldX, worldY + i, 20) * (tileSize - pixelSize * 4) + pixelSize * 2;
-        const height = pixelSize * (2 + Math.floor(noise(worldX + i, worldY + i, 30) * 2));
-        
-        // Grass blade with gradient
-        ctx.fillStyle = palette.accent;
-        ctx.fillRect(px + tx, py + ty - height, pixelSize, height);
-        ctx.fillStyle = palette.lighter;
-        ctx.fillRect(px + tx, py + ty - height, pixelSize, pixelSize);
-      }
+  // Base layer with varied greens
+  for (let py2 = 0; py2 < tileSize; py2 += pixelSize) {
+    for (let px2 = 0; px2 < tileSize; px2 += pixelSize) {
+      const n1 = fractalNoise(worldX * 4 + px2 * 0.3, worldY * 4 + py2 * 0.3, 100);
+      const colorIndex = Math.floor(n1 * palette.colors.length);
+      ctx.fillStyle = palette.colors[Math.min(colorIndex, palette.colors.length - 1)];
+      ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
     }
+  }
+  
+  // Add grass blade details
+  const bladeCount = Math.floor(tileSize / pixelSize * 1.5);
+  for (let i = 0; i < bladeCount; i++) {
+    const n = noise(worldX * 20 + i, worldY * 20, 200);
+    const n2 = noise2(worldX + i, worldY, 300);
     
-    // Small flowers occasionally
-    if (decorNoise > 0.92) {
-      const fx = noise(worldX * 2, worldY * 2, 100) * (tileSize - pixelSize * 4) + pixelSize * 2;
-      const fy = noise(worldX * 2, worldY * 2, 200) * (tileSize - pixelSize * 4) + pixelSize * 2;
-      const flowerColor = ['#ff8888', '#ffff88', '#88aaff', '#ffffff'][Math.floor(decorNoise * 100) % 4];
-      ctx.fillStyle = flowerColor;
-      ctx.fillRect(px + fx, py + fy, pixelSize, pixelSize);
-      ctx.fillRect(px + fx - pixelSize, py + fy, pixelSize, pixelSize);
-      ctx.fillRect(px + fx + pixelSize, py + fy, pixelSize, pixelSize);
-      ctx.fillRect(px + fx, py + fy - pixelSize, pixelSize, pixelSize);
-      ctx.fillStyle = '#ffee00';
-      ctx.fillRect(px + fx, py + fy, pixelSize, pixelSize);
-    }
-  } else if (type === 'sand') {
-    // Shells and pebbles
-    if (decorNoise > 0.85) {
-      const sx = noise(worldX * 5, worldY * 5, 300) * (tileSize - pixelSize * 3) + pixelSize;
-      const sy = noise(worldX * 5, worldY * 5, 400) * (tileSize - pixelSize * 3) + pixelSize;
-      ctx.fillStyle = decorNoise > 0.92 ? '#f8e8d8' : palette.darker;
-      ctx.fillRect(px + sx, py + sy, pixelSize, pixelSize);
-      if (decorNoise > 0.92) {
-        ctx.fillRect(px + sx + pixelSize, py + sy, pixelSize, pixelSize);
-      }
-    }
-  } else if (type === 'forest' || type === 'jungle') {
-    // Leaf clusters and undergrowth
-    if (decorNoise > 0.5) {
-      const clusters = Math.floor(decorNoise * 5) + 1;
-      for (let i = 0; i < clusters; i++) {
-        const cx = noise(worldX + i * 3, worldY, 500) * (tileSize - pixelSize * 2);
-        const cy = noise(worldX, worldY + i * 3, 600) * (tileSize - pixelSize * 2);
-        ctx.fillStyle = i % 2 === 0 ? palette.accent : palette.lighter;
-        ctx.fillRect(px + cx, py + cy, pixelSize, pixelSize);
-      }
-    }
+    if (n > 0.4) continue;
     
-    // Mushrooms occasionally
-    if (decorNoise > 0.88 && type === 'forest') {
-      const mx = noise(worldX * 4, worldY * 4, 700) * (tileSize - pixelSize * 4) + pixelSize * 2;
-      const my = tileSize - pixelSize * 3;
-      // Stem
-      ctx.fillStyle = '#e8dcd0';
-      ctx.fillRect(px + mx, py + my, pixelSize, pixelSize * 2);
-      // Cap
-      ctx.fillStyle = '#c83030';
-      ctx.fillRect(px + mx - pixelSize, py + my - pixelSize, pixelSize * 3, pixelSize);
-      ctx.fillRect(px + mx, py + my - pixelSize * 2, pixelSize, pixelSize);
-      // Spots
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(px + mx, py + my - pixelSize, pixelSize, pixelSize);
-    }
-  } else if (type === 'stone' || type === 'mountain') {
-    // Rocks and mineral veins
-    if (decorNoise > 0.8) {
-      const rx = noise(worldX * 6, worldY * 6, 800) * (tileSize - pixelSize * 4) + pixelSize * 2;
-      const ry = noise(worldX * 6, worldY * 6, 900) * (tileSize - pixelSize * 4) + pixelSize * 2;
-      const rockSize = pixelSize * (decorNoise > 0.9 ? 2 : 1);
-      ctx.fillStyle = palette.lighter;
-      ctx.fillRect(px + rx, py + ry, rockSize, rockSize);
-      ctx.fillStyle = palette.darker;
-      ctx.fillRect(px + rx + rockSize, py + ry + rockSize / 2, pixelSize, pixelSize);
-    }
+    const bx = (n * 1000) % tileSize;
+    const by = ((n2 * 1000) % (tileSize * 0.6)) + tileSize * 0.4;
+    const bladeHeight = pixelSize * (2 + Math.floor(n2 * 3));
     
-    // Mineral sparkles
-    if (decorNoise > 0.95) {
-      ctx.fillStyle = '#c8d0e0';
-      const sparkles = 2;
-      for (let i = 0; i < sparkles; i++) {
-        const spx = noise(worldX + i, worldY, 1000) * tileSize;
-        const spy = noise(worldX, worldY + i, 1100) * tileSize;
-        ctx.fillRect(px + spx, py + spy, pixelSize / 2, pixelSize / 2);
-      }
+    // Blade with gradient
+    for (let h = 0; h < bladeHeight; h += pixelSize) {
+      const shade = h / bladeHeight;
+      ctx.fillStyle = shade < 0.3 ? palette.highlight : 
+                      shade < 0.6 ? palette.colors[1] : palette.colors[3];
+      ctx.fillRect(px + bx, py + by - h, pixelSize, pixelSize);
     }
-  } else if (type === 'snow') {
-    // Snow sparkles
-    if (decorNoise > 0.7) {
-      const sparkles = Math.floor(decorNoise * 6);
-      ctx.fillStyle = '#ffffff';
-      for (let i = 0; i < sparkles; i++) {
-        const spx = noise(worldX + i * 2, worldY, 1200) * tileSize;
-        const spy = noise(worldX, worldY + i * 2, 1300) * tileSize;
-        ctx.fillRect(px + spx, py + spy, pixelSize / 2, pixelSize / 2);
-      }
-    }
-  } else if (type === 'water') {
-    // Foam/bubbles near surface
-    if (decorNoise > 0.9) {
-      ctx.fillStyle = 'rgba(255,255,255,0.4)';
-      const bx = noise(worldX * 8, worldY * 8, 1400) * (tileSize - pixelSize * 2);
-      const by = noise(worldX * 8, worldY * 8, 1500) * (tileSize - pixelSize * 2);
-      ctx.beginPath();
-      ctx.arc(px + bx + pixelSize, py + by + pixelSize, pixelSize, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  } else if (type === 'swamp') {
-    // Lily pads and bubbles
-    if (decorNoise > 0.8) {
-      const lx = noise(worldX * 3, worldY * 3, 1600) * (tileSize - pixelSize * 6) + pixelSize * 3;
-      const ly = noise(worldX * 3, worldY * 3, 1700) * (tileSize - pixelSize * 6) + pixelSize * 3;
-      ctx.fillStyle = '#4a8848';
-      ctx.beginPath();
-      ctx.arc(px + lx, py + ly, pixelSize * 1.5, 0, Math.PI * 2);
-      ctx.fill();
-      // Lily flower
-      if (decorNoise > 0.92) {
-        ctx.fillStyle = '#ffaacc';
-        ctx.fillRect(px + lx - pixelSize / 2, py + ly - pixelSize / 2, pixelSize, pixelSize);
-      }
-    }
+  }
+  
+  // Add flowers occasionally
+  const flowerNoise = noise(worldX * 5, worldY * 5, 400);
+  if (flowerNoise > 0.85) {
+    const fx = (flowerNoise * 500) % (tileSize - pixelSize * 4) + pixelSize * 2;
+    const fy = (noise2(worldX, worldY, 500) * 500) % (tileSize - pixelSize * 4) + pixelSize * 2;
+    const flowerColors = ['#ff6688', '#ffaa44', '#ffff66', '#aaddff', '#ffaaff'];
+    const flowerColor = flowerColors[Math.floor(flowerNoise * 100) % flowerColors.length];
+    
+    // Flower petals in cross pattern
+    ctx.fillStyle = flowerColor;
+    ctx.fillRect(px + fx, py + fy - pixelSize, pixelSize, pixelSize);
+    ctx.fillRect(px + fx, py + fy + pixelSize, pixelSize, pixelSize);
+    ctx.fillRect(px + fx - pixelSize, py + fy, pixelSize, pixelSize);
+    ctx.fillRect(px + fx + pixelSize, py + fy, pixelSize, pixelSize);
+    ctx.fillStyle = '#ffee00';
+    ctx.fillRect(px + fx, py + fy, pixelSize, pixelSize);
+  }
+  
+  // Add clover patches
+  const cloverNoise = noise(worldX * 3, worldY * 3, 600);
+  if (cloverNoise > 0.9) {
+    const cx = (cloverNoise * 300) % (tileSize - pixelSize * 6) + pixelSize * 3;
+    const cy = (noise2(worldX * 2, worldY * 2, 700) * 300) % (tileSize - pixelSize * 6) + pixelSize * 3;
+    ctx.fillStyle = '#2a6a2c';
+    // Three leaves
+    ctx.fillRect(px + cx - pixelSize, py + cy - pixelSize, pixelSize * 2, pixelSize);
+    ctx.fillRect(px + cx - pixelSize * 2, py + cy, pixelSize * 2, pixelSize);
+    ctx.fillRect(px + cx + pixelSize, py + cy, pixelSize * 2, pixelSize);
   }
 };
 
-// Draw a single tile with Stardew Valley-style pixel art
+// Draw detailed water tile
+const drawWaterTile = (
+  ctx: CanvasRenderingContext2D,
+  px: number,
+  py: number,
+  tileSize: number,
+  worldX: number,
+  worldY: number,
+  palette: typeof TILE_PALETTES.water
+) => {
+  const pixelSize = Math.max(2, Math.floor(tileSize / 16));
+  
+  // Base water with depth variation
+  for (let py2 = 0; py2 < tileSize; py2 += pixelSize) {
+    for (let px2 = 0; px2 < tileSize; px2 += pixelSize) {
+      const depth = py2 / tileSize;
+      const wave = Math.sin((worldX * 0.5 + px2 * 0.1 + worldY * 0.3) * Math.PI) * 0.3;
+      const n = fractalNoise(worldX * 3 + px2 * 0.2, worldY * 3 + py2 * 0.2, 800) + wave;
+      
+      const colorIndex = Math.floor((n + depth * 0.3) * palette.colors.length);
+      ctx.fillStyle = palette.colors[Math.max(0, Math.min(colorIndex, palette.colors.length - 1))];
+      ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
+    }
+  }
+  
+  // Add wave highlights
+  for (let i = 0; i < 6; i++) {
+    const n = noise(worldX + i * 3, worldY, 900);
+    const n2 = noise2(worldX, worldY + i * 3, 1000);
+    
+    if (n < 0.6) continue;
+    
+    const wx = (n * 800) % (tileSize - pixelSize * 4);
+    const wy = (n2 * 800) % (tileSize - pixelSize * 2);
+    const waveLength = pixelSize * (2 + Math.floor(n2 * 4));
+    
+    ctx.fillStyle = palette.highlight;
+    ctx.fillRect(px + wx, py + wy, waveLength, pixelSize);
+    ctx.fillStyle = palette.colors[4];
+    ctx.fillRect(px + wx, py + wy + pixelSize, waveLength * 0.8, pixelSize);
+  }
+  
+  // Add sparkle reflections
+  const sparkleNoise = noise(worldX * 8, worldY * 8, 1100);
+  if (sparkleNoise > 0.85) {
+    ctx.fillStyle = '#ffffff';
+    const sx = (sparkleNoise * 500) % (tileSize - pixelSize * 2);
+    const sy = (noise2(worldX * 4, worldY * 4, 1200) * 500) % (tileSize * 0.4);
+    ctx.fillRect(px + sx, py + sy, pixelSize, pixelSize);
+    if (sparkleNoise > 0.92) {
+      ctx.fillRect(px + sx + pixelSize, py + sy, pixelSize / 2, pixelSize / 2);
+    }
+  }
+  
+  // Add subtle foam/bubble
+  if (noise(worldX * 6, worldY * 6, 1300) > 0.88) {
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    const bx = noise(worldX * 7, worldY * 7, 1400) * (tileSize - pixelSize * 4) + pixelSize * 2;
+    const by = noise2(worldX * 7, worldY * 7, 1500) * (tileSize - pixelSize * 4) + pixelSize * 2;
+    ctx.beginPath();
+    ctx.arc(px + bx, py + by, pixelSize, 0, Math.PI * 2);
+    ctx.fill();
+  }
+};
+
+// Draw detailed sand tile
+const drawSandTile = (
+  ctx: CanvasRenderingContext2D,
+  px: number,
+  py: number,
+  tileSize: number,
+  worldX: number,
+  worldY: number,
+  palette: typeof TILE_PALETTES.sand
+) => {
+  const pixelSize = Math.max(2, Math.floor(tileSize / 16));
+  
+  // Base sand with dune patterns
+  for (let py2 = 0; py2 < tileSize; py2 += pixelSize) {
+    for (let px2 = 0; px2 < tileSize; px2 += pixelSize) {
+      const dune = Math.sin((worldX * 0.3 + px2 * 0.08) * Math.PI) * 0.3;
+      const n = fractalNoise(worldX * 5 + px2 * 0.25, worldY * 5 + py2 * 0.25, 1600) + dune;
+      
+      const colorIndex = Math.floor(n * palette.colors.length);
+      ctx.fillStyle = palette.colors[Math.max(0, Math.min(colorIndex, palette.colors.length - 1))];
+      ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
+    }
+  }
+  
+  // Add grain texture
+  for (let i = 0; i < 12; i++) {
+    const n = noise(worldX * 15 + i, worldY * 15, 1700);
+    if (n < 0.7) continue;
+    
+    const gx = (n * 1000) % tileSize;
+    const gy = (noise2(worldX + i, worldY, 1800) * 1000) % tileSize;
+    
+    ctx.fillStyle = n > 0.9 ? palette.highlight : palette.colors[5];
+    ctx.fillRect(px + gx, py + gy, pixelSize / 2, pixelSize / 2);
+  }
+  
+  // Add shells
+  const shellNoise = noise(worldX * 4, worldY * 4, 1900);
+  if (shellNoise > 0.88) {
+    const sx = (shellNoise * 400) % (tileSize - pixelSize * 4) + pixelSize * 2;
+    const sy = (noise2(worldX * 3, worldY * 3, 2000) * 400) % (tileSize - pixelSize * 4) + pixelSize * 2;
+    
+    ctx.fillStyle = shellNoise > 0.94 ? '#f8e8e0' : '#d8c8b8';
+    ctx.fillRect(px + sx, py + sy, pixelSize * 2, pixelSize);
+    ctx.fillRect(px + sx + pixelSize / 2, py + sy - pixelSize, pixelSize, pixelSize);
+  }
+  
+  // Add small pebbles
+  if (noise(worldX * 7, worldY * 7, 2100) > 0.9) {
+    const pbx = noise(worldX * 8, worldY * 8, 2200) * (tileSize - pixelSize * 3);
+    const pby = noise2(worldX * 8, worldY * 8, 2300) * (tileSize - pixelSize * 3);
+    ctx.fillStyle = '#a08070';
+    ctx.fillRect(px + pbx, py + pby, pixelSize, pixelSize);
+  }
+};
+
+// Draw detailed forest tile
+const drawForestTile = (
+  ctx: CanvasRenderingContext2D,
+  px: number,
+  py: number,
+  tileSize: number,
+  worldX: number,
+  worldY: number,
+  palette: typeof TILE_PALETTES.forest
+) => {
+  const pixelSize = Math.max(2, Math.floor(tileSize / 16));
+  
+  // Dark base layer
+  for (let py2 = 0; py2 < tileSize; py2 += pixelSize) {
+    for (let px2 = 0; px2 < tileSize; px2 += pixelSize) {
+      const n = fractalNoise(worldX * 3 + px2 * 0.2, worldY * 3 + py2 * 0.2, 2400);
+      const colorIndex = Math.floor(n * palette.colors.length);
+      ctx.fillStyle = palette.colors[Math.max(0, Math.min(colorIndex, palette.colors.length - 1))];
+      ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
+    }
+  }
+  
+  // Add dense foliage clusters
+  const clusterCount = 8;
+  for (let i = 0; i < clusterCount; i++) {
+    const n = noise(worldX * 10 + i, worldY * 10, 2500);
+    const n2 = noise2(worldX + i * 2, worldY, 2600);
+    
+    const cx = (n * 800) % tileSize;
+    const cy = (n2 * 800) % tileSize;
+    const size = pixelSize * (2 + Math.floor(n * 2));
+    
+    // Foliage blob
+    ctx.fillStyle = n > 0.5 ? palette.colors[2] : palette.colors[4];
+    ctx.fillRect(px + cx, py + cy, size, size);
+    ctx.fillStyle = palette.highlight;
+    ctx.fillRect(px + cx, py + cy, pixelSize, pixelSize);
+  }
+  
+  // Add dappled light
+  for (let i = 0; i < 4; i++) {
+    const n = noise(worldX * 6 + i * 5, worldY * 6, 2700);
+    if (n < 0.75) continue;
+    
+    const lx = (n * 600) % (tileSize - pixelSize * 2);
+    const ly = (noise2(worldX + i, worldY, 2800) * 600) % (tileSize - pixelSize * 2);
+    
+    ctx.fillStyle = palette.accent;
+    ctx.fillRect(px + lx, py + ly, pixelSize * 2, pixelSize * 2);
+  }
+  
+  // Add mushrooms
+  if (noise(worldX * 4, worldY * 4, 2900) > 0.9) {
+    const mx = noise(worldX * 5, worldY * 5, 3000) * (tileSize - pixelSize * 4) + pixelSize * 2;
+    const my = tileSize - pixelSize * 4;
+    
+    // Stem
+    ctx.fillStyle = '#e8dcc8';
+    ctx.fillRect(px + mx, py + my + pixelSize, pixelSize, pixelSize * 2);
+    // Cap
+    ctx.fillStyle = '#c84040';
+    ctx.fillRect(px + mx - pixelSize, py + my, pixelSize * 3, pixelSize);
+    ctx.fillRect(px + mx, py + my - pixelSize, pixelSize, pixelSize);
+    // Spots
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(px + mx, py + my, pixelSize, pixelSize);
+  }
+};
+
+// Draw detailed stone tile
+const drawStoneTile = (
+  ctx: CanvasRenderingContext2D,
+  px: number,
+  py: number,
+  tileSize: number,
+  worldX: number,
+  worldY: number,
+  palette: typeof TILE_PALETTES.stone
+) => {
+  const pixelSize = Math.max(2, Math.floor(tileSize / 16));
+  
+  // Base stone with layers
+  for (let py2 = 0; py2 < tileSize; py2 += pixelSize) {
+    for (let px2 = 0; px2 < tileSize; px2 += pixelSize) {
+      const strata = Math.sin((py2 * 0.15 + worldY * 0.5) * Math.PI) * 0.2;
+      const n = fractalNoise(worldX * 4 + px2 * 0.2, worldY * 4 + py2 * 0.2, 3100) + strata;
+      
+      const colorIndex = Math.floor(n * palette.colors.length);
+      ctx.fillStyle = palette.colors[Math.max(0, Math.min(colorIndex, palette.colors.length - 1))];
+      ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
+    }
+  }
+  
+  // Add cracks
+  for (let i = 0; i < 3; i++) {
+    const n = noise(worldX * 3 + i * 7, worldY * 3, 3200);
+    if (n < 0.7) continue;
+    
+    const startX = (n * 500) % tileSize;
+    const startY = (noise2(worldX + i, worldY, 3300) * 500) % (tileSize / 2);
+    
+    ctx.fillStyle = palette.shadow;
+    let crackX = startX;
+    let crackY = startY;
+    for (let j = 0; j < 6; j++) {
+      ctx.fillRect(px + crackX, py + crackY, pixelSize, pixelSize);
+      crackX += (noise(i, j, 3400) - 0.5) * pixelSize * 2;
+      crackY += pixelSize;
+      if (crackY >= tileSize) break;
+    }
+  }
+  
+  // Add mineral flecks
+  for (let i = 0; i < 5; i++) {
+    const n = noise(worldX * 12 + i, worldY * 12, 3500);
+    if (n < 0.85) continue;
+    
+    const fx = (n * 800) % tileSize;
+    const fy = (noise2(worldX + i * 3, worldY, 3600) * 800) % tileSize;
+    
+    ctx.fillStyle = n > 0.95 ? '#d0d8e8' : palette.highlight;
+    ctx.fillRect(px + fx, py + fy, pixelSize / 2, pixelSize / 2);
+  }
+  
+  // Add moss patches
+  if (noise(worldX * 2, worldY * 2, 3700) > 0.88) {
+    const mx = noise(worldX * 3, worldY * 3, 3800) * (tileSize - pixelSize * 4);
+    const my = noise2(worldX * 3, worldY * 3, 3900) * (tileSize - pixelSize * 4);
+    
+    ctx.fillStyle = '#4a6840';
+    ctx.fillRect(px + mx, py + my, pixelSize * 2, pixelSize);
+    ctx.fillRect(px + mx + pixelSize, py + my + pixelSize, pixelSize, pixelSize);
+  }
+};
+
+// Draw detailed snow tile
+const drawSnowTile = (
+  ctx: CanvasRenderingContext2D,
+  px: number,
+  py: number,
+  tileSize: number,
+  worldX: number,
+  worldY: number,
+  palette: typeof TILE_PALETTES.snow
+) => {
+  const pixelSize = Math.max(2, Math.floor(tileSize / 16));
+  
+  // Base snow with subtle undulation
+  for (let py2 = 0; py2 < tileSize; py2 += pixelSize) {
+    for (let px2 = 0; px2 < tileSize; px2 += pixelSize) {
+      const drift = Math.sin((worldX * 0.4 + px2 * 0.1) * Math.PI) * 0.15;
+      const n = fractalNoise(worldX * 3 + px2 * 0.15, worldY * 3 + py2 * 0.15, 4000) + drift;
+      
+      const colorIndex = Math.floor(n * palette.colors.length);
+      ctx.fillStyle = palette.colors[Math.max(0, Math.min(colorIndex, palette.colors.length - 1))];
+      ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
+    }
+  }
+  
+  // Add sparkles
+  for (let i = 0; i < 8; i++) {
+    const n = noise(worldX * 15 + i, worldY * 15, 4100);
+    if (n < 0.7) continue;
+    
+    const sx = (n * 900) % tileSize;
+    const sy = (noise2(worldX + i * 2, worldY, 4200) * 900) % tileSize;
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(px + sx, py + sy, pixelSize / 2, pixelSize / 2);
+  }
+  
+  // Add shadow depressions
+  for (let i = 0; i < 3; i++) {
+    const n = noise(worldX * 4 + i * 3, worldY * 4, 4300);
+    if (n < 0.75) continue;
+    
+    const dx = (n * 500) % (tileSize - pixelSize * 4);
+    const dy = (noise2(worldX + i, worldY, 4400) * 500) % (tileSize - pixelSize * 2);
+    
+    ctx.fillStyle = palette.shadow;
+    ctx.fillRect(px + dx, py + dy, pixelSize * 3, pixelSize);
+  }
+  
+  // Add frost crystals
+  if (noise(worldX * 6, worldY * 6, 4500) > 0.9) {
+    const cx = noise(worldX * 7, worldY * 7, 4600) * (tileSize - pixelSize * 4) + pixelSize * 2;
+    const cy = noise2(worldX * 7, worldY * 7, 4700) * (tileSize - pixelSize * 4) + pixelSize * 2;
+    
+    ctx.fillStyle = '#e8f4ff';
+    // Crystal shape
+    ctx.fillRect(px + cx, py + cy - pixelSize, pixelSize, pixelSize * 3);
+    ctx.fillRect(px + cx - pixelSize, py + cy, pixelSize * 3, pixelSize);
+  }
+};
+
+// Draw detailed lava tile
+const drawLavaTile = (
+  ctx: CanvasRenderingContext2D,
+  px: number,
+  py: number,
+  tileSize: number,
+  worldX: number,
+  worldY: number,
+  palette: typeof TILE_PALETTES.lava
+) => {
+  const pixelSize = Math.max(2, Math.floor(tileSize / 16));
+  
+  // Base lava with flow patterns
+  for (let py2 = 0; py2 < tileSize; py2 += pixelSize) {
+    for (let px2 = 0; px2 < tileSize; px2 += pixelSize) {
+      const flow = Math.sin((worldX * 0.3 + worldY * 0.2 + px2 * 0.05) * Math.PI) * 0.3;
+      const n = fractalNoise(worldX * 4 + px2 * 0.2, worldY * 4 + py2 * 0.2, 4800) + flow;
+      
+      const colorIndex = Math.floor(n * palette.colors.length);
+      ctx.fillStyle = palette.colors[Math.max(0, Math.min(colorIndex, palette.colors.length - 1))];
+      ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
+    }
+  }
+  
+  // Add bright veins
+  for (let i = 0; i < 5; i++) {
+    const n = noise(worldX * 5 + i * 4, worldY * 5, 4900);
+    if (n < 0.6) continue;
+    
+    const vx = (n * 700) % tileSize;
+    const vy = (noise2(worldX + i, worldY, 5000) * 700) % tileSize;
+    const vlen = pixelSize * (2 + Math.floor(n * 3));
+    
+    ctx.fillStyle = palette.highlight;
+    ctx.fillRect(px + vx, py + vy, vlen, pixelSize);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(px + vx + pixelSize, py + vy, pixelSize, pixelSize);
+  }
+  
+  // Add dark crust patches
+  for (let i = 0; i < 4; i++) {
+    const n = noise(worldX * 6 + i * 5, worldY * 6, 5100);
+    if (n < 0.7) continue;
+    
+    const cx = (n * 600) % (tileSize - pixelSize * 3);
+    const cy = (noise2(worldX + i * 2, worldY, 5200) * 600) % (tileSize - pixelSize * 3);
+    
+    ctx.fillStyle = palette.shadow;
+    ctx.fillRect(px + cx, py + cy, pixelSize * 2, pixelSize * 2);
+    ctx.fillStyle = palette.colors[5];
+    ctx.fillRect(px + cx + pixelSize, py + cy + pixelSize, pixelSize, pixelSize);
+  }
+  
+  // Add glowing embers
+  if (noise(worldX * 8, worldY * 8, 5300) > 0.88) {
+    const ex = noise(worldX * 9, worldY * 9, 5400) * (tileSize - pixelSize * 2);
+    const ey = noise2(worldX * 9, worldY * 9, 5500) * (tileSize - pixelSize * 2);
+    
+    ctx.fillStyle = '#ffff80';
+    ctx.fillRect(px + ex, py + ey, pixelSize, pixelSize);
+  }
+};
+
+// Generic tile drawer for less common tile types
+const drawGenericTile = (
+  ctx: CanvasRenderingContext2D,
+  px: number,
+  py: number,
+  tileSize: number,
+  worldX: number,
+  worldY: number,
+  type: TileType,
+  palette: typeof TILE_PALETTES.grass
+) => {
+  const pixelSize = Math.max(2, Math.floor(tileSize / 16));
+  
+  // Base layer
+  for (let py2 = 0; py2 < tileSize; py2 += pixelSize) {
+    for (let px2 = 0; px2 < tileSize; px2 += pixelSize) {
+      const n = fractalNoise(worldX * 4 + px2 * 0.2, worldY * 4 + py2 * 0.2, type.charCodeAt(0) * 100);
+      const colorIndex = Math.floor(n * palette.colors.length);
+      ctx.fillStyle = palette.colors[Math.max(0, Math.min(colorIndex, palette.colors.length - 1))];
+      ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
+    }
+  }
+  
+  // Add texture details
+  for (let i = 0; i < 6; i++) {
+    const n = noise(worldX * 10 + i, worldY * 10, type.charCodeAt(0) * 10);
+    if (n < 0.7) continue;
+    
+    const dx = (n * 800) % tileSize;
+    const dy = (noise2(worldX + i, worldY, type.charCodeAt(0) * 20) * 800) % tileSize;
+    
+    ctx.fillStyle = n > 0.85 ? palette.highlight : palette.colors[4];
+    ctx.fillRect(px + dx, py + dy, pixelSize, pixelSize);
+  }
+  
+  // Add accents
+  for (let i = 0; i < 3; i++) {
+    const n = noise(worldX * 6 + i * 4, worldY * 6, type.charCodeAt(0) * 30);
+    if (n < 0.8) continue;
+    
+    const ax = (n * 600) % (tileSize - pixelSize * 2);
+    const ay = (noise2(worldX + i * 2, worldY, type.charCodeAt(0) * 40) * 600) % (tileSize - pixelSize * 2);
+    
+    ctx.fillStyle = palette.accent;
+    ctx.fillRect(px + ax, py + ay, pixelSize * 2, pixelSize);
+  }
+};
+
+// Draw a single tile
 const drawTile = (
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -314,205 +632,43 @@ const drawTile = (
   const palette = TILE_PALETTES[type];
   const px = x * tileSize;
   const py = y * tileSize;
+  const pixelSize = Math.max(2, Math.floor(tileSize / 16));
   
-  // Get neighbor types for auto-tiling
+  // Draw tile based on type
+  switch (type) {
+    case 'grass':
+      drawGrassTile(ctx, px, py, tileSize, worldX, worldY, palette);
+      break;
+    case 'water':
+      drawWaterTile(ctx, px, py, tileSize, worldX, worldY, palette);
+      break;
+    case 'sand':
+      drawSandTile(ctx, px, py, tileSize, worldX, worldY, palette);
+      break;
+    case 'forest':
+    case 'jungle':
+      drawForestTile(ctx, px, py, tileSize, worldX, worldY, palette);
+      break;
+    case 'stone':
+    case 'mountain':
+      drawStoneTile(ctx, px, py, tileSize, worldX, worldY, palette);
+      break;
+    case 'snow':
+    case 'ice':
+      drawSnowTile(ctx, px, py, tileSize, worldX, worldY, palette);
+      break;
+    case 'lava':
+      drawLavaTile(ctx, px, py, tileSize, worldX, worldY, palette);
+      break;
+    default:
+      drawGenericTile(ctx, px, py, tileSize, worldX, worldY, type, palette);
+  }
+  
+  // Get neighbor types for transitions
   const getNeighbor = (dx: number, dy: number): TileType | null => {
     const tile = map.tiles[worldY + dy]?.[worldX + dx];
     return tile?.type || null;
   };
-  
-  // Pixel size for the 32-bit look
-  const pixelSize = Math.max(2, Math.floor(tileSize / 16));
-  
-  // Draw base gradient fill for depth
-  const gradient = ctx.createLinearGradient(px, py, px, py + tileSize);
-  gradient.addColorStop(0, palette.light);
-  gradient.addColorStop(0.3, palette.base);
-  gradient.addColorStop(0.7, palette.base);
-  gradient.addColorStop(1, palette.dark);
-  ctx.fillStyle = gradient;
-  ctx.fillRect(px, py, tileSize, tileSize);
-  
-  // Add rich texture based on tile type
-  for (let py2 = 0; py2 < tileSize; py2 += pixelSize) {
-    for (let px2 = 0; px2 < tileSize; px2 += pixelSize) {
-      const noiseVal = fractalNoise(worldX * 8 + px2 / pixelSize, worldY * 8 + py2 / pixelSize, type.charCodeAt(0));
-      const noiseVal2 = noise2(worldX * 16 + px2, worldY * 16 + py2, type.charCodeAt(0) * 2);
-      
-      if (type === 'grass') {
-        // Rich grass texture with multiple shades
-        if (noiseVal > 0.65) {
-          ctx.fillStyle = palette.lighter;
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
-        } else if (noiseVal < 0.35) {
-          ctx.fillStyle = noiseVal < 0.2 ? palette.darker : palette.dark;
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
-        }
-        // Add subtle horizontal striation
-        if (noiseVal2 > 0.85 && py2 % (pixelSize * 2) === 0) {
-          ctx.fillStyle = palette.accent2;
-          ctx.fillRect(px + px2, py + py2, pixelSize * 2, pixelSize / 2);
-        }
-      } else if (type === 'water') {
-        // Animated-style water with depth layers
-        const wave = Math.sin((worldX * 0.5 + worldY * 0.3 + px2 / tileSize * 2) * Math.PI) * 0.5 + 0.5;
-        const depth = py2 / tileSize;
-        
-        if (noiseVal * wave > 0.55) {
-          ctx.fillStyle = depth < 0.3 ? palette.lighter : palette.light;
-          ctx.fillRect(px + px2, py + py2, pixelSize * 2, pixelSize);
-        } else if (noiseVal < 0.25 + depth * 0.2) {
-          ctx.fillStyle = palette.darker;
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
-        }
-        // Specular highlights
-        if (noiseVal > 0.9 && depth < 0.4) {
-          ctx.fillStyle = palette.accent;
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize / 2);
-        }
-      } else if (type === 'sand') {
-        // Dunes and texture variation
-        const dunePattern = Math.sin((worldX + px2 / tileSize) * 1.5) * 0.3;
-        if (noiseVal + dunePattern > 0.7) {
-          ctx.fillStyle = palette.lighter;
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
-        } else if (noiseVal < 0.25) {
-          ctx.fillStyle = noiseVal < 0.12 ? palette.darker : palette.dark;
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
-        }
-        // Subtle grain
-        if (noiseVal2 > 0.9) {
-          ctx.fillStyle = palette.accent;
-          ctx.fillRect(px + px2, py + py2, pixelSize / 2, pixelSize / 2);
-        }
-      } else if (type === 'stone' || type === 'mountain') {
-        // Rocky texture with cracks and layers
-        if (noiseVal > 0.7) {
-          ctx.fillStyle = palette.lighter;
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
-        } else if (noiseVal < 0.2) {
-          ctx.fillStyle = palette.darker;
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
-        }
-        // Rock strata lines
-        if (noiseVal2 > 0.88 && noiseVal > 0.4 && noiseVal < 0.6) {
-          ctx.fillStyle = palette.dark;
-          ctx.fillRect(px + px2, py + py2, pixelSize * 3, pixelSize / 2);
-        }
-        // Mineral flecks
-        if (noiseVal2 > 0.96) {
-          ctx.fillStyle = type === 'mountain' ? '#8090a0' : palette.accent;
-          ctx.fillRect(px + px2, py + py2, pixelSize / 2, pixelSize / 2);
-        }
-      } else if (type === 'forest') {
-        // Dense canopy look
-        if (noiseVal > 0.6) {
-          ctx.fillStyle = noiseVal > 0.8 ? palette.lighter : palette.light;
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
-        } else if (noiseVal < 0.3) {
-          ctx.fillStyle = noiseVal < 0.15 ? palette.darker : palette.dark;
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
-        }
-        // Dappled sunlight effect
-        if (noiseVal2 > 0.92) {
-          ctx.fillStyle = palette.accent;
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
-        }
-      } else if (type === 'jungle') {
-        // Very dense tropical foliage
-        if (noiseVal > 0.55) {
-          ctx.fillStyle = noiseVal > 0.75 ? palette.lighter : palette.light;
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
-        } else if (noiseVal < 0.35) {
-          ctx.fillStyle = noiseVal < 0.18 ? palette.darker : palette.dark;
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
-        }
-        // Bright accent foliage
-        if (noiseVal2 > 0.88) {
-          ctx.fillStyle = palette.accent;
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
-        }
-      } else if (type === 'snow') {
-        // Soft snow texture
-        if (noiseVal > 0.6) {
-          ctx.fillStyle = palette.lighter;
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
-        } else if (noiseVal < 0.25) {
-          ctx.fillStyle = palette.dark;
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
-        }
-        // Snow crystals
-        if (noiseVal2 > 0.94) {
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(px + px2, py + py2, pixelSize / 2, pixelSize / 2);
-        }
-      } else if (type === 'ice') {
-        // Crystalline ice
-        if (noiseVal > 0.6) {
-          ctx.fillStyle = noiseVal > 0.8 ? palette.lighter : palette.light;
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
-        } else if (noiseVal < 0.3) {
-          ctx.fillStyle = palette.darker;
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
-        }
-        // Ice cracks
-        if (noiseVal2 > 0.9 && noiseVal > 0.4 && noiseVal < 0.5) {
-          ctx.fillStyle = palette.accent;
-          ctx.fillRect(px + px2, py + py2, pixelSize * 2, pixelSize / 2);
-        }
-      } else if (type === 'dirt') {
-        // Rich soil texture
-        if (noiseVal > 0.65) {
-          ctx.fillStyle = palette.lighter;
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
-        } else if (noiseVal < 0.3) {
-          ctx.fillStyle = noiseVal < 0.15 ? palette.darker : palette.dark;
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
-        }
-        // Pebbles
-        if (noiseVal2 > 0.92) {
-          ctx.fillStyle = '#8a8070';
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
-        }
-      } else if (type === 'swamp') {
-        // Murky water patches
-        const murk = Math.sin(worldX * 0.8 + worldY * 0.6) * 0.2;
-        if (noiseVal + murk > 0.6) {
-          ctx.fillStyle = palette.light;
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
-        } else if (noiseVal < 0.35) {
-          ctx.fillStyle = palette.darker;
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
-        }
-        // Algae spots
-        if (noiseVal2 > 0.88) {
-          ctx.fillStyle = '#5a8050';
-          ctx.fillRect(px + px2, py + py2, pixelSize * 1.5, pixelSize);
-        }
-      } else if (type === 'lava') {
-        // Glowing lava with crust
-        const glow = Math.sin(worldX * 0.5 + worldY * 0.4) * 0.3 + 0.5;
-        if (noiseVal * glow > 0.45) {
-          ctx.fillStyle = noiseVal > 0.75 ? palette.accent : palette.lighter;
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
-        } else if (noiseVal < 0.25) {
-          ctx.fillStyle = palette.darker;
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
-        }
-        // Hot spots
-        if (noiseVal2 > 0.9) {
-          ctx.fillStyle = '#ffcc60';
-          ctx.fillRect(px + px2, py + py2, pixelSize, pixelSize);
-        }
-      }
-    }
-  }
-  
-  // Draw decorative elements
-  drawDecorations(ctx, px, py, type, tileSize, worldX, worldY, palette);
-  
-  // Draw corner and edge blending
-  const cornerSize = Math.max(pixelSize * 2, tileSize / 8);
   
   const top = getNeighbor(0, -1);
   const bottom = getNeighbor(0, 1);
@@ -523,57 +679,9 @@ const drawTile = (
   const bottomLeft = getNeighbor(-1, 1);
   const bottomRight = getNeighbor(1, 1);
   
-  // Helper to draw smooth corner transition
-  const drawCornerTransition = (
-    cornerX: number,
-    cornerY: number,
-    neighborType: TileType | null,
-    corner: 'tl' | 'tr' | 'bl' | 'br'
-  ) => {
-    if (!neighborType || neighborType === type) return;
-    
-    const neighborPalette = TILE_PALETTES[neighborType];
-    if (!neighborPalette) return;
-    
-    const blendSize = cornerSize;
-    
-    // Draw gradient corner blend for smoother transition
-    const grd = ctx.createRadialGradient(
-      px + cornerX, py + cornerY, 0,
-      px + cornerX, py + cornerY, blendSize
-    );
-    grd.addColorStop(0, neighborPalette.base);
-    grd.addColorStop(1, 'transparent');
-    ctx.fillStyle = grd;
-    
-    ctx.beginPath();
-    switch (corner) {
-      case 'tl':
-        ctx.moveTo(px + cornerX, py + cornerY);
-        ctx.lineTo(px + cornerX + blendSize * 1.2, py + cornerY);
-        ctx.lineTo(px + cornerX, py + cornerY + blendSize * 1.2);
-        break;
-      case 'tr':
-        ctx.moveTo(px + cornerX, py + cornerY);
-        ctx.lineTo(px + cornerX - blendSize * 1.2, py + cornerY);
-        ctx.lineTo(px + cornerX, py + cornerY + blendSize * 1.2);
-        break;
-      case 'bl':
-        ctx.moveTo(px + cornerX, py + cornerY);
-        ctx.lineTo(px + cornerX + blendSize * 1.2, py + cornerY);
-        ctx.lineTo(px + cornerX, py + cornerY - blendSize * 1.2);
-        break;
-      case 'br':
-        ctx.moveTo(px + cornerX, py + cornerY);
-        ctx.lineTo(px + cornerX - blendSize * 1.2, py + cornerY);
-        ctx.lineTo(px + cornerX, py + cornerY - blendSize * 1.2);
-        break;
-    }
-    ctx.closePath();
-    ctx.fill();
-  };
-  
   // Draw edge transitions with dithered blending
+  const edgeSize = pixelSize * 3;
+  
   const drawEdgeTransition = (
     edge: 'top' | 'bottom' | 'left' | 'right',
     neighborType: TileType | null
@@ -583,16 +691,14 @@ const drawTile = (
     const neighborPalette = TILE_PALETTES[neighborType];
     if (!neighborPalette) return;
     
-    const edgeSize = pixelSize * 3;
-    
-    // Dithered edge blend
     for (let i = 0; i < tileSize; i += pixelSize) {
       const noiseVal = noise(worldX * 100 + i, worldY * 100 + i, edge.charCodeAt(0) * 10);
-      const fadeDepth = edgeSize * (1 - noiseVal * 0.5);
+      const fadeDepth = edgeSize * (0.5 + noiseVal * 0.5);
       
-      if (noiseVal > 0.4) continue;
+      if (noiseVal > 0.5) continue;
       
-      ctx.fillStyle = neighborPalette.base;
+      const blendColor = neighborPalette.colors[Math.floor(noiseVal * neighborPalette.colors.length)];
+      ctx.fillStyle = blendColor;
       
       switch (edge) {
         case 'top':
@@ -616,7 +722,55 @@ const drawTile = (
   drawEdgeTransition('left', left);
   drawEdgeTransition('right', right);
   
-  // Inner corner blends
+  // Corner transitions
+  const cornerSize = pixelSize * 4;
+  
+  const drawCornerTransition = (
+    cornerX: number,
+    cornerY: number,
+    neighborType: TileType | null,
+    corner: 'tl' | 'tr' | 'bl' | 'br'
+  ) => {
+    if (!neighborType || neighborType === type) return;
+    
+    const neighborPalette = TILE_PALETTES[neighborType];
+    if (!neighborPalette) return;
+    
+    const grd = ctx.createRadialGradient(
+      px + cornerX, py + cornerY, 0,
+      px + cornerX, py + cornerY, cornerSize
+    );
+    grd.addColorStop(0, neighborPalette.colors[3]);
+    grd.addColorStop(1, 'transparent');
+    ctx.fillStyle = grd;
+    
+    ctx.beginPath();
+    switch (corner) {
+      case 'tl':
+        ctx.moveTo(px + cornerX, py + cornerY);
+        ctx.lineTo(px + cornerX + cornerSize, py + cornerY);
+        ctx.lineTo(px + cornerX, py + cornerY + cornerSize);
+        break;
+      case 'tr':
+        ctx.moveTo(px + cornerX, py + cornerY);
+        ctx.lineTo(px + cornerX - cornerSize, py + cornerY);
+        ctx.lineTo(px + cornerX, py + cornerY + cornerSize);
+        break;
+      case 'bl':
+        ctx.moveTo(px + cornerX, py + cornerY);
+        ctx.lineTo(px + cornerX + cornerSize, py + cornerY);
+        ctx.lineTo(px + cornerX, py + cornerY - cornerSize);
+        break;
+      case 'br':
+        ctx.moveTo(px + cornerX, py + cornerY);
+        ctx.lineTo(px + cornerX - cornerSize, py + cornerY);
+        ctx.lineTo(px + cornerX, py + cornerY - cornerSize);
+        break;
+    }
+    ctx.closePath();
+    ctx.fill();
+  };
+  
   if (top === type && left === type && topLeft && topLeft !== type) {
     drawCornerTransition(0, 0, topLeft, 'tl');
   }
@@ -630,11 +784,10 @@ const drawTile = (
     drawCornerTransition(tileSize, tileSize, bottomRight, 'br');
   }
   
-  // Enhanced ambient occlusion
-  const aoSize = pixelSize * 1.5;
+  // Ambient occlusion
+  const aoSize = pixelSize * 2;
   
-  // Top/left edge shadows
-  ctx.fillStyle = 'rgba(0,0,0,0.1)';
+  ctx.fillStyle = 'rgba(0,0,0,0.12)';
   if (top && top !== type) {
     ctx.fillRect(px, py, tileSize, aoSize);
   }
@@ -642,8 +795,7 @@ const drawTile = (
     ctx.fillRect(px, py, aoSize, tileSize);
   }
   
-  // Bottom/right edge highlights
-  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
   if (bottom && bottom !== type) {
     ctx.fillRect(px, py + tileSize - aoSize, tileSize, aoSize);
   }
@@ -651,8 +803,8 @@ const drawTile = (
     ctx.fillRect(px + tileSize - aoSize, py, aoSize, tileSize);
   }
   
-  // Inner corner shadows
-  ctx.fillStyle = 'rgba(0,0,0,0.12)';
+  // Corner shadows
+  ctx.fillStyle = 'rgba(0,0,0,0.15)';
   if (top && top !== type && left && left !== type) {
     ctx.fillRect(px, py, aoSize * 2, aoSize * 2);
   }
