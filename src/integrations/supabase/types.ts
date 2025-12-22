@@ -58,6 +58,8 @@ export type Database = {
           name: string
           passable: boolean
           placeable: boolean
+          produce_tile: boolean
+          produce_tile_type: string | null
           rarity: string
           recipe: Json | null
           spawn_chance: number
@@ -91,6 +93,8 @@ export type Database = {
           name: string
           passable?: boolean
           placeable?: boolean
+          produce_tile?: boolean
+          produce_tile_type?: string | null
           rarity?: string
           recipe?: Json | null
           spawn_chance?: number
@@ -124,6 +128,8 @@ export type Database = {
           name?: string
           passable?: boolean
           placeable?: boolean
+          produce_tile?: boolean
+          produce_tile_type?: string | null
           rarity?: string
           recipe?: Json | null
           spawn_chance?: number

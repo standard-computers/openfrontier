@@ -97,6 +97,8 @@ const ResourceEditorModal = ({
         lifeDecreasePerUse: data.life_decrease_per_use ?? 100,
         destructible: data.destructible || false,
         maxLife: data.max_life ?? 100,
+        produceTile: data.produce_tile || false,
+        produceTileType: (data.produce_tile_type as Resource['produceTileType']) || undefined,
       });
 
       // Update icon mode based on copied resource
@@ -906,6 +908,51 @@ const ResourceEditorModal = ({
                       Total HP before destruction (1-10000)
                     </p>
                   </div>
+                </div>
+              </div>
+
+              {/* Produce Tile Section */}
+              <div className="bg-secondary/30 rounded-lg p-3">
+                <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                  🌱 Produce Tile
+                </h4>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="produceTile"
+                      checked={form.produceTile || false}
+                      onChange={(e) => setForm({ ...form, produceTile: e.target.checked, produceTileType: e.target.checked ? (form.produceTileType || 'grass') : undefined })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="produceTile" className="text-sm">Transform Tile</label>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    When enabled, using this item on an empty tile (press E) transforms it into the selected tile type
+                  </p>
+                  
+                  {form.produceTile && (
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-2 block">Target Tile Type</label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {TILE_TYPES.map((tile) => (
+                          <button
+                            key={tile.type}
+                            type="button"
+                            onClick={() => setForm({ ...form, produceTileType: tile.type })}
+                            className={cn(
+                              'px-2 py-1 text-xs rounded-md capitalize transition-colors',
+                              form.produceTileType === tile.type
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-secondary hover:bg-secondary/70'
+                            )}
+                          >
+                            {tile.type}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
