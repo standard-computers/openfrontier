@@ -586,6 +586,8 @@ const ResourceRepository = ({
             tileHeight: r.tile_height ?? 1,
             useLife: r.use_life || false,
             lifeDecreasePerUse: r.life_decrease_per_use ?? 100,
+            destructible: r.destructible || false,
+            maxLife: r.max_life ?? 100,
           }))}
           categories={categories}
           isNew={true}
@@ -628,6 +630,8 @@ const ResourceRepository = ({
             tileHeight: editingRepoResource.tile_height ?? 1,
             useLife: editingRepoResource.use_life || false,
             lifeDecreasePerUse: editingRepoResource.life_decrease_per_use ?? 100,
+            destructible: editingRepoResource.destructible || false,
+            maxLife: editingRepoResource.max_life ?? 100,
           }}
           allResources={resources.map(r => ({
             id: r.id,
@@ -657,6 +661,8 @@ const ResourceRepository = ({
             tileHeight: r.tile_height ?? 1,
             useLife: r.use_life || false,
             lifeDecreasePerUse: r.life_decrease_per_use ?? 100,
+            destructible: r.destructible || false,
+            maxLife: r.max_life ?? 100,
           }))}
           categories={categories}
           isNew={false}
