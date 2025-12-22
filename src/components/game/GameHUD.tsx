@@ -208,8 +208,8 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
       )}
 
       {/* Inventory bar with tiles, health, xp, coins */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 game-panel p-2 pointer-events-auto z-50">
-        <div className="flex items-center gap-2">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 game-panel p-2 pointer-events-auto z-50 overflow-visible">
+        <div className="flex items-center gap-2 overflow-visible">
           {/* Claimed tiles indicator */}
           <button 
             onClick={onOpenClaimedTiles}
@@ -245,7 +245,7 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
           <div className="w-px h-8 bg-border" />
           
           {/* Inventory slots */}
-          <div className="flex gap-1">
+          <div className="flex gap-1 overflow-visible">
             {world.inventory.slice(0, 12).map((slot, i) => {
               const resource = getResource(slot.resourceId);
               const isSelected = selectedSlot === i;
