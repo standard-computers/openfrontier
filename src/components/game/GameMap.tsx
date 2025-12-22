@@ -257,15 +257,15 @@ const GameMap = ({
           // Check if an NPC is on this tile
           const npcOnTile = npcs.find(npc => npc.position.x === x && npc.position.y === y);
 
-          // Get floating resources on this tile
-          const floatingResources = tile.resources
+          // Get displayable resources on this tile (floating OR display enabled)
+          const displayableResources = tile.resources
             .map(resId => resources.find(r => r.id === resId))
-            .filter(r => r?.isFloating);
+            .filter(r => r?.isFloating || r?.display);
 
-          // Get the first floating resource for multi-tile rendering
-          const primaryFloatingResource = floatingResources[0];
-          const resourceWidth = primaryFloatingResource?.tileWidth ?? 1;
-          const resourceHeight = primaryFloatingResource?.tileHeight ?? 1;
+          // Get the first displayable resource for multi-tile rendering
+          const primaryDisplayResource = displayableResources[0];
+          const resourceWidth = primaryDisplayResource?.tileWidth ?? 1;
+          const resourceHeight = primaryDisplayResource?.tileHeight ?? 1;
           const isMultiTileResource = resourceWidth > 1 || resourceHeight > 1;
 
           // Check if this tile is a market (1x1 building)
@@ -365,8 +365,8 @@ const GameMap = ({
                   🏪
                 </span>
               )}
-              {/* Show floating resources - extends upward and to the right for multi-tile */}
-              {floatingResources.length > 0 && !isPlayerHere && primaryFloatingResource && (
+              {/* Show displayable resources - extends upward and to the right for multi-tile */}
+              {displayableResources.length > 0 && !isPlayerHere && primaryDisplayResource && (
                 <div 
                   className="absolute flex items-end justify-start drop-shadow-md pointer-events-none z-10"
                   style={{ 
@@ -378,8 +378,8 @@ const GameMap = ({
                   }}
                 >
                   <ResourceIcon 
-                    icon={primaryFloatingResource.icon} 
-                    iconType={primaryFloatingResource.icon.startsWith('http') ? 'image' : 'emoji'}
+                    icon={primaryDisplayResource.icon} 
+                    iconType={primaryDisplayResource.icon.startsWith('http') ? 'image' : 'emoji'}
                     size={isMultiTileResource ? 'custom' : 'md'}
                     className="drop-shadow-md w-full h-full object-contain"
                     style={isMultiTileResource ? {

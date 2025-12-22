@@ -550,6 +550,17 @@ const ResourceEditorModal = ({
                     />
                     <label htmlFor="isFloating" className="text-sm">Is Floating</label>
                   </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="display"
+                      checked={form.display || false}
+                      onChange={(e) => setForm({ ...form, display: e.target.checked })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="display" className="text-sm">Display on Tile</label>
+                  </div>
                   
                   <div className="flex items-center gap-2">
                     <input
