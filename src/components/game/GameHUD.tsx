@@ -66,22 +66,23 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
       {/* Top bar */}
       <div className="absolute top-4 left-4 right-4 flex items-start justify-between pointer-events-none z-50">
         <div className="flex items-center gap-2 pointer-events-auto">
+          {/* World button */}
           <button 
             onClick={onOpenStats}
-            className="game-panel px-4 py-3 hover:bg-muted/50 transition-colors text-left"
+            className="game-panel px-3 py-2 hover:bg-muted/50 transition-colors flex items-center gap-2"
           >
-            <div className="flex items-center gap-2">
-              <h1 className="font-semibold text-foreground">{world.name}</h1>
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
-            </div>
-            <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                Day {worldTime.days}, {worldTime.hours}:00
-              </span>
-              <span>Pos: {world.playerPosition.x}, {world.playerPosition.y}</span>
-            </div>
+            <h1 className="font-semibold text-foreground">{world.name}</h1>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
           </button>
+
+          {/* Clock and position tile */}
+          <div className="game-panel px-3 py-2 flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              Day {worldTime.days}, {worldTime.hours}:00
+            </span>
+            <span>Pos: {world.playerPosition.x}, {world.playerPosition.y}</span>
+          </div>
 
           {/* Player ranking button */}
           <button 
