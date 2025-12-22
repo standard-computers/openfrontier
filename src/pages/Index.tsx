@@ -316,10 +316,12 @@ const Index = () => {
   // Handle using item on facing tile (E key)
   const handleUseItem = useCallback(() => {
     const result = useItemOnFacingTile(selectedSlot, facingDirection);
-    if (result.success) {
-      toast.success(result.message);
-    } else {
-      toast.error(result.message);
+    if (result.message) {
+      if (result.success) {
+        toast.success(result.message);
+      } else {
+        toast.error(result.message);
+      }
     }
   }, [useItemOnFacingTile, selectedSlot, facingDirection]);
 
