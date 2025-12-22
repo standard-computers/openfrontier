@@ -95,6 +95,8 @@ const ResourceEditorModal = ({
         tileHeight: data.tile_height ?? 1,
         useLife: data.use_life || false,
         lifeDecreasePerUse: data.life_decrease_per_use ?? 100,
+        destructible: data.destructible || false,
+        maxLife: data.max_life ?? 100,
       });
 
       // Update icon mode based on copied resource
@@ -860,6 +862,48 @@ const ResourceEditorModal = ({
                     />
                     <p className="text-[10px] text-muted-foreground mt-0.5">
                       Damage dealt when triggered
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Destructible Section */}
+              <div className="bg-secondary/30 rounded-lg p-3">
+                <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                  💥 Destructible
+                </h4>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="destructible"
+                      checked={form.destructible || false}
+                      onChange={(e) => setForm({ ...form, destructible: e.target.checked })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="destructible" className="text-sm">Can Be Destroyed</label>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    If enabled, this item can be destroyed by damage-inflicting items (press E)
+                  </p>
+                  
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Max Life/Durability</label>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min="1"
+                      max="10000"
+                      value={form.maxLife || 100}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 100;
+                        setForm({ ...form, maxLife: Math.max(1, Math.min(10000, val)) });
+                      }}
+                      className="input-field w-full"
+                      disabled={!form.destructible}
+                    />
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      Total HP before destruction (1-10000)
                     </p>
                   </div>
                 </div>

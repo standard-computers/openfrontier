@@ -853,6 +853,149 @@ export const useGameWorld = () => {
     return result;
   }, [saveMapData]);
 
+  // Use damage-inflicting item on facing tile to destroy destructible resources
+  const useItemOnFacingTile = useCallback((
+    selectedSlot: number, 
+    facingDirection: 'north' | 'south' | 'east' | 'west'
+  ): { success: boolean; message: string } => {
+    let result = { success: false, message: '' };
+    
+    setWorld(prev => {
+      // Check if selected slot has a damage-inflicting item
+      const slot = prev.inventory[selectedSlot];
+      if (!slot || !slot.resourceId || slot.quantity <= 0) {
+        result = { success: false, message: 'No item selected' };
+        return prev;
+      }
+      
+      const heldResource = prev.resources.find(r => r.id === slot.resourceId);
+      if (!heldResource || !heldResource.canInflictDamage || !heldResource.damage) {
+        result = { success: false, message: 'Selected item cannot inflict damage' };
+        return prev;
+      }
+      
+      // Calculate target tile based on facing direction
+      let targetX = prev.playerPosition.x;
+      let targetY = prev.playerPosition.y;
+      
+      switch (facingDirection) {
+        case 'north': targetY -= 1; break;
+        case 'south': targetY += 1; break;
+        case 'east': targetX += 1; break;
+        case 'west': targetX -= 1; break;
+      }
+      
+      // Check bounds
+      if (targetX < 0 || targetX >= prev.map.width || targetY < 0 || targetY >= prev.map.height) {
+        result = { success: false, message: 'Nothing to attack' };
+        return prev;
+      }
+      
+      const targetTile = prev.map.tiles[targetY][targetX];
+      
+      // Find a destructible resource on the tile
+      const destructibleResourceId = targetTile.resources.find(resId => {
+        const res = prev.resources.find(r => r.id === resId);
+        return res?.destructible;
+      });
+      
+      if (!destructibleResourceId) {
+        result = { success: false, message: 'Nothing destructible here' };
+        return prev;
+      }
+      
+      const destructibleResource = prev.resources.find(r => r.id === destructibleResourceId)!;
+      const damageAmount = heldResource.damage;
+      const maxLife = destructibleResource.maxLife ?? 100;
+      
+      // Get current life of the resource on this tile
+      const resourceLife = targetTile.resourceLife || {};
+      const currentLife = resourceLife[destructibleResourceId] ?? maxLife;
+      const newLife = currentLife - damageAmount;
+      
+      let newInventory = [...prev.inventory];
+      let newTiles = prev.map.tiles;
+      let destroyedMessage = '';
+      
+      // Handle useLife for the held item
+      if (heldResource.useLife) {
+        const lifeDecrease = heldResource.lifeDecreasePerUse ?? 100;
+        // For simplicity, we consume the item if lifeDecrease >= 100
+        if (lifeDecrease >= 100) {
+          newInventory[selectedSlot] = {
+            ...newInventory[selectedSlot],
+            quantity: newInventory[selectedSlot].quantity - 1
+          };
+          if (newInventory[selectedSlot].quantity <= 0) {
+            newInventory[selectedSlot] = { resourceId: null, quantity: 0 };
+          }
+        }
+        // TODO: Implement partial life tracking for held items if needed
+      }
+      
+      if (newLife <= 0) {
+        // Resource is destroyed - remove from tile
+        newTiles = prev.map.tiles.map((row, ry) =>
+          row.map((t, rx) => {
+            if (rx === targetX && ry === targetY) {
+              const newResources = t.resources.filter(r => r !== destructibleResourceId);
+              const newResourceLife = { ...t.resourceLife };
+              delete newResourceLife[destructibleResourceId];
+              return { ...t, resources: newResources, resourceLife: Object.keys(newResourceLife).length > 0 ? newResourceLife : undefined };
+            }
+            return t;
+          })
+        );
+        
+        // If the resource has a recipe, break it into ingredients
+        if (destructibleResource.recipes && destructibleResource.recipes.length > 0) {
+          const recipe = destructibleResource.recipes[0];
+          for (const ingredient of recipe.ingredients) {
+            for (let i = 0; i < ingredient.quantity; i++) {
+              // Add ingredient to inventory
+              let slotIndex = newInventory.findIndex(s => s.resourceId === ingredient.resourceId && s.quantity < 99);
+              if (slotIndex === -1) {
+                slotIndex = newInventory.findIndex(s => !s.resourceId);
+              }
+              if (slotIndex !== -1) {
+                if (newInventory[slotIndex].resourceId === ingredient.resourceId) {
+                  newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
+                } else {
+                  newInventory[slotIndex] = { resourceId: ingredient.resourceId, quantity: 1 };
+                }
+              }
+            }
+          }
+          destroyedMessage = ` Broke into components!`;
+        }
+        
+        result = { success: true, message: `Destroyed ${destructibleResource.name}!${destroyedMessage}` };
+      } else {
+        // Resource damaged but not destroyed - update life
+        newTiles = prev.map.tiles.map((row, ry) =>
+          row.map((t, rx) => {
+            if (rx === targetX && ry === targetY) {
+              const newResourceLife = { ...t.resourceLife, [destructibleResourceId]: newLife };
+              return { ...t, resourceLife: newResourceLife };
+            }
+            return t;
+          })
+        );
+        
+        result = { success: true, message: `Hit ${destructibleResource.name}! (${newLife}/${maxLife} HP)` };
+      }
+      
+      const newMapData: WorldMap = { ...prev.map, tiles: newTiles };
+      
+      // Save map changes
+      setTimeout(() => saveMapData(newMapData), 500);
+      
+      return { ...prev, inventory: newInventory, map: newMapData };
+    });
+    
+    return result;
+  }, [saveMapData]);
+
   const toggleEnableMarkets = useCallback(async (enabled: boolean) => {
     if (!isOwner || !dbWorldId) return;
     
@@ -1092,6 +1235,7 @@ export const useGameWorld = () => {
     consumeResource,
     takeDamage,
     placeItem,
+    useItemOnFacingTile,
     toggleEnableMarkets,
     addMarket,
     removeMarket,
