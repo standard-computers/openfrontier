@@ -42,6 +42,7 @@ export type Database = {
           created_by: string | null
           damage: number
           description: string | null
+          display: boolean
           download_count: number
           gather_time: number
           has_limited_lifetime: boolean
@@ -72,6 +73,7 @@ export type Database = {
           created_by?: string | null
           damage?: number
           description?: string | null
+          display?: boolean
           download_count?: number
           gather_time?: number
           has_limited_lifetime?: boolean
@@ -102,6 +104,7 @@ export type Database = {
           created_by?: string | null
           damage?: number
           description?: string | null
+          display?: boolean
           download_count?: number
           gather_time?: number
           has_limited_lifetime?: boolean
