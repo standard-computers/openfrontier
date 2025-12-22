@@ -262,6 +262,12 @@ const GameMap = ({
             .map(resId => resources.find(r => r.id === resId))
             .filter(r => r?.isFloating);
 
+          // Get the first floating resource for multi-tile rendering
+          const primaryFloatingResource = floatingResources[0];
+          const resourceWidth = primaryFloatingResource?.tileWidth ?? 1;
+          const resourceHeight = primaryFloatingResource?.tileHeight ?? 1;
+          const isMultiTileResource = resourceWidth > 1 || resourceHeight > 1;
+
           // Check if this tile is a market (1x1 building)
           const marketOnTile = enableMarkets ? markets.find(m => 
             x === m.position.x && y === m.position.y
@@ -359,19 +365,30 @@ const GameMap = ({
                   🏪
                 </span>
               )}
-              {/* Show floating resources */}
-              {floatingResources.length > 0 && !isPlayerHere && floatingResources[0] && (
-                <span 
-                  className="absolute inset-0 flex items-center justify-center drop-shadow-md"
-                  style={{ fontSize: Math.max(10, tileSize * 0.5) }}
+              {/* Show floating resources - extends upward and to the right for multi-tile */}
+              {floatingResources.length > 0 && !isPlayerHere && primaryFloatingResource && (
+                <div 
+                  className="absolute flex items-end justify-start drop-shadow-md pointer-events-none z-10"
+                  style={{ 
+                    // Position at bottom-left of this tile, extend upward and right
+                    bottom: 0,
+                    left: 0,
+                    width: isMultiTileResource ? tileSize * resourceWidth : tileSize,
+                    height: isMultiTileResource ? tileSize * resourceHeight : tileSize,
+                  }}
                 >
                   <ResourceIcon 
-                    icon={floatingResources[0].icon} 
-                    iconType={floatingResources[0].icon.startsWith('http') ? 'image' : 'emoji'}
-                    size="md"
-                    className="drop-shadow-md"
+                    icon={primaryFloatingResource.icon} 
+                    iconType={primaryFloatingResource.icon.startsWith('http') ? 'image' : 'emoji'}
+                    size={isMultiTileResource ? 'custom' : 'md'}
+                    className="drop-shadow-md w-full h-full object-contain"
+                    style={isMultiTileResource ? {
+                      fontSize: Math.max(16, tileSize * Math.min(resourceWidth, resourceHeight) * 0.8),
+                      width: '100%',
+                      height: '100%',
+                    } : undefined}
                   />
-                </span>
+                </div>
               )}
               {/* Show player character */}
               {isPlayerHere && (
