@@ -64,7 +64,7 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
   return (
     <>
       {/* Top bar */}
-      <div className="absolute top-4 left-4 right-4 flex items-start justify-between pointer-events-none">
+      <div className="absolute top-4 left-4 right-4 flex items-start justify-between pointer-events-none z-50">
         <div className="flex items-center gap-2 pointer-events-auto">
           <button 
             onClick={onOpenStats}
@@ -196,7 +196,7 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
 
       {/* Return to player button - shown when camera is offset */}
       {cameraOffset && (
-        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 pointer-events-auto">
+        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 pointer-events-auto z-50">
           <button
             onClick={onReturnToPlayer}
             className="game-panel px-4 py-2 hover:bg-muted/50 transition-colors flex items-center gap-2 bg-primary/20 border border-primary/30"
@@ -208,7 +208,7 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
       )}
 
       {/* Inventory bar with tiles, health, xp, coins */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 game-panel p-2 pointer-events-auto">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 game-panel p-2 pointer-events-auto z-50">
         <div className="flex items-center gap-2">
           {/* Claimed tiles indicator */}
           <button 
