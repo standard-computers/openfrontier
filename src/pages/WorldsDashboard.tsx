@@ -159,6 +159,7 @@ const WorldsDashboard = () => {
             recipes: repoResource.recipe ? [repoResource.recipe as unknown as import('@/types/game').Recipe] : [],
             isContainer: repoResource.is_container || false,
             isFloating: repoResource.is_floating || false,
+            display: repoResource.display || false,
             placeable: repoResource.placeable || false,
             passable: repoResource.passable || false,
             hasLimitedLifetime: repoResource.has_limited_lifetime || false,
