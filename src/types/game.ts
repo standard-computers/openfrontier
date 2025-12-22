@@ -70,6 +70,7 @@ export interface WorldMap {
 export interface InventorySlot {
   resourceId: string | null;
   quantity: number;
+  life?: number; // Current life/durability of this item stack (0-100)
 }
 
 export interface Sovereignty {

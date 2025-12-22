@@ -7,13 +7,14 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import ResourceIcon from './ResourceIcon';
-import { Heart, Coins, Utensils, Swords } from 'lucide-react';
+import { Heart, Coins, Utensils, Swords, Shield } from 'lucide-react';
 
 interface InventoryItemModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   resource: Resource | null;
   quantity: number;
+  life?: number;
   onConsume: (resourceId: string) => { success: boolean; message: string };
 }
 
@@ -22,9 +23,12 @@ const InventoryItemModal = ({
   onOpenChange, 
   resource, 
   quantity,
+  life,
   onConsume 
 }: InventoryItemModalProps) => {
   if (!resource) return null;
+  
+  const showLife = resource.useLife && life !== undefined;
 
   const handleConsume = () => {
     const result = onConsume(resource.id);
@@ -82,6 +86,22 @@ const InventoryItemModal = ({
                 <Swords className="w-4 h-4 text-orange-500" />
                 <span className="text-muted-foreground">Damage:</span>
                 <span className="font-medium text-orange-500">{resource.damage}</span>
+              </div>
+            )}
+
+            {showLife && (
+              <div className="col-span-2 flex flex-col gap-1 bg-blue-500/10 rounded px-2 py-1.5">
+                <div className="flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-blue-400" />
+                  <span className="text-muted-foreground">Durability:</span>
+                  <span className="font-medium text-blue-400">{life}%</span>
+                </div>
+                <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-blue-400 transition-all duration-300"
+                    style={{ width: `${life}%` }}
+                  />
+                </div>
               </div>
             )}
           </div>
