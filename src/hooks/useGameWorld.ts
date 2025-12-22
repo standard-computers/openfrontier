@@ -861,7 +861,7 @@ export const useGameWorld = () => {
     let result = { success: false, message: '' };
     
     setWorld(prev => {
-      // Check if selected slot has a damage-inflicting item
+      // Check if selected slot has an item
       const slot = prev.inventory[selectedSlot];
       if (!slot || !slot.resourceId || slot.quantity <= 0) {
         result = { success: false, message: 'No item selected' };
@@ -869,8 +869,17 @@ export const useGameWorld = () => {
       }
       
       const heldResource = prev.resources.find(r => r.id === slot.resourceId);
-      if (!heldResource || !heldResource.canInflictDamage || !heldResource.damage) {
-        result = { success: false, message: 'Selected item cannot inflict damage' };
+      if (!heldResource) {
+        result = { success: false, message: 'Invalid item' };
+        return prev;
+      }
+      
+      // Check if item can do anything (inflict damage or produce tile)
+      const canInflictDamage = heldResource.canInflictDamage && heldResource.damage;
+      const canProduceTile = heldResource.produceTile && heldResource.produceTileType;
+      
+      if (!canInflictDamage && !canProduceTile) {
+        result = { success: false, message: 'Selected item cannot be used here' };
         return prev;
       }
       
@@ -887,11 +896,68 @@ export const useGameWorld = () => {
       
       // Check bounds
       if (targetX < 0 || targetX >= prev.map.width || targetY < 0 || targetY >= prev.map.height) {
-        result = { success: false, message: 'Nothing to attack' };
+        result = { success: false, message: 'Nothing to use item on' };
         return prev;
       }
       
       const targetTile = prev.map.tiles[targetY][targetX];
+      
+      // Check for produce tile functionality first (on empty tiles without resources)
+      if (canProduceTile && targetTile.resources.length === 0) {
+        const newTileType = heldResource.produceTileType!;
+        
+        // Transform the tile
+        let newTiles = prev.map.tiles.map((row, ry) =>
+          row.map((t, rx) => {
+            if (rx === targetX && ry === targetY) {
+              return { 
+                ...t, 
+                type: newTileType,
+                walkable: !['water', 'lava', 'stone'].includes(newTileType)
+              };
+            }
+            return t;
+          })
+        );
+        
+        let newInventory = [...prev.inventory];
+        
+        // Handle durability loss for the held item
+        if (heldResource.useLife) {
+          const lifeDecrease = heldResource.lifeDecreasePerUse ?? 100;
+          const currentItemLife = newInventory[selectedSlot].life ?? 100;
+          const newItemLife = currentItemLife - lifeDecrease;
+          
+          if (newItemLife <= 0) {
+            newInventory[selectedSlot] = {
+              ...newInventory[selectedSlot],
+              quantity: newInventory[selectedSlot].quantity - 1,
+              life: 100
+            };
+            if (newInventory[selectedSlot].quantity <= 0) {
+              newInventory[selectedSlot] = { resourceId: null, quantity: 0 };
+            }
+          } else {
+            newInventory[selectedSlot] = {
+              ...newInventory[selectedSlot],
+              life: newItemLife
+            };
+          }
+        }
+        
+        result = { success: true, message: `Transformed tile to ${newTileType}` };
+        return {
+          ...prev,
+          map: { ...prev.map, tiles: newTiles },
+          inventory: newInventory
+        };
+      }
+      
+      // If can't produce tile or tile has resources, try damage logic
+      if (!canInflictDamage) {
+        result = { success: false, message: canProduceTile ? 'Tile must be empty to transform' : 'Selected item cannot inflict damage' };
+        return prev;
+      }
       
       // Find a destructible resource on the tile
       const destructibleResourceId = targetTile.resources.find(resId => {
