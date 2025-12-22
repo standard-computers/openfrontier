@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { GameWorld, Resource, Sovereignty, Market, NPC, Area, Position, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap, TILE_TYPES, generateNPCs } from '@/types/game';
+import { GameWorld, Resource, Sovereignty, Market, NPC, Area, Position, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap, TILE_TYPES, generateNPCs, generateStrangers, Stranger } from '@/types/game';
 import type { Json } from '@/integrations/supabase/types';
 
 // Hook version marker for HMR compatibility
@@ -130,10 +130,17 @@ export const useGameWorld = () => {
 
         const enableNpcs = (worldData as any).enable_npcs ?? false;
         const npcCount = (worldData as any).npc_count ?? 0;
+        const enableStrangers = (worldData as any).enable_strangers ?? false;
+        const strangerDensity = parseFloat((worldData as any).stranger_density) ?? 0.02;
         
         // Generate NPCs if enabled
         const npcs = enableNpcs && npcCount > 0 
           ? generateNPCs(npcCount, mapData)
+          : [];
+
+        // Generate Strangers if enabled
+        const strangers = enableStrangers 
+          ? generateStrangers(strangerDensity, mapData)
           : [];
 
         setWorld({
@@ -158,6 +165,9 @@ export const useGameWorld = () => {
           enableNpcs,
           npcCount,
           npcs,
+          enableStrangers,
+          strangerDensity,
+          strangers,
         });
       } catch (error) {
         console.error('Error loading world:', error);
@@ -1009,6 +1019,51 @@ export const useGameWorld = () => {
       .eq('id', dbWorldId);
   }, [isOwner, dbWorldId]);
 
+  const toggleEnableStrangers = useCallback(async (enabled: boolean, density: number = 0.02) => {
+    if (!isOwner || !dbWorldId) return;
+    
+    const strangerDensity = enabled ? Math.min(Math.max(density, 0.001), 1) : 0.02;
+    
+    setWorld(prev => {
+      const strangers = enabled 
+        ? generateStrangers(strangerDensity, prev.map, prev.strangers)
+        : [];
+      return { ...prev, enableStrangers: enabled, strangerDensity, strangers };
+    });
+    
+    await supabase
+      .from('worlds')
+      .update({ 
+        enable_strangers: enabled,
+        stranger_density: strangerDensity
+      })
+      .eq('id', dbWorldId);
+  }, [isOwner, dbWorldId]);
+
+  const updateStrangerDensity = useCallback(async (density: number) => {
+    if (!isOwner || !dbWorldId) return;
+    
+    const strangerDensity = Math.min(Math.max(density, 0.001), 1);
+    
+    setWorld(prev => {
+      const strangers = generateStrangers(strangerDensity, prev.map);
+      return { 
+        ...prev, 
+        strangerDensity,
+        enableStrangers: true,
+        strangers,
+      };
+    });
+    
+    await supabase
+      .from('worlds')
+      .update({ 
+        enable_strangers: true,
+        stranger_density: strangerDensity
+      })
+      .eq('id', dbWorldId);
+  }, [isOwner, dbWorldId]);
+
   return {
     world,
     setWorld,
@@ -1044,6 +1099,8 @@ export const useGameWorld = () => {
     sellToMarket,
     toggleEnableNpcs,
     updateNpcCount,
+    toggleEnableStrangers,
+    updateStrangerDensity,
     saveMapData,
   };
 };

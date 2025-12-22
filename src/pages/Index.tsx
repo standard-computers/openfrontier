@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameWorld, WorldMember } from '@/hooks/useGameWorld';
 import { useNPCBehavior } from '@/hooks/useNPCBehavior';
+import { useStrangerBehavior } from '@/hooks/useStrangerBehavior';
 import { useAuth } from '@/hooks/useAuth';
 import { useTouchDevice } from '@/hooks/useTouchDevice';
 import GameMap from '@/components/game/GameMap';
@@ -85,11 +86,16 @@ const Index = () => {
     sellToMarket,
     toggleEnableNpcs,
     updateNpcCount,
+    toggleEnableStrangers,
+    updateStrangerDensity,
     saveMapData,
   } = useGameWorld();
 
   // Enable NPC behavior
   useNPCBehavior({ world, setWorld, saveMapData });
+  
+  // Enable Stranger behavior
+  useStrangerBehavior({ world, setWorld, saveMapData });
 
   useEffect(() => {
     if (!loading && !user) {
@@ -352,6 +358,7 @@ const Index = () => {
           markets={world.markets}
           enableMarkets={world.enableMarkets}
           npcs={world.npcs}
+          strangers={world.strangers}
           areas={world.areas}
           facingDirection={facingDirection}
           isMoving={isMoving}
@@ -490,6 +497,10 @@ const Index = () => {
         enableMarkets={world.enableMarkets}
         enableNpcs={world.enableNpcs}
         npcCount={world.npcCount}
+        enableStrangers={world.enableStrangers}
+        strangerDensity={world.strangerDensity}
+        mapWidth={world.map.width}
+        mapHeight={world.map.height}
         onUpdateWorldName={updateWorldName}
         onAddResource={addResource}
         onUpdateResource={updateResource}
@@ -498,6 +509,8 @@ const Index = () => {
         onToggleMarkets={toggleEnableMarkets}
         onToggleNpcs={toggleEnableNpcs}
         onUpdateNpcCount={updateNpcCount}
+        onToggleStrangers={toggleEnableStrangers}
+        onUpdateStrangerDensity={updateStrangerDensity}
       />
 
       <WorldStatsPanel

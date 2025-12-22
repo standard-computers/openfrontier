@@ -131,6 +131,17 @@ export interface Market {
   name: string;
 }
 
+// Stranger - like NPC but doesn't claim territory
+export interface Stranger {
+  id: string;
+  name: string;
+  color: string;
+  position: { x: number; y: number };
+  inventory: InventorySlot[];
+  health: number;
+  lastActionTime?: number;
+}
+
 export interface GameWorld {
   id: string;
   name: string;
@@ -153,6 +164,9 @@ export interface GameWorld {
   enableNpcs?: boolean;
   npcCount?: number;
   npcs?: NPC[];
+  enableStrangers?: boolean;
+  strangerDensity?: number; // 0-1, where 1 = 1 stranger per tile
+  strangers?: Stranger[];
 }
 
 export const TILE_TYPES: { type: TileType; label: string; walkable: boolean; color: string; baseValue: number }[] = [
@@ -633,4 +647,64 @@ export const generateNPCs = (
   }
   
   return npcs;
+};
+
+// Stranger name components
+const STRANGER_FIRST_NAMES = ['Wandering', 'Lost', 'Curious', 'Quiet', 'Humble', 'Swift', 'Gentle', 'Clever', 'Weary', 'Bold', 'Shy', 'Eager'];
+const STRANGER_LAST_NAMES = ['Traveler', 'Nomad', 'Drifter', 'Seeker', 'Walker', 'Gatherer', 'Scout', 'Rover', 'Wanderer', 'Forager', 'Hunter', 'Pilgrim'];
+
+export const generateStrangers = (
+  density: number,
+  map: WorldMap,
+  existingStrangers?: Stranger[]
+): Stranger[] => {
+  const totalTiles = map.width * map.height;
+  const strangerCount = Math.floor(totalTiles * density);
+  
+  // If we already have strangers with the right count, return them
+  if (existingStrangers && existingStrangers.length === strangerCount) {
+    return existingStrangers;
+  }
+
+  const strangers: Stranger[] = [];
+  const usedPositions: Set<string> = new Set();
+  
+  for (let i = 0; i < strangerCount; i++) {
+    const firstName = STRANGER_FIRST_NAMES[Math.floor(Math.random() * STRANGER_FIRST_NAMES.length)];
+    const lastName = STRANGER_LAST_NAMES[Math.floor(Math.random() * STRANGER_LAST_NAMES.length)];
+    const name = `${firstName} ${lastName}`;
+    
+    // Find a walkable position
+    let position = { x: 0, y: 0 };
+    let attempts = 0;
+    while (attempts < 100) {
+      const x = Math.floor(Math.random() * map.width);
+      const y = Math.floor(Math.random() * map.height);
+      const key = `${x},${y}`;
+      const tile = map.tiles[y]?.[x];
+      if (tile?.walkable && !usedPositions.has(key)) {
+        position = { x, y };
+        usedPositions.add(key);
+        break;
+      }
+      attempts++;
+    }
+    
+    // Create empty inventory (5 slots - smaller than NPCs)
+    const inventory: InventorySlot[] = Array.from({ length: 5 }, () => ({ resourceId: null, quantity: 0 }));
+    
+    // Use muted colors for strangers
+    const strangerColors = ['#6b7280', '#9ca3af', '#78716c', '#a8a29e', '#71717a', '#a1a1aa'];
+    
+    strangers.push({
+      id: `stranger-${i}`,
+      name,
+      color: strangerColors[i % strangerColors.length],
+      position,
+      inventory,
+      health: 50 + Math.floor(Math.random() * 30), // Start with 50-80 health
+    });
+  }
+  
+  return strangers;
 };

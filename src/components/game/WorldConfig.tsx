@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Resource, RARITY_COLORS } from '@/types/game';
-import { X, Plus, Save, RefreshCw, Map, Package, Hammer, Copy, Lock, Database, LogOut } from 'lucide-react';
+import { X, Plus, Save, RefreshCw, Map, Package, Hammer, Copy, Lock, Database, LogOut, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import ResourceEditorModal from './ResourceEditorModal';
@@ -19,6 +19,10 @@ interface WorldConfigProps {
   enableMarkets?: boolean;
   enableNpcs?: boolean;
   npcCount?: number;
+  enableStrangers?: boolean;
+  strangerDensity?: number;
+  mapWidth?: number;
+  mapHeight?: number;
   onUpdateWorldName: (name: string) => void;
   onAddResource: (resource: Resource) => void;
   onUpdateResource: (resource: Resource) => void;
@@ -27,6 +31,8 @@ interface WorldConfigProps {
   onToggleMarkets?: (enabled: boolean) => void;
   onToggleNpcs?: (enabled: boolean, count: number) => void;
   onUpdateNpcCount?: (count: number) => void;
+  onToggleStrangers?: (enabled: boolean, density: number) => void;
+  onUpdateStrangerDensity?: (density: number) => void;
 }
 
 const WorldConfig = ({
@@ -40,6 +46,10 @@ const WorldConfig = ({
   enableMarkets,
   enableNpcs,
   npcCount,
+  enableStrangers,
+  strangerDensity = 0.02,
+  mapWidth = 100,
+  mapHeight = 100,
   onUpdateWorldName,
   onAddResource,
   onUpdateResource,
@@ -48,6 +58,8 @@ const WorldConfig = ({
   onToggleMarkets,
   onToggleNpcs,
   onUpdateNpcCount,
+  onToggleStrangers,
+  onUpdateStrangerDensity,
 }: WorldConfigProps) => {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<'world' | 'resources'>('world');
@@ -265,6 +277,64 @@ const WorldConfig = ({
                               className="input-field w-20 text-center"
                             />
                             <span className="text-xs text-muted-foreground">(max 12)</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Strangers Settings */}
+                      <div className="p-3 bg-secondary/30 rounded-lg space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl">👤</span>
+                            <div>
+                              <div className="font-medium text-sm">Enable Strangers</div>
+                              <div className="text-xs text-muted-foreground">Add wandering NPCs that don't claim territory</div>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => onToggleStrangers?.(!enableStrangers, strangerDensity)}
+                            className={cn(
+                              'w-12 h-6 rounded-full transition-colors relative',
+                              enableStrangers ? 'bg-primary' : 'bg-muted'
+                            )}
+                          >
+                            <div
+                              className={cn(
+                                'w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform',
+                                enableStrangers ? 'translate-x-6' : 'translate-x-0.5'
+                              )}
+                            />
+                          </button>
+                        </div>
+                        
+                        {enableStrangers && (
+                          <div className="space-y-3 pt-2 border-t border-border/50">
+                            <div className="flex items-center gap-3">
+                              <label className="text-sm text-muted-foreground">Population Density:</label>
+                              <input
+                                type="number"
+                                min={0.001}
+                                max={1}
+                                step={0.01}
+                                value={strangerDensity}
+                                onChange={(e) => {
+                                  const value = Math.min(Math.max(parseFloat(e.target.value) || 0.02, 0.001), 1);
+                                  onUpdateStrangerDensity?.(value);
+                                }}
+                                className="input-field w-24 text-center"
+                              />
+                            </div>
+                            
+                            <div className="text-sm text-muted-foreground">
+                              Computed strangers: <span className="font-medium text-foreground">{Math.floor(mapWidth * mapHeight * strangerDensity)}</span>
+                            </div>
+                            
+                            {strangerDensity > 0.5 && (
+                              <div className="flex items-center gap-2 p-2 bg-destructive/20 rounded text-sm text-destructive">
+                                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                                <span>High density may cause performance issues!</span>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
