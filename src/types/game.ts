@@ -405,55 +405,131 @@ export const generateMap = (width: number, height: number, resources: Resource[]
   // Use provided probabilities or default
   const probs = tileProbabilities || DEFAULT_TILE_PROBABILITIES;
   
-  // Build cumulative probability distribution
-  const sortedTiles = Object.entries(probs)
+  // Get active tile types sorted by probability
+  const activeTiles = Object.entries(probs)
     .filter(([_, prob]) => prob > 0)
-    .sort((a, b) => b[1] - a[1]); // Sort by probability descending for efficiency
+    .sort((a, b) => b[1] - a[1])
+    .map(([type, prob]) => ({ type: type as TileType, probability: prob }));
   
-  let cumulative = 0;
-  const distribution: { type: TileType; threshold: number }[] = [];
-  for (const [type, prob] of sortedTiles) {
-    cumulative += prob;
-    distribution.push({ type: type as TileType, threshold: cumulative });
-  }
+  // Create multiple noise layers for biome-like clustering
+  const primaryNoise = createNoise(seed);
+  const secondaryNoise = createNoise(seed + 1000);
+  const tertiaryNoise = createNoise(seed + 2000);
+  const moistureNoise = createNoise(seed + 3000);
+  const temperatureNoise = createNoise(seed + 4000);
   
-  // Create noise layers for natural clustering
-  const clusterNoise = createNoise(seed);
-  const detailNoise = createNoise(seed + 1000);
-  const clusterScale = 0.03;
-  const detailScale = 0.08;
+  // Scale factors for natural biome sizes
+  const primaryScale = 0.015; // Large biomes
+  const secondaryScale = 0.04; // Medium features
+  const tertiaryScale = 0.08; // Small details
   
-  // Generate tiles based on probability with noise-based clustering
+  // Assign each tile type a "biome signature" based on noise thresholds
+  // This maps noise values to tile types based on their probabilities
+  const assignTileType = (elevation: number, moisture: number, temperature: number, detail: number): TileType => {
+    // Normalize values to 0-1 range
+    const e = (elevation + 1) / 2;
+    const m = (moisture + 1) / 2;
+    const t = (temperature + 1) / 2;
+    
+    // Build weighted selection based on biome logic
+    const scores: { type: TileType; score: number }[] = [];
+    
+    for (const { type, probability } of activeTiles) {
+      let score = probability; // Base score from probability
+      
+      // Apply biome-appropriate modifiers
+      switch (type) {
+        case 'water':
+          score *= e < 0.35 ? 3 : e < 0.45 ? 1.5 : 0.1; // Low elevation
+          break;
+        case 'sand':
+          score *= (e > 0.35 && e < 0.5) ? 2.5 : 0.5; // Coastal/low
+          score *= t > 0.5 ? 1.5 : 0.7; // Warmer areas
+          break;
+        case 'grass':
+          score *= (e > 0.4 && e < 0.7) ? 2 : 0.5; // Mid elevation
+          score *= (m > 0.3 && m < 0.7) ? 1.5 : 0.7; // Moderate moisture
+          break;
+        case 'forest':
+          score *= (e > 0.4 && e < 0.75) ? 2 : 0.4; // Mid elevation
+          score *= m > 0.5 ? 2 : 0.5; // High moisture
+          break;
+        case 'jungle':
+          score *= (e > 0.35 && e < 0.65) ? 2 : 0.3; // Lower-mid elevation
+          score *= m > 0.6 ? 2.5 : 0.3; // Very high moisture
+          score *= t > 0.6 ? 2 : 0.3; // Hot
+          break;
+        case 'swamp':
+          score *= e < 0.45 ? 2 : 0.3; // Low elevation
+          score *= m > 0.6 ? 2.5 : 0.2; // Very high moisture
+          break;
+        case 'dirt':
+          score *= (e > 0.4 && e < 0.6) ? 1.5 : 0.6; // Mid elevation
+          score *= (m > 0.2 && m < 0.5) ? 1.5 : 0.7; // Low-moderate moisture
+          break;
+        case 'stone':
+          score *= e > 0.6 ? 2.5 : 0.4; // High elevation
+          break;
+        case 'mountain':
+          score *= e > 0.75 ? 3 : e > 0.6 ? 1.5 : 0.1; // Very high elevation
+          break;
+        case 'snow':
+          score *= e > 0.6 ? 2 : 0.3; // High elevation
+          score *= t < 0.35 ? 3 : 0.2; // Cold
+          break;
+        case 'ice':
+          score *= e < 0.4 ? 1.5 : 0.5; // Can be low (frozen water)
+          score *= t < 0.25 ? 4 : 0.1; // Very cold
+          break;
+        case 'lava':
+          score *= e > 0.7 ? 2 : 0.2; // High elevation (volcanic)
+          score *= t > 0.8 ? 3 : 0.1; // Very hot
+          score *= detail > 0.6 ? 2 : 0.3; // Rare spots
+          break;
+      }
+      
+      scores.push({ type, score: Math.max(0.01, score) });
+    }
+    
+    // Weighted random selection based on scores
+    const totalScore = scores.reduce((sum, s) => sum + s.score, 0);
+    let pick = Math.random() * totalScore;
+    
+    for (const { type, score } of scores) {
+      pick -= score;
+      if (pick <= 0) return type;
+    }
+    
+    return activeTiles[0]?.type || 'grass';
+  };
+  
+  // Generate initial tiles using biome logic
   for (let y = 0; y < height; y++) {
     const row: MapTile[] = [];
     for (let x = 0; x < width; x++) {
-      // Use noise to create natural clusters
-      const clusterValue = fractalNoise(clusterNoise, x * clusterScale, y * clusterScale, 4, 0.5);
-      const detailValue = fractalNoise(detailNoise, x * detailScale, y * detailScale, 2, 0.4);
+      // Generate layered noise values
+      const elevation = fractalNoise(primaryNoise, x * primaryScale, y * primaryScale, 5, 0.5);
+      const moisture = fractalNoise(moistureNoise, x * secondaryScale, y * secondaryScale, 4, 0.6);
       
-      // Combine noise with random value for probability selection
-      // This creates clusters while respecting overall probabilities
-      const baseRandom = Math.random() * 100;
-      const noiseInfluence = (clusterValue + 1) * 25; // 0-50 range
-      const adjustedRandom = (baseRandom + noiseInfluence + detailValue * 10) % 100;
+      // Temperature varies with latitude (y position)
+      const latitudeTemp = 1 - Math.abs(y / height - 0.5) * 2;
+      const tempNoise = fractalNoise(temperatureNoise, x * primaryScale, y * primaryScale, 3, 0.5);
+      const temperature = latitudeTemp * 0.7 + tempNoise * 0.3;
       
-      // Select tile type based on cumulative probability
-      let type: TileType = 'grass';
-      for (const { type: tileType, threshold } of distribution) {
-        if (adjustedRandom <= threshold) {
-          type = tileType;
-          break;
-        }
-      }
+      const detail = fractalNoise(tertiaryNoise, x * tertiaryScale, y * tertiaryScale, 2, 0.4);
       
+      const type = assignTileType(elevation, moisture, temperature, detail);
       const tileInfo = TILE_TYPES.find(t => t.type === type)!;
       row.push({ type, walkable: tileInfo.walkable, resources: [] });
     }
     tiles.push(row);
   }
   
-  // Apply cellular automata smoothing for more natural edges
-  smoothTerrain(tiles, 3);
+  // Apply cellular automata smoothing for natural biome edges
+  smoothTerrain(tiles, 4);
+  
+  // Post-process: adjust tile distribution to match target probabilities
+  adjustDistribution(tiles, probs);
   
   seedResources(tiles, resources);
   
@@ -468,6 +544,83 @@ export const generateMap = (width: number, height: number, resources: Resource[]
     tiles,
     spawnPoint,
   };
+};
+
+// Adjust tile distribution to better match target probabilities while preserving clusters
+const adjustDistribution = (tiles: MapTile[][], targetProbs: TileProbabilities) => {
+  const height = tiles.length;
+  const width = tiles[0].length;
+  const totalTiles = width * height;
+  
+  // Count current distribution
+  const counts: Record<TileType, number> = {} as Record<TileType, number>;
+  for (const type of Object.keys(targetProbs) as TileType[]) {
+    counts[type] = 0;
+  }
+  
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      counts[tiles[y][x].type] = (counts[tiles[y][x].type] || 0) + 1;
+    }
+  }
+  
+  // Calculate over/under represented types
+  const overRepresented: TileType[] = [];
+  const underRepresented: TileType[] = [];
+  
+  for (const [type, prob] of Object.entries(targetProbs)) {
+    const targetCount = (prob / 100) * totalTiles;
+    const currentCount = counts[type as TileType] || 0;
+    const diff = currentCount - targetCount;
+    
+    if (diff > totalTiles * 0.02) { // More than 2% over
+      overRepresented.push(type as TileType);
+    } else if (diff < -totalTiles * 0.02) { // More than 2% under
+      underRepresented.push(type as TileType);
+    }
+  }
+  
+  if (overRepresented.length === 0 || underRepresented.length === 0) return;
+  
+  // Find edge tiles of over-represented types and convert some to under-represented
+  const edgeTiles: { x: number; y: number; type: TileType }[] = [];
+  
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const currentType = tiles[y][x].type;
+      if (!overRepresented.includes(currentType)) continue;
+      
+      // Check if this is an edge tile (has different neighbor)
+      let isEdge = false;
+      for (let dy = -1; dy <= 1 && !isEdge; dy++) {
+        for (let dx = -1; dx <= 1 && !isEdge; dx++) {
+          if (dx === 0 && dy === 0) continue;
+          if (tiles[y + dy][x + dx].type !== currentType) {
+            isEdge = true;
+          }
+        }
+      }
+      
+      if (isEdge) {
+        edgeTiles.push({ x, y, type: currentType });
+      }
+    }
+  }
+  
+  // Shuffle and convert some edge tiles
+  for (let i = edgeTiles.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [edgeTiles[i], edgeTiles[j]] = [edgeTiles[j], edgeTiles[i]];
+  }
+  
+  // Convert a portion of edge tiles
+  const conversions = Math.min(edgeTiles.length / 4, totalTiles * 0.05);
+  for (let i = 0; i < conversions && underRepresented.length > 0; i++) {
+    const { x, y } = edgeTiles[i];
+    const newType = underRepresented[Math.floor(Math.random() * underRepresented.length)];
+    const tileInfo = TILE_TYPES.find(t => t.type === newType)!;
+    tiles[y][x] = { type: newType, walkable: tileInfo.walkable, resources: [] };
+  }
 };
 
 const determineBiome = (elevation: number, moisture: number, temperature: number, detail: number): TileType => {
