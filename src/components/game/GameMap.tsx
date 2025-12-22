@@ -268,6 +268,16 @@ const GameMap = ({
           const resourceHeight = primaryDisplayResource?.tileHeight ?? 1;
           const isMultiTileResource = resourceWidth > 1 || resourceHeight > 1;
 
+          // Check if player is behind this resource (resource covers tiles the player is on or behind)
+          // Resource spans from (x, y) to (x + width - 1, y - height + 1) visually (upward)
+          // Player is "behind" if the resource is in front of them (higher Y or same Y but resource covers player)
+          const playerBehindResource = primaryDisplayResource && (
+            playerPosition.x >= x && 
+            playerPosition.x < x + resourceWidth &&
+            playerPosition.y <= y && 
+            playerPosition.y > y - resourceHeight
+          );
+
           // Check if this tile is a market (1x1 building)
           const marketOnTile = enableMarkets ? markets.find(m => 
             x === m.position.x && y === m.position.y
@@ -366,15 +376,17 @@ const GameMap = ({
                 </span>
               )}
               {/* Show displayable resources - extends upward and to the right for multi-tile */}
-              {displayableResources.length > 0 && !isPlayerHere && primaryDisplayResource && (
+              {displayableResources.length > 0 && primaryDisplayResource && (
                 <div 
-                  className="absolute flex items-end justify-start drop-shadow-md pointer-events-none z-10"
+                  className="absolute flex items-end justify-start drop-shadow-md pointer-events-none"
                   style={{ 
                     // Position at bottom-left of this tile, extend upward and right
                     bottom: 0,
                     left: 0,
                     width: isMultiTileResource ? tileSize * resourceWidth : tileSize,
                     height: isMultiTileResource ? tileSize * resourceHeight : tileSize,
+                    opacity: playerBehindResource ? 0.4 : 1,
+                    zIndex: 5, // Lower z-index to stay below HUD elements
                   }}
                 >
                   <ResourceIcon 
