@@ -42,6 +42,7 @@ export type Database = {
           created_by: string | null
           damage: number
           description: string | null
+          destructible: boolean
           display: boolean
           download_count: number
           gather_time: number
@@ -53,6 +54,7 @@ export type Database = {
           is_floating: boolean
           life_decrease_per_use: number
           lifetime_hours: number | null
+          max_life: number
           name: string
           passable: boolean
           placeable: boolean
@@ -73,6 +75,7 @@ export type Database = {
           created_by?: string | null
           damage?: number
           description?: string | null
+          destructible?: boolean
           display?: boolean
           download_count?: number
           gather_time?: number
@@ -84,6 +87,7 @@ export type Database = {
           is_floating?: boolean
           life_decrease_per_use?: number
           lifetime_hours?: number | null
+          max_life?: number
           name: string
           passable?: boolean
           placeable?: boolean
@@ -104,6 +108,7 @@ export type Database = {
           created_by?: string | null
           damage?: number
           description?: string | null
+          destructible?: boolean
           display?: boolean
           download_count?: number
           gather_time?: number
@@ -115,6 +120,7 @@ export type Database = {
           is_floating?: boolean
           life_decrease_per_use?: number
           lifetime_hours?: number | null
+          max_life?: number
           name?: string
           passable?: boolean
           placeable?: boolean

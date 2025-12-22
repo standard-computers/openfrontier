@@ -45,11 +45,14 @@ export interface Resource {
   tileHeight?: number; // Height in tiles (0 = smaller than tile, 1 = default, 2+ = multi-tile)
   useLife?: boolean; // If true, using the item decreases its life
   lifeDecreasePerUse?: number; // Amount of life decreased per use (default 100 = full consumption)
+  destructible?: boolean; // If true, can be destroyed by damage-inflicting items
+  maxLife?: number; // Maximum life/durability of the resource (default 100)
 }
 
 export interface MapTile {
   type: TileType;
   resources: string[];
+  resourceLife?: Record<string, number>; // Track current life of each resource on tile by resourceId
   walkable: boolean;
   claimedBy?: string;
   name?: string;

@@ -81,6 +81,7 @@ const Index = () => {
     updateArea,
     renameTile,
     placeItem,
+    useItemOnFacingTile,
     toggleEnableMarkets,
     addMarket,
     removeMarket,
@@ -312,6 +313,16 @@ const Index = () => {
     }
   }, [getAdjacentMarket, handlePlaceItem]);
 
+  // Handle using item on facing tile (E key)
+  const handleUseItem = useCallback(() => {
+    const result = useItemOnFacingTile(selectedSlot, facingDirection);
+    if (result.success) {
+      toast.success(result.message);
+    } else {
+      toast.error(result.message);
+    }
+  }, [useItemOnFacingTile, selectedSlot, facingDirection]);
+
   // Handle keyboard input for slot selection and placement
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -343,11 +354,17 @@ const Index = () => {
         e.preventDefault();
         handleGatherAll();
       }
+      
+      // E key for using item on facing tile (attack/destroy)
+      if (e.key.toLowerCase() === 'e') {
+        e.preventDefault();
+        handleUseItem();
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleOpenMarketplace, handleGatherAll]);
+  }, [handleOpenMarketplace, handleGatherAll, handleUseItem]);
 
   const zoomPercent = Math.round((tileSize / DEFAULT_TILE_SIZE) * 100);
 

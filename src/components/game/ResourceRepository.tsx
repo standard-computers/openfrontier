@@ -37,6 +37,8 @@ interface RepositoryResource {
   tile_height: number;
   use_life: boolean;
   life_decrease_per_use: number;
+  destructible: boolean;
+  max_life: number;
 }
 
 interface ResourceRepositoryProps {
@@ -131,6 +133,8 @@ const ResourceRepository = ({
       tileHeight: repoResource.tile_height ?? 1,
       useLife: repoResource.use_life || false,
       lifeDecreasePerUse: repoResource.life_decrease_per_use ?? 100,
+      destructible: repoResource.destructible || false,
+      maxLife: repoResource.max_life ?? 100,
     };
 
     onAddResource(newResource);
@@ -178,6 +182,8 @@ const ResourceRepository = ({
         tile_height: resource.tileHeight ?? 1,
         use_life: resource.useLife || false,
         life_decrease_per_use: resource.lifeDecreasePerUse ?? 100,
+        destructible: resource.destructible || false,
+        max_life: resource.maxLife ?? 100,
       }]);
 
       if (error) throw error;
@@ -248,6 +254,8 @@ const ResourceRepository = ({
         tile_height: resource.tileHeight ?? 1,
         use_life: resource.useLife || false,
         life_decrease_per_use: resource.lifeDecreasePerUse ?? 100,
+        destructible: resource.destructible || false,
+        max_life: resource.maxLife ?? 100,
       }]);
 
       if (error) throw error;
@@ -301,6 +309,8 @@ const ResourceRepository = ({
           tile_height: resource.tileHeight ?? 1,
           use_life: resource.useLife || false,
           life_decrease_per_use: resource.lifeDecreasePerUse ?? 100,
+          destructible: resource.destructible || false,
+          max_life: resource.maxLife ?? 100,
         })
         .eq('id', editingRepoResource.id);
 
