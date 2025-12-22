@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Globe, Trash2, Play, LogOut, Users, Crown, Copy, UserPlus, Database, Download } from 'lucide-react';
+import { Plus, Globe, Trash2, Play, LogOut, Users, Crown, Copy, UserPlus, Database, Download, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
@@ -26,6 +26,13 @@ const WorldsDashboard = () => {
   const [selectedResources, setSelectedResources] = useState<Resource[]>([]);
   const [repositoryOpen, setRepositoryOpen] = useState(false);
   const [addingAllResources, setAddingAllResources] = useState(false);
+  
+  // World feature settings
+  const [enableMarkets, setEnableMarkets] = useState(false);
+  const [enableNpcs, setEnableNpcs] = useState(false);
+  const [npcCount, setNpcCount] = useState(4);
+  const [enableStrangers, setEnableStrangers] = useState(false);
+  const [strangerDensity, setStrangerDensity] = useState(0.02);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -44,7 +51,13 @@ const WorldsDashboard = () => {
     
     setIsSubmitting(true);
     try {
-      const worldId = await createWorld(newWorldName.trim(), width, height, selectedResources);
+      const worldId = await createWorld(newWorldName.trim(), width, height, selectedResources, {
+        enableMarkets,
+        enableNpcs,
+        npcCount: enableNpcs ? npcCount : 0,
+        enableStrangers,
+        strangerDensity: enableStrangers ? strangerDensity : 0.02,
+      });
       localStorage.setItem('currentWorldId', worldId);
       toast.success(`World created! (${width}×${height} tiles)`);
       setSelectedResources([]);
@@ -309,6 +322,141 @@ const WorldsDashboard = () => {
                 <p className="text-xs text-muted-foreground">
                   Total tiles: {((parseInt(newWorldWidth) || 500) * (parseInt(newWorldHeight) || 500)).toLocaleString()}
                 </p>
+
+                {/* World Features */}
+                <div className="space-y-3 pt-4 border-t border-border">
+                  <h3 className="text-sm font-medium text-foreground">World Features</h3>
+                  
+                  {/* Enable Markets */}
+                  <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">🏪</span>
+                      <div>
+                        <div className="font-medium text-sm">Enable Markets</div>
+                        <div className="text-xs text-muted-foreground">Add marketplace buildings to the world</div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setEnableMarkets(!enableMarkets)}
+                      className={cn(
+                        'w-12 h-6 rounded-full transition-colors relative',
+                        enableMarkets ? 'bg-primary' : 'bg-muted'
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          'w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform',
+                          enableMarkets ? 'translate-x-6' : 'translate-x-0.5'
+                        )}
+                      />
+                    </button>
+                  </div>
+
+                  {/* NPC Settings */}
+                  <div className="p-3 bg-secondary/30 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl">🤖</span>
+                        <div>
+                          <div className="font-medium text-sm">Enable NPCs</div>
+                          <div className="text-xs text-muted-foreground">Add AI characters to the world</div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setEnableNpcs(!enableNpcs)}
+                        className={cn(
+                          'w-12 h-6 rounded-full transition-colors relative',
+                          enableNpcs ? 'bg-primary' : 'bg-muted'
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            'w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform',
+                            enableNpcs ? 'translate-x-6' : 'translate-x-0.5'
+                          )}
+                        />
+                      </button>
+                    </div>
+                    
+                    {enableNpcs && (
+                      <div className="flex items-center gap-3 pt-2 border-t border-border/50">
+                        <label className="text-sm text-muted-foreground">Number of NPCs:</label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={12}
+                          value={npcCount}
+                          onChange={(e) => {
+                            const value = Math.min(Math.max(parseInt(e.target.value) || 1, 1), 12);
+                            setNpcCount(value);
+                          }}
+                          className="input-field w-20 text-center"
+                        />
+                        <span className="text-xs text-muted-foreground">(max 12)</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Strangers Settings */}
+                  <div className="p-3 bg-secondary/30 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl">👤</span>
+                        <div>
+                          <div className="font-medium text-sm">Enable Strangers</div>
+                          <div className="text-xs text-muted-foreground">Add wandering NPCs that don't claim territory</div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setEnableStrangers(!enableStrangers)}
+                        className={cn(
+                          'w-12 h-6 rounded-full transition-colors relative',
+                          enableStrangers ? 'bg-primary' : 'bg-muted'
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            'w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform',
+                            enableStrangers ? 'translate-x-6' : 'translate-x-0.5'
+                          )}
+                        />
+                      </button>
+                    </div>
+                    
+                    {enableStrangers && (
+                      <div className="space-y-3 pt-2 border-t border-border/50">
+                        <div className="flex items-center gap-3">
+                          <label className="text-sm text-muted-foreground">Population Density:</label>
+                          <input
+                            type="number"
+                            min={0.001}
+                            max={1}
+                            step={0.01}
+                            value={strangerDensity}
+                            onChange={(e) => {
+                              const value = Math.min(Math.max(parseFloat(e.target.value) || 0.02, 0.001), 1);
+                              setStrangerDensity(value);
+                            }}
+                            className="input-field w-24 text-center"
+                          />
+                        </div>
+                        
+                        <div className="text-sm text-muted-foreground">
+                          Computed strangers: <span className="font-medium text-foreground">
+                            {Math.floor((parseInt(newWorldWidth) || 500) * (parseInt(newWorldHeight) || 500) * strangerDensity)}
+                          </span>
+                        </div>
+                        
+                        {strangerDensity > 0.5 && (
+                          <div className="flex items-center gap-2 p-2 bg-destructive/20 rounded text-sm text-destructive">
+                            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                            <span>High density may cause performance issues!</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </>
             )}
             
@@ -366,7 +514,17 @@ const WorldsDashboard = () => {
                 {isSubmitting ? 'Creating...' : <><Plus className="w-4 h-4" /> Create World</>}
               </button>
               <button 
-                onClick={() => { setIsCreating(false); setNewWorldName(''); setSelectedResources([]); setCreateTab('settings'); }}
+                onClick={() => { 
+                  setIsCreating(false); 
+                  setNewWorldName(''); 
+                  setSelectedResources([]); 
+                  setCreateTab('settings');
+                  setEnableMarkets(false);
+                  setEnableNpcs(false);
+                  setNpcCount(4);
+                  setEnableStrangers(false);
+                  setStrangerDensity(0.02);
+                }}
                 className="btn"
               >
                 Cancel
