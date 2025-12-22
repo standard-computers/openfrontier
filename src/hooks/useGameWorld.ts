@@ -947,7 +947,7 @@ export const useGameWorld = () => {
           })
         );
         
-        // If the resource has a recipe, break it into ingredients
+        // If the resource has a recipe, break it into ingredients; otherwise give the resource itself
         if (destructibleResource.recipes && destructibleResource.recipes.length > 0) {
           const recipe = destructibleResource.recipes[0];
           for (const ingredient of recipe.ingredients) {
@@ -967,6 +967,20 @@ export const useGameWorld = () => {
             }
           }
           destroyedMessage = ` Broke into components!`;
+        } else {
+          // No recipe - give the resource itself
+          let slotIndex = newInventory.findIndex(s => s.resourceId === destructibleResourceId && s.quantity < 99);
+          if (slotIndex === -1) {
+            slotIndex = newInventory.findIndex(s => !s.resourceId);
+          }
+          if (slotIndex !== -1) {
+            if (newInventory[slotIndex].resourceId === destructibleResourceId) {
+              newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
+            } else {
+              newInventory[slotIndex] = { resourceId: destructibleResourceId, quantity: 1 };
+            }
+          }
+          destroyedMessage = ` Collected!`;
         }
         
         result = { success: true, message: `Destroyed ${destructibleResource.name}!${destroyedMessage}` };
