@@ -661,9 +661,16 @@ const ResourceEditorModal = ({
                         max={form.isFloating ? 1 : 99}
                         value={form.tileWidth ?? 1}
                         onChange={(e) => {
-                          const val = parseInt(e.target.value) || 0;
-                          const maxVal = form.isFloating ? 1 : 99;
-                          setForm({ ...form, tileWidth: Math.max(0, Math.min(maxVal, val)) });
+                          const rawVal = e.target.value;
+                          if (rawVal === '') {
+                            setForm({ ...form, tileWidth: 0 });
+                            return;
+                          }
+                          const val = parseInt(rawVal, 10);
+                          if (!isNaN(val)) {
+                            const maxVal = form.isFloating ? 1 : 99;
+                            setForm({ ...form, tileWidth: Math.max(0, Math.min(maxVal, val)) });
+                          }
                         }}
                         className="input-field w-full"
                       />
@@ -678,9 +685,16 @@ const ResourceEditorModal = ({
                         max={form.isFloating ? 1 : 99}
                         value={form.tileHeight ?? 1}
                         onChange={(e) => {
-                          const val = parseInt(e.target.value) || 0;
-                          const maxVal = form.isFloating ? 1 : 99;
-                          setForm({ ...form, tileHeight: Math.max(0, Math.min(maxVal, val)) });
+                          const rawVal = e.target.value;
+                          if (rawVal === '') {
+                            setForm({ ...form, tileHeight: 0 });
+                            return;
+                          }
+                          const val = parseInt(rawVal, 10);
+                          if (!isNaN(val)) {
+                            const maxVal = form.isFloating ? 1 : 99;
+                            setForm({ ...form, tileHeight: Math.max(0, Math.min(maxVal, val)) });
+                          }
                         }}
                         className="input-field w-full"
                       />
