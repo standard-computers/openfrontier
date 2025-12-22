@@ -384,32 +384,62 @@ const GameMap = ({
                 </span>
               )}
               {/* Show displayable resources - extends upward and to the right for multi-tile */}
-              {displayableResources.length > 0 && primaryDisplayResource && (
-                <div 
-                  className="absolute flex items-end justify-start drop-shadow-md pointer-events-none"
-                  style={{ 
-                    // Position at bottom-left of this tile, extend upward and right
-                    bottom: 0,
-                    left: 0,
-                    width: isMultiTileResource ? tileSize * resourceWidth : tileSize,
-                    height: isMultiTileResource ? tileSize * resourceHeight : tileSize,
-                    opacity: playerBehindResource ? 0.7 : 1,
-                    zIndex: 5, // Lower z-index to stay below HUD elements
-                  }}
-                >
-                  <ResourceIcon 
-                    icon={primaryDisplayResource.icon} 
-                    iconType={primaryDisplayResource.icon.startsWith('http') ? 'image' : 'emoji'}
-                    size={isMultiTileResource ? 'custom' : 'md'}
-                    className="drop-shadow-md w-full h-full object-contain"
-                    style={isMultiTileResource ? {
-                      fontSize: Math.max(16, tileSize * Math.min(resourceWidth, resourceHeight) * 0.8),
-                      width: '100%',
-                      height: '100%',
-                    } : undefined}
-                  />
-                </div>
-              )}
+              {displayableResources.length > 0 && primaryDisplayResource && (() => {
+                // Get resource life for health bar display
+                const resourceLife = tile.resourceLife?.[primaryDisplayResource.id];
+                const maxLife = primaryDisplayResource.maxLife ?? 100;
+                const isDamaged = primaryDisplayResource.destructible && resourceLife !== undefined && resourceLife < maxLife;
+                const lifePercent = isDamaged ? (resourceLife / maxLife) * 100 : 100;
+                
+                return (
+                  <div 
+                    className="absolute flex flex-col items-center drop-shadow-md pointer-events-none"
+                    style={{ 
+                      // Position at bottom-left of this tile, extend upward and right
+                      bottom: 0,
+                      left: 0,
+                      width: isMultiTileResource ? tileSize * resourceWidth : tileSize,
+                      height: isMultiTileResource ? tileSize * resourceHeight : tileSize,
+                      opacity: playerBehindResource ? 0.7 : 1,
+                      zIndex: 5,
+                    }}
+                  >
+                    {/* Health bar for damaged destructible resources */}
+                    {isDamaged && (
+                      <div 
+                        className="absolute bg-muted/60 rounded-full overflow-hidden"
+                        style={{
+                          top: -4,
+                          left: '10%',
+                          right: '10%',
+                          height: Math.max(3, tileSize * 0.08),
+                        }}
+                      >
+                        <div 
+                          className={`h-full transition-all duration-200 ${
+                            lifePercent > 50 ? 'bg-emerald-400' : 
+                            lifePercent > 25 ? 'bg-amber-400' : 'bg-red-400'
+                          }`}
+                          style={{ width: `${lifePercent}%` }}
+                        />
+                      </div>
+                    )}
+                    <div className="flex items-end justify-start w-full h-full">
+                      <ResourceIcon 
+                        icon={primaryDisplayResource.icon} 
+                        iconType={primaryDisplayResource.icon.startsWith('http') ? 'image' : 'emoji'}
+                        size={isMultiTileResource ? 'custom' : 'md'}
+                        className="drop-shadow-md w-full h-full object-contain"
+                        style={isMultiTileResource ? {
+                          fontSize: Math.max(16, tileSize * Math.min(resourceWidth, resourceHeight) * 0.8),
+                          width: '100%',
+                          height: '100%',
+                        } : undefined}
+                      />
+                    </div>
+                  </div>
+                );
+              })()}
               {/* Show player character */}
               {isPlayerHere && (
                 <div 

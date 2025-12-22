@@ -252,12 +252,11 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
               return (
                 <button
                   key={i}
-                  className={`w-11 h-11 rounded flex items-center justify-center relative text-lg transition-colors ${
+                  className={`w-11 h-11 rounded flex items-center justify-center relative text-lg transition-colors group ${
                     isSelected 
                       ? 'bg-primary/30 ring-2 ring-primary' 
                       : 'bg-input hover:bg-muted'
                   } ${!slot.resourceId ? 'cursor-default' : ''}`}
-                  title={resource?.name ? `${resource.name} (${i + 1})` : `Slot ${i + 1}`}
                   onClick={() => {
                     onSelectSlot(i);
                     if (slot.resourceId) {
@@ -265,6 +264,20 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
                     }
                   }}
                 >
+                  {/* Hover tooltip */}
+                  {resource && (
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-card border border-border rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 whitespace-nowrap text-xs">
+                      <div className="font-medium text-foreground">{resource.name}</div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <span className="text-amber-400">{resource.coinValue}g</span>
+                        {(resource.useLife || resource.canInflictDamage) && slot.life !== undefined && (
+                          <span className={slot.life > 50 ? 'text-blue-400' : slot.life > 25 ? 'text-amber-400' : 'text-red-400'}>
+                            {slot.life}%
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   {/* Slot number indicator */}
                   <span className="absolute top-0 left-0.5 text-[8px] text-muted-foreground font-medium">
                     {i < 9 ? i + 1 : i === 9 ? '0' : i === 10 ? '-' : '='}
