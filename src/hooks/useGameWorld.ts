@@ -1173,8 +1173,14 @@ export const useGameWorld = () => {
         newInventory[slotIndex] = { resourceId: resource.id, quantity: 1, life: 100 };
       }
       
+      // Add resource to world.resources if it doesn't exist
+      let newResources = prev.resources;
+      if (!prev.resources.find(r => r.id === resource.id)) {
+        newResources = [...prev.resources, resource];
+      }
+      
       result = { success: true, message: `Purchased ${resource.name}!` };
-      return { ...prev, coins: prev.coins - cost, inventory: newInventory };
+      return { ...prev, coins: prev.coins - cost, inventory: newInventory, resources: newResources };
     });
     
     return result;
