@@ -337,6 +337,28 @@ const ResourceRepository = ({
     }
   };
 
+  const handleDeleteRepoResource = async (resourceId: string) => {
+    if (!userId) {
+      toast.error('You must be logged in to delete resources');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('resource_marketplace')
+        .delete()
+        .eq('id', resourceId);
+
+      if (error) throw error;
+      toast.success('Resource deleted');
+      setEditingRepoResource(null);
+      fetchRepositoryResources();
+    } catch (error) {
+      console.error('Failed to delete resource:', error);
+      toast.error('Failed to delete resource');
+    }
+  };
+
   const toggleRarityFilter = (rarity: string) => {
     setFilterRarities(prev => 
       prev.includes(rarity) ? prev.filter(r => r !== rarity) : [...prev, rarity]
@@ -687,7 +709,7 @@ const ResourceRepository = ({
           categories={categories}
           isNew={false}
           onSave={handleUpdateResource}
-          onDelete={() => {}}
+          onDelete={() => handleDeleteRepoResource(editingRepoResource.id)}
           onClose={() => setEditingRepoResource(null)}
         />
       )}
