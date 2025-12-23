@@ -97,6 +97,7 @@ const ResourceEditorModal = ({
         lifeDecreasePerUse: data.life_decrease_per_use ?? 100,
         destructible: data.destructible || false,
         maxLife: data.max_life ?? 100,
+        destroyedBy: data.destroyed_by || undefined,
         produceTile: data.produce_tile || false,
         produceTileType: (data.produce_tile_type as Resource['produceTileType']) || undefined,
       });
@@ -907,6 +908,50 @@ const ResourceEditorModal = ({
                     <p className="text-[10px] text-muted-foreground mt-0.5">
                       Total HP before destruction (1-10000)
                     </p>
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Destroyed By (optional)</label>
+                    <p className="text-[10px] text-muted-foreground mb-2">
+                      Select which items can destroy this. Leave empty for any damage item.
+                    </p>
+                    <div className="max-h-32 overflow-y-auto bg-background/50 rounded-md p-2 space-y-1">
+                      {allResources.filter(r => r.canInflictDamage && r.id !== form.id).length === 0 ? (
+                        <p className="text-[10px] text-muted-foreground italic">No damage-inflicting items available</p>
+                      ) : (
+                        allResources.filter(r => r.canInflictDamage && r.id !== form.id).map(r => (
+                          <label key={r.id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-secondary/30 p-1 rounded">
+                            <input
+                              type="checkbox"
+                              checked={form.destroyedBy?.includes(r.id) || false}
+                              onChange={(e) => {
+                                const current = form.destroyedBy || [];
+                                if (e.target.checked) {
+                                  setForm({ ...form, destroyedBy: [...current, r.id] });
+                                } else {
+                                  setForm({ ...form, destroyedBy: current.filter(id => id !== r.id) });
+                                }
+                              }}
+                              className="w-3 h-3"
+                              disabled={!form.destructible}
+                            />
+                            <ResourceIcon icon={r.icon} iconType={r.iconType} size="sm" />
+                            <span>{r.name}</span>
+                            <span className="text-muted-foreground">({r.damage} dmg)</span>
+                          </label>
+                        ))
+                      )}
+                    </div>
+                    {form.destroyedBy && form.destroyedBy.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, destroyedBy: [] })}
+                        className="text-[10px] text-primary hover:underline mt-1"
+                        disabled={!form.destructible}
+                      >
+                        Clear selection (allow any)
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

@@ -66,6 +66,7 @@ export interface Resource {
   lifeDecreasePerUse?: number; // Amount of life decreased per use (default 100 = full consumption)
   destructible?: boolean; // If true, can be destroyed by damage-inflicting items
   maxLife?: number; // Maximum life/durability of the resource (default 100)
+  destroyedBy?: string[]; // Array of resource IDs that can destroy this. Empty = any damage item can destroy
   produceTile?: boolean; // If true, using this item on an empty tile transforms it
   produceTileType?: TileType; // The tile type this item produces when used
 }

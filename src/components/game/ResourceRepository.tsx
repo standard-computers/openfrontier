@@ -39,6 +39,7 @@ interface RepositoryResource {
   life_decrease_per_use: number;
   destructible: boolean;
   max_life: number;
+  destroyed_by: string[] | null;
   produce_tile: boolean;
   produce_tile_type: string | null;
 }
@@ -137,6 +138,7 @@ const ResourceRepository = ({
       lifeDecreasePerUse: repoResource.life_decrease_per_use ?? 100,
       destructible: repoResource.destructible || false,
       maxLife: repoResource.max_life ?? 100,
+      destroyedBy: repoResource.destroyed_by || undefined,
       produceTile: repoResource.produce_tile || false,
       produceTileType: repoResource.produce_tile_type as TileType | undefined,
     };
@@ -188,6 +190,7 @@ const ResourceRepository = ({
         life_decrease_per_use: resource.lifeDecreasePerUse ?? 100,
         destructible: resource.destructible || false,
         max_life: resource.maxLife ?? 100,
+        destroyed_by: resource.destroyedBy || null,
         produce_tile: resource.produceTile || false,
         produce_tile_type: resource.produceTileType || null,
       }]);

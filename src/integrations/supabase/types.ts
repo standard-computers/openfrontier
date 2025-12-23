@@ -42,6 +42,7 @@ export type Database = {
           created_by: string | null
           damage: number
           description: string | null
+          destroyed_by: string[] | null
           destructible: boolean
           display: boolean
           download_count: number
@@ -77,6 +78,7 @@ export type Database = {
           created_by?: string | null
           damage?: number
           description?: string | null
+          destroyed_by?: string[] | null
           destructible?: boolean
           display?: boolean
           download_count?: number
@@ -112,6 +114,7 @@ export type Database = {
           created_by?: string | null
           damage?: number
           description?: string | null
+          destroyed_by?: string[] | null
           destructible?: boolean
           display?: boolean
           download_count?: number
