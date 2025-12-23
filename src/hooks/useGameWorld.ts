@@ -1155,9 +1155,13 @@ export const useGameWorld = () => {
         return prev;
       }
       
+      // Check if resource with same name already exists in world
+      const existingResource = prev.resources.find(r => r.name.toLowerCase() === resource.name.toLowerCase());
+      const resourceIdToUse = existingResource ? existingResource.id : resource.id;
+      
       // Find empty slot or existing slot with same resource
       const newInventory = [...prev.inventory];
-      let slotIndex = newInventory.findIndex(s => s.resourceId === resource.id && s.quantity < 99);
+      let slotIndex = newInventory.findIndex(s => s.resourceId === resourceIdToUse && s.quantity < 99);
       if (slotIndex === -1) {
         slotIndex = newInventory.findIndex(s => !s.resourceId);
       }
@@ -1167,15 +1171,15 @@ export const useGameWorld = () => {
         return prev;
       }
       
-      if (newInventory[slotIndex].resourceId === resource.id) {
+      if (newInventory[slotIndex].resourceId === resourceIdToUse) {
         newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
       } else {
-        newInventory[slotIndex] = { resourceId: resource.id, quantity: 1, life: 100 };
+        newInventory[slotIndex] = { resourceId: resourceIdToUse, quantity: 1, life: 100 };
       }
       
-      // Add resource to world.resources if it doesn't exist
+      // Only add resource to world.resources if it doesn't exist by name
       let newResources = prev.resources;
-      if (!prev.resources.find(r => r.id === resource.id)) {
+      if (!existingResource) {
         newResources = [...prev.resources, resource];
       }
       
