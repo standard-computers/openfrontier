@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Plus, Download, Search, Database, Upload, Edit2, Filter, Tag, Check } from 'lucide-react';
-import { Resource, RARITY_COLORS } from '@/types/game';
+import { Resource, RARITY_COLORS, TileType } from '@/types/game';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import ResourceIcon from './ResourceIcon';
@@ -137,6 +137,8 @@ const ResourceRepository = ({
       lifeDecreasePerUse: repoResource.life_decrease_per_use ?? 100,
       destructible: repoResource.destructible || false,
       maxLife: repoResource.max_life ?? 100,
+      produceTile: repoResource.produce_tile || false,
+      produceTileType: repoResource.produce_tile_type as TileType | undefined,
     };
 
     onAddResource(newResource);
@@ -186,6 +188,8 @@ const ResourceRepository = ({
         life_decrease_per_use: resource.lifeDecreasePerUse ?? 100,
         destructible: resource.destructible || false,
         max_life: resource.maxLife ?? 100,
+        produce_tile: resource.produceTile || false,
+        produce_tile_type: resource.produceTileType || null,
       }]);
 
       if (error) throw error;
