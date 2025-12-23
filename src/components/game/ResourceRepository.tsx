@@ -258,6 +258,8 @@ const ResourceRepository = ({
         life_decrease_per_use: resource.lifeDecreasePerUse ?? 100,
         destructible: resource.destructible || false,
         max_life: resource.maxLife ?? 100,
+        produce_tile: resource.produceTile || false,
+        produce_tile_type: resource.produceTileType || null,
       }]);
 
       if (error) throw error;
@@ -313,6 +315,8 @@ const ResourceRepository = ({
           life_decrease_per_use: resource.lifeDecreasePerUse ?? 100,
           destructible: resource.destructible || false,
           max_life: resource.maxLife ?? 100,
+          produce_tile: resource.produceTile || false,
+          produce_tile_type: resource.produceTileType || null,
         })
         .eq('id', editingRepoResource.id);
 
