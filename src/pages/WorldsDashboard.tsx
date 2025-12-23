@@ -188,6 +188,8 @@ const WorldsDashboard = () => {
             lifeDecreasePerUse: repoResource.life_decrease_per_use ?? 100,
             destructible: repoResource.destructible || false,
             maxLife: repoResource.max_life ?? 100,
+            produceTile: repoResource.produce_tile || false,
+            produceTileType: repoResource.produce_tile_type as import('@/types/game').TileType | undefined,
           };
           setSelectedResources(prev => [...prev, newResource]);
           existingNames.add(repoResource.name.toLowerCase());
