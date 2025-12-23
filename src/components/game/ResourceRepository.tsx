@@ -587,6 +587,7 @@ const ResourceRepository = ({
             recipes: r.recipe ? [r.recipe] : [],
             isContainer: r.is_container || false,
             isFloating: r.is_floating || false,
+            display: r.display || false,
             placeable: r.placeable || false,
             passable: r.passable || false,
             category: r.category || undefined,
@@ -598,6 +599,8 @@ const ResourceRepository = ({
             lifeDecreasePerUse: r.life_decrease_per_use ?? 100,
             destructible: r.destructible || false,
             maxLife: r.max_life ?? 100,
+            produceTile: r.produce_tile || false,
+            produceTileType: r.produce_tile_type as TileType | undefined,
           }))}
           categories={categories}
           isNew={true}
