@@ -756,7 +756,6 @@ const WorldsDashboard = () => {
         onClose={() => setRepositoryOpen(false)}
         onAddResource={(resource) => {
           setSelectedResources(prev => [...prev, resource]);
-          toast.success(`Added "${resource.name}" to world resources`);
         }}
         existingResources={selectedResources}
         userId={user?.id}
