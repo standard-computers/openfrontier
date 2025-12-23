@@ -878,6 +878,14 @@ export const useGameWorld = () => {
       const canInflictDamage = heldResource.canInflictDamage && heldResource.damage;
       const canProduceTile = heldResource.produceTile && heldResource.produceTileType;
       
+      console.log('useItemOnFacingTile:', {
+        heldResource: heldResource.name,
+        produceTile: heldResource.produceTile,
+        produceTileType: heldResource.produceTileType,
+        canProduceTile,
+        canInflictDamage,
+      });
+      
       if (!canInflictDamage && !canProduceTile) {
         result = { success: false, message: 'Selected item cannot be used here' };
         return prev;
@@ -901,6 +909,16 @@ export const useGameWorld = () => {
       }
       
       const targetTile = prev.map.tiles[targetY][targetX];
+      
+      console.log('Target tile check:', {
+        targetX,
+        targetY,
+        tileType: targetTile.type,
+        resources: targetTile.resources,
+        resourcesLength: targetTile.resources.length,
+        canProduceTile,
+        willTransform: canProduceTile && targetTile.resources.length === 0,
+      });
       
       // Check for produce tile functionality first (on empty tiles without resources)
       if (canProduceTile && targetTile.resources.length === 0) {
