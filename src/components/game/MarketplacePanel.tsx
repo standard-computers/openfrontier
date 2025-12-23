@@ -77,7 +77,7 @@ const MarketplacePanel = ({
     }
   };
 
-  const handleBuy = (item: MarketplaceItem) => {
+  const handleBuy = async (item: MarketplaceItem) => {
     // Market sells at 2x the base value
     const cost = item.baseValue * 2;
     
@@ -86,17 +86,49 @@ const MarketplacePanel = ({
       return;
     }
 
+    // Fetch full resource data from marketplace
+    const { data, error } = await supabase
+      .from('resource_marketplace')
+      .select('*')
+      .eq('id', item.id)
+      .maybeSingle();
+
+    if (error || !data) {
+      toast.error('Failed to fetch resource data');
+      return;
+    }
+
     const resource: Resource = {
-      id: item.id,
-      name: item.name,
-      icon: item.icon,
-      iconType: item.iconType,
-      rarity: item.rarity as Resource['rarity'],
-      description: item.description,
-      gatherTime: 0,
-      spawnTiles: [],
-      spawnChance: 0,
-      coinValue: item.baseValue,
+      id: `res-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name: data.name,
+      icon: data.icon,
+      iconType: data.icon?.startsWith('http') ? 'image' : 'emoji',
+      rarity: data.rarity as Resource['rarity'],
+      description: data.description || '',
+      gatherTime: data.gather_time || 1000,
+      spawnTiles: data.spawn_tiles as Resource['spawnTiles'],
+      spawnChance: Number(data.spawn_chance),
+      coinValue: data.base_value,
+      consumable: data.consumable || false,
+      healthGain: data.health_gain || 0,
+      canInflictDamage: data.can_inflict_damage || false,
+      damage: data.damage || 0,
+      recipes: data.recipe ? [data.recipe as unknown as import('@/types/game').Recipe] : [],
+      isContainer: data.is_container || false,
+      isFloating: data.is_floating || false,
+      display: data.display || false,
+      placeable: data.placeable || false,
+      passable: data.passable || false,
+      hasLimitedLifetime: data.has_limited_lifetime || false,
+      lifetimeHours: data.lifetime_hours ?? undefined,
+      tileWidth: data.tile_width ?? 1,
+      tileHeight: data.tile_height ?? 1,
+      useLife: data.use_life || false,
+      lifeDecreasePerUse: data.life_decrease_per_use ?? 100,
+      destructible: data.destructible || false,
+      maxLife: data.max_life ?? 100,
+      produceTile: data.produce_tile || false,
+      produceTileType: data.produce_tile_type as Resource['spawnTiles'][number] | undefined,
     };
 
     const result = onBuyResource(resource, cost);
