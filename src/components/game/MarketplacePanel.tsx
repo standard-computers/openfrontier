@@ -127,6 +127,7 @@ const MarketplacePanel = ({
       lifeDecreasePerUse: data.life_decrease_per_use ?? 100,
       destructible: data.destructible || false,
       maxLife: data.max_life ?? 100,
+      destroyedBy: data.destroyed_by || undefined,
       produceTile: data.produce_tile || false,
       produceTileType: data.produce_tile_type as Resource['spawnTiles'][number] | undefined,
     };

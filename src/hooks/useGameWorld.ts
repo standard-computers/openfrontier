@@ -959,13 +959,31 @@ export const useGameWorld = () => {
         return prev;
       }
       
-      // Find a destructible resource on the tile
+      // Find a destructible resource on the tile that can be destroyed by the held item
       const destructibleResourceId = targetTile.resources.find(resId => {
         const res = prev.resources.find(r => r.id === resId);
-        return res?.destructible;
+        if (!res?.destructible) return false;
+        // Check if destroyedBy is specified - if so, held item must be in the list
+        if (res.destroyedBy && res.destroyedBy.length > 0) {
+          return res.destroyedBy.includes(heldResource.id);
+        }
+        // No restrictions - any damage item can destroy
+        return true;
       });
       
       if (!destructibleResourceId) {
+        // Check if there's a destructible resource but wrong tool
+        const anyDestructible = targetTile.resources.find(resId => {
+          const res = prev.resources.find(r => r.id === resId);
+          return res?.destructible;
+        });
+        if (anyDestructible) {
+          const res = prev.resources.find(r => r.id === anyDestructible);
+          if (res?.destroyedBy && res.destroyedBy.length > 0) {
+            result = { success: false, message: 'Wrong tool for this resource' };
+            return prev;
+          }
+        }
         result = { success: false, message: 'Nothing destructible here' };
         return prev;
       }
