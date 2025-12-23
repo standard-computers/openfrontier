@@ -100,6 +100,9 @@ const ResourceEditorModal = ({
         destroyedBy: data.destroyed_by || undefined,
         produceTile: data.produce_tile || false,
         produceTileType: (data.produce_tile_type as Resource['produceTileType']) || undefined,
+        producesResource: data.produces_resource || undefined,
+        producesAmount: data.produces_amount ?? 1,
+        producesIntervalHours: data.produces_interval_hours ?? 24,
       });
 
       // Update icon mode based on copied resource
@@ -996,6 +999,118 @@ const ResourceEditorModal = ({
                           </button>
                         ))}
                       </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Resource Production Section */}
+              <div className="bg-secondary/30 rounded-lg p-3">
+                <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                  ⚙️ Resource Production
+                </h4>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="producesResource"
+                      checked={!!form.producesResource}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          // Find first available resource
+                          const firstResource = allResources.find(r => r.id !== form.id);
+                          setForm({ 
+                            ...form, 
+                            producesResource: firstResource?.id || undefined,
+                            producesAmount: form.producesAmount ?? 1,
+                            producesIntervalHours: form.producesIntervalHours ?? 24 
+                          });
+                        } else {
+                          setForm({ ...form, producesResource: undefined });
+                        }
+                      }}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="producesResource" className="text-sm">Produces Resources</label>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    When enabled, this item will periodically produce resources that can be collected
+                  </p>
+                  
+                  {form.producesResource && (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-2 block">Resource to Produce</label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button className="input-field w-full flex items-center gap-2 text-left">
+                              {(() => {
+                                const selectedResource = allResources.find(r => r.id === form.producesResource);
+                                return selectedResource ? (
+                                  <>
+                                    <ResourceIcon icon={selectedResource.icon} iconType={selectedResource.iconType} size="sm" />
+                                    <span className="flex-1 truncate">{selectedResource.name}</span>
+                                  </>
+                                ) : (
+                                  <span className="text-muted-foreground">Select resource...</span>
+                                );
+                              })()}
+                              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-64 p-1 max-h-60 overflow-auto z-50 bg-card border border-border" align="start">
+                            {allResources
+                              .filter(r => r.id !== form.id)
+                              .map(r => (
+                                <button
+                                  key={r.id}
+                                  onClick={() => setForm({ ...form, producesResource: r.id })}
+                                  className={cn(
+                                    "w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-muted transition-colors",
+                                    form.producesResource === r.id && "bg-primary/20"
+                                  )}
+                                >
+                                  <ResourceIcon icon={r.icon} iconType={r.iconType} size="sm" />
+                                  <span className="truncate">{r.name}</span>
+                                </button>
+                              ))}
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs text-muted-foreground mb-1 block">Amount per Cycle</label>
+                          <input
+                            type="number"
+                            min={1}
+                            max={100}
+                            value={form.producesAmount || 1}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value) || 1;
+                              setForm({ ...form, producesAmount: Math.max(1, Math.min(100, val)) });
+                            }}
+                            className="input-field w-full"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-muted-foreground mb-1 block">Interval (game hours)</label>
+                          <input
+                            type="number"
+                            min={1}
+                            max={1000}
+                            value={form.producesIntervalHours || 24}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value) || 24;
+                              setForm({ ...form, producesIntervalHours: Math.max(1, Math.min(1000, val)) });
+                            }}
+                            className="input-field w-full"
+                          />
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">
+                        Every {form.producesIntervalHours || 24} game hours, this produces {form.producesAmount || 1}x {allResources.find(r => r.id === form.producesResource)?.name || 'resource'}
+                      </p>
                     </div>
                   )}
                 </div>

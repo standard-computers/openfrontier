@@ -130,6 +130,9 @@ const MarketplacePanel = ({
       destroyedBy: data.destroyed_by || undefined,
       produceTile: data.produce_tile || false,
       produceTileType: data.produce_tile_type as Resource['spawnTiles'][number] | undefined,
+      producesResource: data.produces_resource || undefined,
+      producesAmount: data.produces_amount ?? 1,
+      producesIntervalHours: data.produces_interval_hours ?? 24,
     };
 
     const result = onBuyResource(resource, cost);

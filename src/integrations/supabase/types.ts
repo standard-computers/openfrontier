@@ -61,6 +61,9 @@ export type Database = {
           placeable: boolean
           produce_tile: boolean
           produce_tile_type: string | null
+          produces_amount: number
+          produces_interval_hours: number
+          produces_resource: string | null
           rarity: string
           recipe: Json | null
           spawn_chance: number
@@ -97,6 +100,9 @@ export type Database = {
           placeable?: boolean
           produce_tile?: boolean
           produce_tile_type?: string | null
+          produces_amount?: number
+          produces_interval_hours?: number
+          produces_resource?: string | null
           rarity?: string
           recipe?: Json | null
           spawn_chance?: number
@@ -133,6 +139,9 @@ export type Database = {
           placeable?: boolean
           produce_tile?: boolean
           produce_tile_type?: string | null
+          produces_amount?: number
+          produces_interval_hours?: number
+          produces_resource?: string | null
           rarity?: string
           recipe?: Json | null
           spawn_chance?: number

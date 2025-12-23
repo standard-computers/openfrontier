@@ -42,6 +42,9 @@ interface RepositoryResource {
   destroyed_by: string[] | null;
   produce_tile: boolean;
   produce_tile_type: string | null;
+  produces_resource: string | null;
+  produces_amount: number;
+  produces_interval_hours: number;
 }
 
 interface ResourceRepositoryProps {
@@ -141,6 +144,9 @@ const ResourceRepository = ({
       destroyedBy: repoResource.destroyed_by || undefined,
       produceTile: repoResource.produce_tile || false,
       produceTileType: repoResource.produce_tile_type as TileType | undefined,
+      producesResource: repoResource.produces_resource || undefined,
+      producesAmount: repoResource.produces_amount ?? 1,
+      producesIntervalHours: repoResource.produces_interval_hours ?? 24,
     };
 
     onAddResource(newResource);
@@ -193,6 +199,9 @@ const ResourceRepository = ({
         destroyed_by: resource.destroyedBy || null,
         produce_tile: resource.produceTile || false,
         produce_tile_type: resource.produceTileType || null,
+        produces_resource: resource.producesResource || null,
+        produces_amount: resource.producesAmount ?? 1,
+        produces_interval_hours: resource.producesIntervalHours ?? 24,
       }]);
 
       if (error) throw error;
@@ -267,6 +276,9 @@ const ResourceRepository = ({
         max_life: resource.maxLife ?? 100,
         produce_tile: resource.produceTile || false,
         produce_tile_type: resource.produceTileType || null,
+        produces_resource: resource.producesResource || null,
+        produces_amount: resource.producesAmount ?? 1,
+        produces_interval_hours: resource.producesIntervalHours ?? 24,
       }]);
 
       if (error) throw error;
@@ -324,6 +336,9 @@ const ResourceRepository = ({
           max_life: resource.maxLife ?? 100,
           produce_tile: resource.produceTile || false,
           produce_tile_type: resource.produceTileType || null,
+          produces_resource: resource.producesResource || null,
+          produces_amount: resource.producesAmount ?? 1,
+          produces_interval_hours: resource.producesIntervalHours ?? 24,
         })
         .eq('id', editingRepoResource.id);
 
