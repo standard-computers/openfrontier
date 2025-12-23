@@ -39,6 +39,8 @@ interface RepositoryResource {
   life_decrease_per_use: number;
   destructible: boolean;
   max_life: number;
+  produce_tile: boolean;
+  produce_tile_type: string | null;
 }
 
 interface ResourceRepositoryProps {
@@ -632,6 +634,8 @@ const ResourceRepository = ({
             lifeDecreasePerUse: editingRepoResource.life_decrease_per_use ?? 100,
             destructible: editingRepoResource.destructible || false,
             maxLife: editingRepoResource.max_life ?? 100,
+            produceTile: editingRepoResource.produce_tile || false,
+            produceTileType: editingRepoResource.produce_tile_type as Resource['spawnTiles'][number] | undefined,
           }}
           allResources={resources.map(r => ({
             id: r.id,
@@ -663,6 +667,8 @@ const ResourceRepository = ({
             lifeDecreasePerUse: r.life_decrease_per_use ?? 100,
             destructible: r.destructible || false,
             maxLife: r.max_life ?? 100,
+            produceTile: r.produce_tile || false,
+            produceTileType: r.produce_tile_type as Resource['spawnTiles'][number] | undefined,
           }))}
           categories={categories}
           isNew={false}
