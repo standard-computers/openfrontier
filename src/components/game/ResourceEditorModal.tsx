@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Resource, Recipe, RecipeIngredient, TileType, TILE_TYPES, RARITY_COLORS } from '@/types/game';
-import { X, Save, Trash2, Plus, ChevronRight, Upload, Smile, Image, ChevronDown, Tag, Copy, ClipboardPaste } from 'lucide-react';
+import { X, Save, Trash2, Plus, ChevronRight, Upload, Smile, Image, ChevronDown, Tag, Copy, ClipboardPaste, Search } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
@@ -40,6 +40,8 @@ const ResourceEditorModal = ({
   const [showCopyFromIdDialog, setShowCopyFromIdDialog] = useState(false);
   const [copyFromIdInput, setCopyFromIdInput] = useState('');
   const [loadingCopyFrom, setLoadingCopyFrom] = useState(false);
+  const [producesResourceSearch, setProducesResourceSearch] = useState('');
+  const [ingredientSearches, setIngredientSearches] = useState<Record<number, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getResource = (id: string) => allResources.find(r => r.id === id);
@@ -1041,7 +1043,7 @@ const ResourceEditorModal = ({
                     <div className="space-y-3">
                       <div>
                         <label className="text-xs text-muted-foreground mb-2 block">Resource to Produce</label>
-                        <Popover>
+                        <Popover onOpenChange={(open) => !open && setProducesResourceSearch('')}>
                           <PopoverTrigger asChild>
                             <button className="input-field w-full flex items-center gap-2 text-left">
                               {(() => {
@@ -1058,22 +1060,41 @@ const ResourceEditorModal = ({
                               <ChevronDown className="w-4 h-4 text-muted-foreground" />
                             </button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-64 p-1 max-h-60 overflow-auto z-50 bg-card border border-border" align="start">
-                            {allResources
-                              .filter(r => r.id !== form.id)
-                              .map(r => (
-                                <button
-                                  key={r.id}
-                                  onClick={() => setForm({ ...form, producesResource: r.id })}
-                                  className={cn(
-                                    "w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-muted transition-colors",
-                                    form.producesResource === r.id && "bg-primary/20"
-                                  )}
-                                >
-                                  <ResourceIcon icon={r.icon} iconType={r.iconType} size="sm" />
-                                  <span className="truncate">{r.name}</span>
-                                </button>
-                              ))}
+                          <PopoverContent className="w-64 p-2 z-50 bg-card border border-border" align="start">
+                            <div className="relative mb-2">
+                              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                              <input
+                                type="text"
+                                placeholder="Search resources..."
+                                value={producesResourceSearch}
+                                onChange={(e) => setProducesResourceSearch(e.target.value)}
+                                className="input-field w-full pl-7 py-1.5 text-sm"
+                                autoFocus
+                              />
+                            </div>
+                            <div className="max-h-48 overflow-auto space-y-0.5">
+                              {allResources
+                                .filter(r => r.id !== form.id && r.name.toLowerCase().includes(producesResourceSearch.toLowerCase()))
+                                .map(r => (
+                                  <button
+                                    key={r.id}
+                                    onClick={() => {
+                                      setForm({ ...form, producesResource: r.id });
+                                      setProducesResourceSearch('');
+                                    }}
+                                    className={cn(
+                                      "w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-muted transition-colors",
+                                      form.producesResource === r.id && "bg-primary/20"
+                                    )}
+                                  >
+                                    <ResourceIcon icon={r.icon} iconType={r.iconType} size="sm" />
+                                    <span className="truncate">{r.name}</span>
+                                  </button>
+                                ))}
+                              {allResources.filter(r => r.id !== form.id && r.name.toLowerCase().includes(producesResourceSearch.toLowerCase())).length === 0 && (
+                                <p className="text-xs text-muted-foreground text-center py-2">No resources found</p>
+                              )}
+                            </div>
                           </PopoverContent>
                         </Popover>
                       </div>
@@ -1161,7 +1182,11 @@ const ResourceEditorModal = ({
                       <div className="space-y-2">
                         {editingRecipe.ingredients.map((ingredient, index) => (
                           <div key={index} className="flex items-center gap-2 bg-secondary/30 p-2 rounded">
-                            <Popover>
+                            <Popover onOpenChange={(open) => {
+                              if (!open) {
+                                setIngredientSearches(prev => ({ ...prev, [index]: '' }));
+                              }
+                            }}>
                               <PopoverTrigger asChild>
                                 <button className="input-field flex-1 flex items-center gap-2 text-left">
                                   {(() => {
@@ -1178,22 +1203,41 @@ const ResourceEditorModal = ({
                                   <ChevronDown className="w-4 h-4 text-muted-foreground" />
                                 </button>
                               </PopoverTrigger>
-                              <PopoverContent className="w-64 p-1 max-h-60 overflow-auto z-50 bg-card border border-border" align="start">
-                                {allResources
-                                  .filter(r => r.id !== form.id)
-                                  .map(r => (
-                                    <button
-                                      key={r.id}
-                                      onClick={() => handleUpdateIngredient(index, { resourceId: r.id })}
-                                      className={cn(
-                                        "w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-muted transition-colors",
-                                        ingredient.resourceId === r.id && "bg-primary/20"
-                                      )}
-                                    >
-                                      <ResourceIcon icon={r.icon} iconType={r.iconType} size="sm" />
-                                      <span className="truncate">{r.name}</span>
-                                    </button>
-                                  ))}
+                              <PopoverContent className="w-64 p-2 z-50 bg-card border border-border" align="start">
+                                <div className="relative mb-2">
+                                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                                  <input
+                                    type="text"
+                                    placeholder="Search resources..."
+                                    value={ingredientSearches[index] || ''}
+                                    onChange={(e) => setIngredientSearches(prev => ({ ...prev, [index]: e.target.value }))}
+                                    className="input-field w-full pl-7 py-1.5 text-sm"
+                                    autoFocus
+                                  />
+                                </div>
+                                <div className="max-h-48 overflow-auto space-y-0.5">
+                                  {allResources
+                                    .filter(r => r.id !== form.id && r.name.toLowerCase().includes((ingredientSearches[index] || '').toLowerCase()))
+                                    .map(r => (
+                                      <button
+                                        key={r.id}
+                                        onClick={() => {
+                                          handleUpdateIngredient(index, { resourceId: r.id });
+                                          setIngredientSearches(prev => ({ ...prev, [index]: '' }));
+                                        }}
+                                        className={cn(
+                                          "w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-muted transition-colors",
+                                          ingredient.resourceId === r.id && "bg-primary/20"
+                                        )}
+                                      >
+                                        <ResourceIcon icon={r.icon} iconType={r.iconType} size="sm" />
+                                        <span className="truncate">{r.name}</span>
+                                      </button>
+                                    ))}
+                                  {allResources.filter(r => r.id !== form.id && r.name.toLowerCase().includes((ingredientSearches[index] || '').toLowerCase())).length === 0 && (
+                                    <p className="text-xs text-muted-foreground text-center py-2">No resources found</p>
+                                  )}
+                                </div>
                               </PopoverContent>
                             </Popover>
                             <span className="text-muted-foreground">×</span>
