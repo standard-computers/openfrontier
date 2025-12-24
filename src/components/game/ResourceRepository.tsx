@@ -641,8 +641,12 @@ const ResourceRepository = ({
             lifeDecreasePerUse: r.life_decrease_per_use ?? 100,
             destructible: r.destructible || false,
             maxLife: r.max_life ?? 100,
+            destroyedBy: r.destroyed_by || undefined,
             produceTile: r.produce_tile || false,
             produceTileType: r.produce_tile_type as TileType | undefined,
+            producesResource: r.produces_resource || undefined,
+            producesAmount: r.produces_amount ?? 1,
+            producesIntervalHours: r.produces_interval_hours ?? 24,
           }))}
           categories={categories}
           isNew={true}
@@ -687,8 +691,12 @@ const ResourceRepository = ({
             lifeDecreasePerUse: editingRepoResource.life_decrease_per_use ?? 100,
             destructible: editingRepoResource.destructible || false,
             maxLife: editingRepoResource.max_life ?? 100,
+            destroyedBy: editingRepoResource.destroyed_by || undefined,
             produceTile: editingRepoResource.produce_tile || false,
             produceTileType: editingRepoResource.produce_tile_type as Resource['spawnTiles'][number] | undefined,
+            producesResource: editingRepoResource.produces_resource || undefined,
+            producesAmount: editingRepoResource.produces_amount ?? 1,
+            producesIntervalHours: editingRepoResource.produces_interval_hours ?? 24,
           }}
           allResources={resources.map(r => ({
             id: r.id,
@@ -720,8 +728,12 @@ const ResourceRepository = ({
             lifeDecreasePerUse: r.life_decrease_per_use ?? 100,
             destructible: r.destructible || false,
             maxLife: r.max_life ?? 100,
+            destroyedBy: r.destroyed_by || undefined,
             produceTile: r.produce_tile || false,
             produceTileType: r.produce_tile_type as Resource['spawnTiles'][number] | undefined,
+            producesResource: r.produces_resource || undefined,
+            producesAmount: r.produces_amount ?? 1,
+            producesIntervalHours: r.produces_interval_hours ?? 24,
           }))}
           categories={categories}
           isNew={false}
