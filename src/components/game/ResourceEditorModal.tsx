@@ -88,6 +88,7 @@ const ResourceEditorModal = ({
         isContainer: data.is_container || false,
         isFloating: data.is_floating || false,
         canFloatOnWater: data.can_float_on_water || false,
+        holdsPlayer: data.holds_player || false,
         display: data.display || false,
         placeable: data.placeable || false,
         passable: data.passable || false,
@@ -673,6 +674,17 @@ const ResourceEditorModal = ({
                       className="w-4 h-4"
                     />
                     <label htmlFor="canFloatOnWater" className="text-sm">Can Float on Water</label>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="holdsPlayer"
+                      checked={form.holdsPlayer || false}
+                      onChange={(e) => setForm({ ...form, holdsPlayer: e.target.checked })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="holdsPlayer" className="text-sm">Holds Player (Vehicle/Boat)</label>
                   </div>
 
                   <div className="flex items-center gap-2">
