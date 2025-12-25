@@ -50,6 +50,7 @@ export type Database = {
           gather_time: number
           has_limited_lifetime: boolean
           health_gain: number
+          holds_player: boolean
           icon: string
           id: string
           is_container: boolean
@@ -90,6 +91,7 @@ export type Database = {
           gather_time?: number
           has_limited_lifetime?: boolean
           health_gain?: number
+          holds_player?: boolean
           icon?: string
           id?: string
           is_container?: boolean
@@ -130,6 +132,7 @@ export type Database = {
           gather_time?: number
           has_limited_lifetime?: boolean
           health_gain?: number
+          holds_player?: boolean
           icon?: string
           id?: string
           is_container?: boolean
