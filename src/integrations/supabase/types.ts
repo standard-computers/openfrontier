@@ -35,6 +35,7 @@ export type Database = {
       resource_marketplace: {
         Row: {
           base_value: number
+          can_float_on_water: boolean
           can_inflict_damage: boolean
           category: string | null
           consumable: boolean
@@ -74,6 +75,7 @@ export type Database = {
         }
         Insert: {
           base_value?: number
+          can_float_on_water?: boolean
           can_inflict_damage?: boolean
           category?: string | null
           consumable?: boolean
@@ -113,6 +115,7 @@ export type Database = {
         }
         Update: {
           base_value?: number
+          can_float_on_water?: boolean
           can_inflict_damage?: boolean
           category?: string | null
           consumable?: boolean

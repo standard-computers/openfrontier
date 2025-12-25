@@ -22,6 +22,7 @@ interface RepositoryResource {
   created_by: string | null;
   is_container: boolean;
   is_floating: boolean;
+  can_float_on_water: boolean;
   display: boolean;
   placeable: boolean;
   passable: boolean;
@@ -256,7 +257,8 @@ const ResourceRepository = ({
         recipe: resource.recipes?.[0] ? JSON.parse(JSON.stringify(resource.recipes[0])) : null,
         created_by: userId,
         is_container: resource.isContainer || false,
-        is_floating: resource.isFloating || false,
+          is_floating: resource.isFloating || false,
+          can_float_on_water: resource.canFloatOnWater || false,
         display: resource.display || false,
         placeable: resource.placeable || false,
         passable: resource.passable || false,
@@ -317,7 +319,8 @@ const ResourceRepository = ({
           base_value: resource.coinValue,
           recipe: resource.recipes?.[0] ? JSON.parse(JSON.stringify(resource.recipes[0])) : null,
           is_container: resource.isContainer || false,
-          is_floating: resource.isFloating || false,
+            is_floating: resource.isFloating || false,
+            can_float_on_water: resource.canFloatOnWater || false,
           display: resource.display || false,
           placeable: resource.placeable || false,
           passable: resource.passable || false,
@@ -629,6 +632,7 @@ const ResourceRepository = ({
             recipes: r.recipe ? [r.recipe] : [],
             isContainer: r.is_container || false,
             isFloating: r.is_floating || false,
+            canFloatOnWater: r.can_float_on_water || false,
             display: r.display || false,
             placeable: r.placeable || false,
             passable: r.passable || false,
@@ -679,6 +683,7 @@ const ResourceRepository = ({
             recipes: editingRepoResource.recipe ? [editingRepoResource.recipe] : [],
             isContainer: editingRepoResource.is_container || false,
             isFloating: editingRepoResource.is_floating || false,
+            canFloatOnWater: editingRepoResource.can_float_on_water || false,
             display: editingRepoResource.display || false,
             placeable: editingRepoResource.placeable || false,
             passable: editingRepoResource.passable || false,
@@ -716,6 +721,7 @@ const ResourceRepository = ({
             recipes: r.recipe ? [r.recipe] : [],
             isContainer: r.is_container || false,
             isFloating: r.is_floating || false,
+            canFloatOnWater: r.can_float_on_water || false,
             display: r.display || false,
             placeable: r.placeable || false,
             passable: r.passable || false,

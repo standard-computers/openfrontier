@@ -87,6 +87,7 @@ const ResourceEditorModal = ({
         recipes: data.recipe ? [data.recipe as unknown as Recipe] : [],
         isContainer: data.is_container || false,
         isFloating: data.is_floating || false,
+        canFloatOnWater: data.can_float_on_water || false,
         display: data.display || false,
         placeable: data.placeable || false,
         passable: data.passable || false,
@@ -660,7 +661,18 @@ const ResourceEditorModal = ({
                       }}
                       className="w-4 h-4"
                     />
-                    <label htmlFor="isFloating" className="text-sm">Is Floating</label>
+                    <label htmlFor="isFloating" className="text-sm">Hovers Above Tile</label>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="canFloatOnWater"
+                      checked={form.canFloatOnWater || false}
+                      onChange={(e) => setForm({ ...form, canFloatOnWater: e.target.checked })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="canFloatOnWater" className="text-sm">Can Float on Water</label>
                   </div>
 
                   <div className="flex items-center gap-2">
