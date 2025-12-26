@@ -74,6 +74,7 @@ export interface Resource {
   producesResource?: string; // Resource ID that this item produces periodically
   producesAmount?: number; // Amount produced each cycle (default 1)
   producesIntervalHours?: number; // Game hours between production cycles (default 24)
+  emitsLight?: boolean; // If true, resource emits light during nighttime when on a tile
 }
 
 export interface MapTile {

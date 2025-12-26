@@ -99,6 +99,12 @@ const GameMap = ({
       return { color: 'rgba(10, 20, 50, 0.55)', blend: 'multiply' };
     }
   }, [currentHour]);
+
+  // Check if it's nighttime (when light-emitting resources should glow)
+  const isNighttime = useMemo(() => {
+    return currentHour >= 0 && currentHour < 7 || currentHour >= 19;
+  }, [currentHour]);
+
   const [hoveredStranger, setHoveredStranger] = useState<Stranger | null>(null);
 
   const updateViewport = useCallback(() => {
@@ -429,6 +435,9 @@ const GameMap = ({
                 const isDamaged = primaryDisplayResource.destructible && resourceLife !== undefined && resourceLife < maxLife;
                 const lifePercent = isDamaged ? (resourceLife / maxLife) * 100 : 100;
                 
+                // Check if any resource on this tile emits light
+                const hasLightEmitter = isNighttime && displayableResources.some(r => r?.emitsLight);
+                
                 return (
                   <div 
                     className="absolute flex flex-col items-center drop-shadow-md pointer-events-none"
@@ -442,6 +451,21 @@ const GameMap = ({
                       zIndex: 5,
                     }}
                   >
+                    {/* Light glow effect for light-emitting resources at night */}
+                    {hasLightEmitter && (
+                      <div 
+                        className="absolute rounded-full pointer-events-none animate-pulse"
+                        style={{
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          width: tileSize * 2.5,
+                          height: tileSize * 2.5,
+                          background: 'radial-gradient(circle, rgba(255, 220, 100, 0.5) 0%, rgba(255, 180, 50, 0.25) 40%, transparent 70%)',
+                          zIndex: -1,
+                        }}
+                      />
+                    )}
                     {/* Health bar for damaged destructible resources */}
                     {isDamaged && (
                       <div 

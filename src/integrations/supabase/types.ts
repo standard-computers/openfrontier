@@ -47,6 +47,7 @@ export type Database = {
           destructible: boolean
           display: boolean
           download_count: number
+          emits_light: boolean
           gather_time: number
           has_limited_lifetime: boolean
           health_gain: number
@@ -88,6 +89,7 @@ export type Database = {
           destructible?: boolean
           display?: boolean
           download_count?: number
+          emits_light?: boolean
           gather_time?: number
           has_limited_lifetime?: boolean
           health_gain?: number
@@ -129,6 +131,7 @@ export type Database = {
           destructible?: boolean
           display?: boolean
           download_count?: number
+          emits_light?: boolean
           gather_time?: number
           has_limited_lifetime?: boolean
           health_gain?: number

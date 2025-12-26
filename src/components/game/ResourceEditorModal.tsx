@@ -690,6 +690,17 @@ const ResourceEditorModal = ({
                     />
                     <label htmlFor="display" className="text-sm">Display on Tile</label>
                   </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="emitsLight"
+                      checked={form.emitsLight || false}
+                      onChange={(e) => setForm({ ...form, emitsLight: e.target.checked })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="emitsLight" className="text-sm">Emits Light (at night)</label>
+                  </div>
                   
                   <div className="flex items-center gap-2">
                     <input
