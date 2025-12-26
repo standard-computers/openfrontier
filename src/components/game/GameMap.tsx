@@ -474,14 +474,14 @@ const GameMap = ({
                     {/* Light glow effect for light-emitting resources at night */}
                     {hasLightEmitter && (
                       <div 
-                        className="absolute rounded-full pointer-events-none animate-pulse"
+                        className="absolute rounded-full pointer-events-none"
                         style={{
                           top: '50%',
                           left: '50%',
                           transform: 'translate(-50%, -50%)',
-                          width: tileSize * 2.5,
-                          height: tileSize * 2.5,
-                          background: 'radial-gradient(circle, rgba(255, 220, 100, 0.5) 0%, rgba(255, 180, 50, 0.25) 40%, transparent 70%)',
+                          width: tileSize * 5,
+                          height: tileSize * 5,
+                          background: 'radial-gradient(circle, rgba(255, 220, 100, 0.45) 0%, rgba(255, 180, 50, 0.2) 35%, rgba(255, 150, 30, 0.08) 60%, transparent 80%)',
                           zIndex: -1,
                         }}
                       />
