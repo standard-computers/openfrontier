@@ -61,6 +61,44 @@ const GameMap = ({
   const [dragStart, setDragStart] = useState<Position | null>(null);
   const [dragEnd, setDragEnd] = useState<Position | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [currentHour, setCurrentHour] = useState(() => new Date().getHours());
+
+  // Update time every minute
+  useEffect(() => {
+    const updateTime = () => setCurrentHour(new Date().getHours());
+    const interval = setInterval(updateTime, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Calculate time-of-day lighting overlay
+  const timeOfDayOverlay = useMemo(() => {
+    // 0-5: Night (dark)
+    // 5-7: Dawn (transitioning to light)
+    // 7-19: Day (bright)
+    // 19-22: Dusk (transitioning to dark)
+    // 22-24: Night (dark)
+    
+    if (currentHour >= 0 && currentHour < 5) {
+      // Night - dark blue overlay
+      return { color: 'rgba(10, 20, 50, 0.6)', blend: 'multiply' };
+    } else if (currentHour >= 5 && currentHour < 7) {
+      // Dawn - warm orange/pink gradient
+      const progress = (currentHour - 5) / 2;
+      const opacity = 0.5 - progress * 0.4;
+      return { color: `rgba(255, 150, 100, ${opacity})`, blend: 'overlay' };
+    } else if (currentHour >= 7 && currentHour < 19) {
+      // Daytime - no overlay or very subtle warm tint
+      return { color: 'rgba(255, 255, 200, 0.05)', blend: 'overlay' };
+    } else if (currentHour >= 19 && currentHour < 22) {
+      // Dusk - orange/purple transition
+      const progress = (currentHour - 19) / 3;
+      const opacity = 0.1 + progress * 0.4;
+      return { color: `rgba(50, 30, 80, ${opacity})`, blend: 'multiply' };
+    } else {
+      // Late night (22-24) - dark blue overlay
+      return { color: 'rgba(10, 20, 50, 0.55)', blend: 'multiply' };
+    }
+  }, [currentHour]);
   const [hoveredStranger, setHoveredStranger] = useState<Stranger | null>(null);
 
   const updateViewport = useCallback(() => {
@@ -544,6 +582,15 @@ const GameMap = ({
           );
         })}
       </div>
+      
+      {/* Time of day lighting overlay */}
+      <div 
+        className="absolute inset-0 pointer-events-none z-30 transition-colors duration-[30000ms]"
+        style={{
+          backgroundColor: timeOfDayOverlay.color,
+          mixBlendMode: timeOfDayOverlay.blend as React.CSSProperties['mixBlendMode'],
+        }}
+      />
     </div>
   );
 };
