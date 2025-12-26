@@ -88,8 +88,8 @@ const WorldConfig = ({
       rarity: 'common',
       description: '',
       gatherTime: 2,
-      spawnTiles: ['grass'],
-      spawnChance: 0.1,
+      spawnTiles: [],
+      spawnChance: 0,
       coinValue: 10,
     });
     setIsNewResource(true);
