@@ -607,12 +607,13 @@ const GameMap = ({
         })}
       </div>
       
-      {/* Time of day lighting overlay */}
+      {/* Time of day lighting overlay - positioned above everything */}
       <div 
-        className="absolute inset-0 pointer-events-none z-30 transition-colors duration-[30000ms]"
+        className="absolute inset-0 pointer-events-none transition-colors duration-[30000ms]"
         style={{
           backgroundColor: timeOfDayOverlay.color,
           mixBlendMode: timeOfDayOverlay.blend as React.CSSProperties['mixBlendMode'],
+          zIndex: 100,
         }}
       />
     </div>
