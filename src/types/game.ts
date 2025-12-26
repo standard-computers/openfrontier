@@ -80,6 +80,7 @@ export interface Resource {
 export interface MapTile {
   type: TileType;
   resources: string[];
+  placedResources?: string[]; // Resources placed by players (cannot be gathered, must be destroyed)
   resourceLife?: Record<string, number>; // Track current life of each resource on tile by resourceId
   walkable: boolean;
   claimedBy?: string;

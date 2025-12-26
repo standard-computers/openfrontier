@@ -175,35 +175,43 @@ const TileInfoPanel = ({
           </p>
         ) : (
           <div className="space-y-2">
-            {tileResources.map((resource) => (
-              <div 
-                key={resource.id}
-                className="flex items-center justify-between p-2 bg-secondary/50 rounded"
-              >
-                <div className="flex items-center gap-2">
-                  <ResourceIcon icon={resource.icon} iconType={resource.iconType} size="lg" />
-                  <div>
-                    <p className="text-sm font-medium">{resource.name}</p>
-                    <div className="flex items-center gap-2">
-                      <span className={cn('text-xs', RARITY_COLORS[resource.rarity])}>{resource.rarity}</span>
-                      <span className="text-xs text-amber-400 flex items-center gap-0.5">
-                        <Coins className="w-3 h-3" />{resource.coinValue}
-                      </span>
+            {tileResources.map((resource) => {
+              const isPlaced = tile.placedResources?.includes(resource.id);
+              return (
+                <div 
+                  key={resource.id}
+                  className="flex items-center justify-between p-2 bg-secondary/50 rounded"
+                >
+                  <div className="flex items-center gap-2">
+                    <ResourceIcon icon={resource.icon} iconType={resource.iconType} size="lg" />
+                    <div>
+                      <p className="text-sm font-medium">{resource.name}</p>
+                      <div className="flex items-center gap-2">
+                        <span className={cn('text-xs', RARITY_COLORS[resource.rarity])}>{resource.rarity}</span>
+                        <span className="text-xs text-amber-400 flex items-center gap-0.5">
+                          <Coins className="w-3 h-3" />{resource.coinValue}
+                        </span>
+                        {isPlaced && (
+                          <span className="text-xs text-muted-foreground">(placed)</span>
+                        )}
+                      </div>
                     </div>
                   </div>
+                  {isPlaced ? (
+                    <span className="text-xs text-muted-foreground">Use tool to destroy</span>
+                  ) : canGather ? (
+                    <button
+                      onClick={() => onGather(resource.id)}
+                      className="btn btn-accent text-xs py-1 px-2"
+                    >
+                      Gather
+                    </button>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Not yours</span>
+                  )}
                 </div>
-                {canGather ? (
-                  <button
-                    onClick={() => onGather(resource.id)}
-                    className="btn btn-accent text-xs py-1 px-2"
-                  >
-                    Gather
-                  </button>
-                ) : (
-                  <span className="text-xs text-muted-foreground">Not yours</span>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

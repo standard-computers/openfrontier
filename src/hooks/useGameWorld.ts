@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { GameWorld, Resource, Sovereignty, Market, NPC, Area, Position, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap, TILE_TYPES, generateNPCs, generateStrangers, Stranger } from '@/types/game';
 import type { Json } from '@/integrations/supabase/types';
+import { toast } from 'sonner';
 
 // Hook version marker for HMR compatibility
 
@@ -464,6 +465,12 @@ export const useGameWorld = () => {
     if (!tile.resources.includes(resourceId)) return;
     if (tile.claimedBy && tile.claimedBy !== currentWorld.userId) return;
     
+    // Cannot gather player-placed resources - they must be destroyed
+    if (tile.placedResources?.includes(resourceId)) {
+      toast.error('Placed items cannot be gathered. Use a tool to destroy it.');
+      return;
+    }
+    
     const newTiles = currentWorld.map.tiles.map((row, ry) =>
       row.map((t, rx) =>
         rx === x && ry === y
@@ -832,11 +839,15 @@ export const useGameWorld = () => {
         newInventory[slotIndex] = { resourceId: null, quantity: 0 };
       }
       
-      // Add resource to tile
+      // Add resource to tile and track as placed
       const newTiles = prev.map.tiles.map((row, ry) =>
         row.map((t, rx) =>
           rx === targetX && ry === targetY
-            ? { ...t, resources: [...t.resources, resourceId] }
+            ? { 
+                ...t, 
+                resources: [...t.resources, resourceId],
+                placedResources: [...(t.placedResources || []), resourceId]
+              }
             : t
         )
       );
