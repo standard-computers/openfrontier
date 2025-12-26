@@ -342,14 +342,22 @@ const ResourceEditorModal = ({
                   >
                     <Smile className="w-3 h-3" /> Emoji
                   </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
                   <button
-                    onClick={() => setIconMode('image')}
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
                     className={cn(
                       'flex items-center gap-1 px-3 py-1.5 text-xs rounded transition-colors',
                       iconMode === 'image' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
                     )}
                   >
-                    <Image className="w-3 h-3" /> Upload Image
+                    <Image className="w-3 h-3" /> {uploading ? 'Uploading...' : 'Upload Image'}
                   </button>
                 </div>
 
@@ -370,21 +378,6 @@ const ResourceEditorModal = ({
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploading}
-                      className="btn w-full flex items-center justify-center gap-2"
-                    >
-                      <Upload className="w-4 h-4" />
-                      {uploading ? 'Uploading...' : 'Choose Image'}
-                    </button>
                     {form.iconType === 'image' && form.icon.startsWith('http') && (
                       <div className="flex items-center gap-2 p-2 bg-secondary/30 rounded">
                         <img src={form.icon} alt="Preview" className="w-10 h-10 object-cover rounded" />
