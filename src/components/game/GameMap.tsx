@@ -25,6 +25,7 @@ interface GameMapProps {
   areas?: Area[];
   facingDirection: FacingDirection;
   isMoving: boolean;
+  worldCreatedAt?: string; // For calculating game time
   onMove: (dx: number, dy: number) => void;
   onTileSelect: (x: number, y: number) => void;
   onMultiTileSelect: (tiles: Position[]) => void;
@@ -50,6 +51,7 @@ const GameMap = ({
   areas = [],
   facingDirection,
   isMoving,
+  worldCreatedAt,
   onMove,
   onTileSelect,
   onMultiTileSelect,
@@ -61,19 +63,32 @@ const GameMap = ({
   const [dragStart, setDragStart] = useState<Position | null>(null);
   const [dragEnd, setDragEnd] = useState<Position | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [currentHour, setCurrentHour] = useState(() => new Date().getHours());
+  // Calculate game hour based on world creation time (1 real hour = 1 game day)
+  const [gameHour, setGameHour] = useState(() => {
+    if (!worldCreatedAt) return 12; // Default to noon if no creation time
+    const createdAt = new Date(worldCreatedAt).getTime();
+    const elapsedMs = Date.now() - createdAt;
+    const totalGameHours = (elapsedMs / 3600000) * 24;
+    return Math.floor(totalGameHours % 24);
+  });
 
-  // Update time every minute
+  // Update game time every 2.5 seconds (= 1 game minute, since 1 real hour = 24 game hours)
   useEffect(() => {
-    const updateTime = () => {
-      const hour = new Date().getHours();
-      console.log('Current real-world hour for lighting:', hour, 'Overlay:', timeOfDayOverlay);
-      setCurrentHour(hour);
+    if (!worldCreatedAt) return;
+    
+    const updateGameTime = () => {
+      const createdAt = new Date(worldCreatedAt).getTime();
+      const elapsedMs = Date.now() - createdAt;
+      const totalGameHours = (elapsedMs / 3600000) * 24;
+      const hour = Math.floor(totalGameHours % 24);
+      setGameHour(hour);
     };
-    updateTime(); // Run immediately
-    const interval = setInterval(updateTime, 60000);
+    
+    updateGameTime();
+    // Update every 2.5 seconds for smooth transitions (1 game hour = 150 real seconds)
+    const interval = setInterval(updateGameTime, 2500);
     return () => clearInterval(interval);
-  }, []);
+  }, [worldCreatedAt]);
 
   // Calculate time-of-day lighting overlay
   const timeOfDayOverlay = useMemo(() => {
@@ -83,32 +98,32 @@ const GameMap = ({
     // 19-22: Dusk (transitioning to dark)
     // 22-24: Night (dark)
     
-    if (currentHour >= 0 && currentHour < 5) {
+    if (gameHour >= 0 && gameHour < 5) {
       // Night - dark blue overlay
       return { color: 'rgba(10, 20, 50, 0.6)', blend: 'multiply' };
-    } else if (currentHour >= 5 && currentHour < 7) {
+    } else if (gameHour >= 5 && gameHour < 7) {
       // Dawn - warm orange/pink gradient
-      const progress = (currentHour - 5) / 2;
+      const progress = (gameHour - 5) / 2;
       const opacity = 0.5 - progress * 0.4;
       return { color: `rgba(255, 150, 100, ${opacity})`, blend: 'overlay' };
-    } else if (currentHour >= 7 && currentHour < 19) {
+    } else if (gameHour >= 7 && gameHour < 19) {
       // Daytime - no overlay or very subtle warm tint
       return { color: 'rgba(255, 255, 200, 0.05)', blend: 'overlay' };
-    } else if (currentHour >= 19 && currentHour < 22) {
+    } else if (gameHour >= 19 && gameHour < 22) {
       // Dusk - orange/purple transition
-      const progress = (currentHour - 19) / 3;
+      const progress = (gameHour - 19) / 3;
       const opacity = 0.1 + progress * 0.4;
       return { color: `rgba(50, 30, 80, ${opacity})`, blend: 'multiply' };
     } else {
       // Late night (22-24) - dark blue overlay
       return { color: 'rgba(10, 20, 50, 0.55)', blend: 'multiply' };
     }
-  }, [currentHour]);
+  }, [gameHour]);
 
   // Check if it's nighttime (when light-emitting resources should glow)
   const isNighttime = useMemo(() => {
-    return currentHour >= 0 && currentHour < 7 || currentHour >= 19;
-  }, [currentHour]);
+    return gameHour >= 0 && gameHour < 7 || gameHour >= 19;
+  }, [gameHour]);
 
   const [hoveredStranger, setHoveredStranger] = useState<Stranger | null>(null);
 

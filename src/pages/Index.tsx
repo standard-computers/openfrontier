@@ -402,6 +402,7 @@ const Index = () => {
           areas={world.areas}
           facingDirection={facingDirection}
           isMoving={isMoving}
+          worldCreatedAt={world.createdAt}
           onMove={handleMove}
           onTileSelect={selectTile}
           onMultiTileSelect={handleMultiTileSelect}
