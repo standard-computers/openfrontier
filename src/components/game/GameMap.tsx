@@ -65,7 +65,12 @@ const GameMap = ({
 
   // Update time every minute
   useEffect(() => {
-    const updateTime = () => setCurrentHour(new Date().getHours());
+    const updateTime = () => {
+      const hour = new Date().getHours();
+      console.log('Current real-world hour for lighting:', hour, 'Overlay:', timeOfDayOverlay);
+      setCurrentHour(hour);
+    };
+    updateTime(); // Run immediately
     const interval = setInterval(updateTime, 60000);
     return () => clearInterval(interval);
   }, []);
