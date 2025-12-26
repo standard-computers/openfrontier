@@ -65,7 +65,7 @@ const TileInfoPanel = ({
   return (
     <div className="game-panel w-80 max-h-[450px] overflow-hidden flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b border-border">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border">
         <div className="flex items-center gap-2">
           <div className={cn('w-6 h-6 rounded', tileInfo?.color)} />
           <div>

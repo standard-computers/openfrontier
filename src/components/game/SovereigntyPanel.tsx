@@ -58,7 +58,7 @@ const SovereigntyPanel = ({
     return (
       <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
         <div className="game-panel w-full max-w-sm overflow-hidden">
-          <div className="flex items-center justify-between p-4 border-b border-border">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-border">
             <div className="flex items-center gap-2">
               <Crown className="w-5 h-5 text-amber-400" />
               <h2 className="font-semibold">Found Your Sovereignty</h2>
@@ -126,7 +126,7 @@ const SovereigntyPanel = ({
     return (
       <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
         <div className="game-panel w-full max-w-sm overflow-hidden">
-          <div className="flex items-center justify-between p-4 border-b border-border">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-border">
             <div className="flex items-center gap-2">
               <Flag className="w-5 h-5" />
               <h2 className="font-semibold">{username || 'Player'}</h2>
@@ -162,7 +162,7 @@ const SovereigntyPanel = ({
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
       <div className="game-panel w-full max-w-md overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-border">
           <div className="flex items-center gap-2">
             <span className="text-2xl">{sovereignty.flag}</span>
             <div>
