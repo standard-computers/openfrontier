@@ -412,9 +412,12 @@ const ResourceRepository = ({
         <div className="game-panel w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-border">
-            <div className="flex items-center gap-2">
-              <Database className="w-5 h-5 text-primary" />
-              <h2 className="text-lg font-semibold text-foreground">Resource Repository</h2>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Database className="w-5 h-5 text-primary" />
+                <h2 className="text-lg font-semibold text-foreground">Resource Repository</h2>
+              </div>
+              <span className="text-sm text-muted-foreground">{resources.length} resources</span>
             </div>
             <div className="flex items-center gap-2">
               <button onClick={handleCreateNew} className="btn btn-primary text-sm">
