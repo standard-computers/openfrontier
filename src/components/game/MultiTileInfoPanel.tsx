@@ -110,7 +110,7 @@ const MultiTileInfoPanel = ({
   return (
     <div className="game-panel w-80 max-h-[500px] overflow-hidden flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b border-border">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border">
         <div>
           <h3 className="font-medium">Multi-Tile Selection</h3>
           <p className="text-xs text-muted-foreground">{tiles.length} tiles selected</p>

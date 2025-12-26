@@ -125,7 +125,7 @@ const WorldConfig = ({
       <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
         <div className="game-panel w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-border">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-border">
             <h2 className="text-lg font-semibold text-foreground">World Configuration</h2>
             <button onClick={onClose} className="btn btn-ghost p-2">
               <X className="w-5 h-5" />

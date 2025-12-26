@@ -24,7 +24,7 @@ const UserProfilePanel = ({ isOpen, onClose, member, world }: UserProfilePanelPr
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
       <div className="game-panel w-full max-w-sm overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-border">
           <div className="flex items-center gap-3">
             <div className={cn(
               "w-12 h-12 rounded-full flex items-center justify-center",

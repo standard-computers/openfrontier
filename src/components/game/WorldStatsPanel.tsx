@@ -68,7 +68,7 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUse
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
       <div className="game-panel w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-border">
           <div className="flex items-center gap-2">
             <Globe className="w-5 h-5 text-primary" />
             <h2 className="font-semibold">{world.name}</h2>
