@@ -47,6 +47,7 @@ interface RepositoryResource {
   produces_resource: string | null;
   produces_amount: number;
   produces_interval_hours: number;
+  emits_light: boolean;
 }
 
 interface ResourceRepositoryProps {
@@ -149,6 +150,7 @@ const ResourceRepository = ({
       producesResource: repoResource.produces_resource || undefined,
       producesAmount: repoResource.produces_amount ?? 1,
       producesIntervalHours: repoResource.produces_interval_hours ?? 24,
+      emitsLight: repoResource.emits_light || false,
     };
 
     onAddResource(newResource);
@@ -284,6 +286,7 @@ const ResourceRepository = ({
         produces_resource: resource.producesResource || null,
         produces_amount: resource.producesAmount ?? 1,
         produces_interval_hours: resource.producesIntervalHours ?? 24,
+        emits_light: resource.emitsLight || false,
       }]);
 
       if (error) throw error;
@@ -347,6 +350,7 @@ const ResourceRepository = ({
           produces_resource: resource.producesResource || null,
           produces_amount: resource.producesAmount ?? 1,
           produces_interval_hours: resource.producesIntervalHours ?? 24,
+          emits_light: resource.emitsLight || false,
         })
         .eq('id', editingRepoResource.id);
 
@@ -658,6 +662,7 @@ const ResourceRepository = ({
             producesResource: r.produces_resource || undefined,
             producesAmount: r.produces_amount ?? 1,
             producesIntervalHours: r.produces_interval_hours ?? 24,
+            emitsLight: r.emits_light || false,
           }))}
           categories={categories}
           isNew={true}
@@ -710,6 +715,7 @@ const ResourceRepository = ({
             producesResource: editingRepoResource.produces_resource || undefined,
             producesAmount: editingRepoResource.produces_amount ?? 1,
             producesIntervalHours: editingRepoResource.produces_interval_hours ?? 24,
+            emitsLight: editingRepoResource.emits_light || false,
           }}
           allResources={resources.map(r => ({
             id: r.id,
@@ -749,6 +755,7 @@ const ResourceRepository = ({
             producesResource: r.produces_resource || undefined,
             producesAmount: r.produces_amount ?? 1,
             producesIntervalHours: r.produces_interval_hours ?? 24,
+            emitsLight: r.emits_light || false,
           }))}
           categories={categories}
           isNew={false}

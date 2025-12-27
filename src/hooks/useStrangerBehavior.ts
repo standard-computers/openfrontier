@@ -135,7 +135,14 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     
     if (!currentTile || currentTile.resources.length === 0) return null;
     
-    const resourceToGather = currentTile.resources[0];
+    // Filter out placed resources - strangers cannot gather them
+    const gatherableResources = currentTile.resources.filter(
+      resId => !currentTile.placedResources?.includes(resId)
+    );
+    
+    if (gatherableResources.length === 0) return null;
+    
+    const resourceToGather = gatherableResources[0];
     
     const newTiles = map.tiles.map((row, ry) =>
       row.map((t, rx) =>
