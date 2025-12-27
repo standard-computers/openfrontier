@@ -259,6 +259,7 @@ const Index = () => {
     : null;
   
   const canPlaceSelectedItem = !!(selectedResource?.placeable && world.inventory[selectedSlot]?.quantity > 0);
+  const canUseSelectedItem = !!(selectedResource?.canInflictDamage && world.inventory[selectedSlot]?.quantity > 0);
 
   // Handle placing items
   const handlePlaceItem = useCallback(() => {
@@ -452,7 +453,9 @@ const Index = () => {
           <TouchControls 
             onMove={handleMove} 
             onPlace={handlePlaceItem}
+            onUse={handleUseItem}
             canPlace={canPlaceSelectedItem}
+            canUse={canUseSelectedItem}
           />
         )}
       </div>
