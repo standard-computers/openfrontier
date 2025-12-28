@@ -223,6 +223,17 @@ const ResourceEditorModal = ({
     setForm({ ...form, recipes: recipes.filter(r => r.id !== recipeId) });
   };
 
+  const handleDuplicateRecipe = (recipe: Recipe) => {
+    const recipes = form.recipes || [];
+    const duplicatedRecipe: Recipe = {
+      ...recipe,
+      id: `recipe-${Date.now()}`,
+      name: `${recipe.name} (Copy)`,
+    };
+    setForm({ ...form, recipes: [...recipes, duplicatedRecipe] });
+    toast.success('Recipe duplicated');
+  };
+
   const handleAddIngredient = () => {
     if (!editingRecipe) return;
     const available = allResources.find(r => 
@@ -1344,6 +1355,12 @@ const ResourceEditorModal = ({
                                 className="btn btn-ghost text-xs px-2"
                               >
                                 Edit
+                              </button>
+                              <button 
+                                onClick={() => handleDuplicateRecipe(recipe)}
+                                className="btn btn-ghost text-xs px-2"
+                              >
+                                Duplicate
                               </button>
                               <button 
                                 onClick={() => handleDeleteRecipe(recipe.id)}
