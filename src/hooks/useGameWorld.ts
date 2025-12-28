@@ -534,7 +534,15 @@ export const useGameWorld = () => {
     
     const currentWorld = world;
     const newTiles = currentWorld.map.tiles.map(row => 
-      row.map(t => ({ ...t, resources: t.claimedBy ? [] : [] }))
+      row.map(t => {
+        // Preserve player-placed resources
+        const placedResources = t.placedResources || [];
+        return { 
+          ...t, 
+          resources: t.claimedBy ? [...placedResources] : [...placedResources],
+          placedResources: [...placedResources]
+        };
+      })
     );
     
     for (let y = 0; y < newTiles.length; y++) {
@@ -544,7 +552,10 @@ export const useGameWorld = () => {
           const validResources = currentWorld.resources.filter(r => r.spawnTiles.includes(tile.type));
           for (const resource of validResources) {
             if (Math.random() < resource.spawnChance) {
-              tile.resources.push(resource.id);
+              // Check tile limits before adding
+              if (canAddResourceToTile(tile, resource, currentWorld.resources)) {
+                tile.resources.push(resource.id);
+              }
             }
           }
         }

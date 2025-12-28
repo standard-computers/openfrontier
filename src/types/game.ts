@@ -955,7 +955,9 @@ export const seedResources = (tiles: MapTile[][], resources: Resource[]) => {
   for (let y = 0; y < tiles.length; y++) {
     for (let x = 0; x < tiles[y].length; x++) {
       const tile = tiles[y][x];
-      tile.resources = [];
+      // Preserve player-placed resources
+      const placedResources = tile.placedResources || [];
+      tile.resources = [...placedResources];
       
       const validResources = resources.filter(r => r.spawnTiles.includes(tile.type));
       
