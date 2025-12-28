@@ -914,6 +914,43 @@ const findSpawnPoint = (tiles: MapTile[][], width: number, height: number): { x:
   return { x: centerX, y: centerY };
 };
 
+// Helper to check if a resource is "large" (bigger than 1x1)
+export const isLargeResource = (resource: Resource): boolean => {
+  return (resource.tileWidth ?? 1) > 1 || (resource.tileHeight ?? 1) > 1;
+};
+
+// Helper to check if a tile can accept a new resource based on limits:
+// - Max 2 small (1x1) resources OR 1 large resource
+// - If a large resource exists, only 1 small resource can be added
+export const canAddResourceToTile = (
+  tile: MapTile, 
+  newResource: Resource, 
+  resources: Resource[]
+): boolean => {
+  const existingResources = tile.resources
+    .map(id => resources.find(r => r.id === id))
+    .filter((r): r is Resource => r !== undefined);
+  
+  const existingLarge = existingResources.filter(isLargeResource);
+  const existingSmall = existingResources.filter(r => !isLargeResource(r));
+  const isNewLarge = isLargeResource(newResource);
+  
+  // If adding a large resource
+  if (isNewLarge) {
+    // Can only add if no large resource exists and at most 1 small resource
+    return existingLarge.length === 0 && existingSmall.length <= 1;
+  }
+  
+  // If adding a small resource
+  // If a large resource exists, can only have 1 small (total 2 resources)
+  if (existingLarge.length > 0) {
+    return existingSmall.length < 1;
+  }
+  
+  // No large resource - can have up to 2 small resources
+  return existingSmall.length < 2;
+};
+
 export const seedResources = (tiles: MapTile[][], resources: Resource[]) => {
   for (let y = 0; y < tiles.length; y++) {
     for (let x = 0; x < tiles[y].length; x++) {
@@ -924,7 +961,10 @@ export const seedResources = (tiles: MapTile[][], resources: Resource[]) => {
       
       for (const resource of validResources) {
         if (Math.random() < resource.spawnChance) {
-          tile.resources.push(resource.id);
+          // Check if tile can accept this resource based on limits
+          if (canAddResourceToTile(tile, resource, resources)) {
+            tile.resources.push(resource.id);
+          }
         }
       }
     }
