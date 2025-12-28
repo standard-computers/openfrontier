@@ -332,9 +332,15 @@ const GameMap = ({
           // Get displayable resources on this tile (floating OR display enabled)
           const displayableResources = tile.resources
             .map(resId => resources.find(r => r.id === resId))
-            .filter(r => r?.isFloating || r?.display);
+            .filter(r => r?.isFloating || r?.display)
+            // Sort so larger resources (by tile size) take visual precedence
+            .sort((a, b) => {
+              const aSize = (a?.tileWidth ?? 1) * (a?.tileHeight ?? 1);
+              const bSize = (b?.tileWidth ?? 1) * (b?.tileHeight ?? 1);
+              return bSize - aSize; // Larger first
+            });
 
-          // Get the first displayable resource for multi-tile rendering
+          // Get the first displayable resource for multi-tile rendering (largest takes precedence)
           const primaryDisplayResource = displayableResources[0];
           const resourceWidth = primaryDisplayResource?.tileWidth ?? 1;
           const resourceHeight = primaryDisplayResource?.tileHeight ?? 1;

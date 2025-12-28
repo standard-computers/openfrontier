@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { GameWorld, Resource, Sovereignty, Market, NPC, Area, Position, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap, TILE_TYPES, generateNPCs, generateStrangers, Stranger } from '@/types/game';
+import { GameWorld, Resource, Sovereignty, Market, NPC, Area, Position, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap, TILE_TYPES, generateNPCs, generateStrangers, Stranger, canAddResourceToTile, isLargeResource } from '@/types/game';
 import type { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 
@@ -826,6 +826,13 @@ export const useGameWorld = () => {
       // Check if tile already has this resource placed
       if (targetTile.resources.includes(resourceId)) {
         result = { success: false, message: 'Item already placed here' };
+        return prev;
+      }
+      
+      // Check tile resource limits
+      if (!canAddResourceToTile(targetTile, resource, prev.resources)) {
+        const isLarge = isLargeResource(resource);
+        result = { success: false, message: isLarge ? 'Tile already has a large resource' : 'Tile is full (max 2 small resources)' };
         return prev;
       }
       
