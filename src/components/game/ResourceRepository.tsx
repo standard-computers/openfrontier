@@ -7,48 +7,9 @@ import ResourceIcon from './ResourceIcon';
 import ResourceEditorModal from './ResourceEditorModal';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { RepositoryResource, repositoryToGameResource, gameResourceToRepository } from '@/utils/resourceConverter';
 
-interface RepositoryResource {
-  id: string;
-  name: string;
-  icon: string;
-  rarity: string;
-  description: string | null;
-  spawn_tiles: string[];
-  spawn_chance: number;
-  base_value: number;
-  recipe: any;
-  download_count: number;
-  created_by: string | null;
-  is_container: boolean;
-  is_floating: boolean;
-  can_float_on_water: boolean;
-  holds_player: boolean;
-  display: boolean;
-  placeable: boolean;
-  passable: boolean;
-  consumable: boolean;
-  health_gain: number;
-  can_inflict_damage: boolean;
-  damage: number;
-  category: string | null;
-  gather_time: number;
-  has_limited_lifetime: boolean;
-  lifetime_hours: number | null;
-  tile_width: number;
-  tile_height: number;
-  use_life: boolean;
-  life_decrease_per_use: number;
-  destructible: boolean;
-  max_life: number;
-  destroyed_by: string[] | null;
-  produce_tile: boolean;
-  produce_tile_type: string | null;
-  produces_resource: string | null;
-  produces_amount: number;
-  produces_interval_hours: number;
-  emits_light: boolean;
-}
+// RepositoryResource is now imported from resourceConverter
 
 interface ResourceRepositoryProps {
   isOpen: boolean;
@@ -109,49 +70,14 @@ const ResourceRepository = ({
   };
 
   const handleAddToWorld = async (repoResource: RepositoryResource) => {
-    // Check if resource with same name already exists
-    if (existingResources.some(r => r.name.toLowerCase() === repoResource.name.toLowerCase())) {
-      toast.error('A resource with this name already exists in your world');
+    // Check if resource already exists in world by ID (same resource from repo)
+    if (existingResources.some(r => r.id === repoResource.id)) {
+      toast.error('This resource is already in your world');
       return;
     }
 
-    const newResource: Resource = {
-      id: `res-${Date.now()}`,
-      name: repoResource.name,
-      icon: repoResource.icon,
-      iconType: repoResource.icon?.startsWith('http') ? 'image' : 'emoji',
-      rarity: repoResource.rarity as Resource['rarity'],
-      description: repoResource.description || '',
-      gatherTime: repoResource.gather_time || 1000,
-      spawnTiles: repoResource.spawn_tiles as Resource['spawnTiles'],
-      spawnChance: Number(repoResource.spawn_chance),
-      coinValue: repoResource.base_value,
-      consumable: repoResource.consumable || false,
-      healthGain: repoResource.health_gain || 0,
-      canInflictDamage: repoResource.can_inflict_damage || false,
-      damage: repoResource.damage || 0,
-      recipes: repoResource.recipe ? [repoResource.recipe] : [],
-      isContainer: repoResource.is_container || false,
-      isFloating: repoResource.is_floating || false,
-      display: repoResource.display || false,
-      placeable: repoResource.placeable || false,
-      passable: repoResource.passable || false,
-      hasLimitedLifetime: repoResource.has_limited_lifetime || false,
-      lifetimeHours: repoResource.lifetime_hours ?? undefined,
-      tileWidth: repoResource.tile_width ?? 1,
-      tileHeight: repoResource.tile_height ?? 1,
-      useLife: repoResource.use_life || false,
-      lifeDecreasePerUse: repoResource.life_decrease_per_use ?? 100,
-      destructible: repoResource.destructible || false,
-      maxLife: repoResource.max_life ?? 100,
-      destroyedBy: repoResource.destroyed_by || undefined,
-      produceTile: repoResource.produce_tile || false,
-      produceTileType: repoResource.produce_tile_type as TileType | undefined,
-      producesResource: repoResource.produces_resource || undefined,
-      producesAmount: repoResource.produces_amount ?? 1,
-      producesIntervalHours: repoResource.produces_interval_hours ?? 24,
-      emitsLight: repoResource.emits_light || false,
-    };
+    // Convert using the shared utility - preserves the repository ID
+    const newResource = repositoryToGameResource(repoResource);
 
     onAddResource(newResource);
 
@@ -171,42 +97,8 @@ const ResourceRepository = ({
     }
 
     try {
-      const { error } = await supabase.from('resource_marketplace').insert([{
-        name: resource.name,
-        icon: resource.icon,
-        rarity: resource.rarity,
-        description: resource.description,
-        spawn_tiles: resource.spawnTiles,
-        spawn_chance: resource.spawnChance,
-        base_value: resource.coinValue,
-        recipe: resource.recipes?.[0] ? JSON.parse(JSON.stringify(resource.recipes[0])) : null,
-        created_by: userId,
-        is_container: resource.isContainer || false,
-        is_floating: resource.isFloating || false,
-        display: resource.display || false,
-        placeable: resource.placeable || false,
-        passable: resource.passable || false,
-        consumable: resource.consumable || false,
-        health_gain: resource.healthGain || 0,
-        can_inflict_damage: resource.canInflictDamage || false,
-        damage: resource.damage || 0,
-        category: resource.category || null,
-        gather_time: resource.gatherTime || 1000,
-        has_limited_lifetime: resource.hasLimitedLifetime || false,
-        lifetime_hours: resource.lifetimeHours,
-        tile_width: resource.tileWidth ?? 1,
-        tile_height: resource.tileHeight ?? 1,
-        use_life: resource.useLife || false,
-        life_decrease_per_use: resource.lifeDecreasePerUse ?? 100,
-        destructible: resource.destructible || false,
-        max_life: resource.maxLife ?? 100,
-        destroyed_by: resource.destroyedBy || null,
-        produce_tile: resource.produceTile || false,
-        produce_tile_type: resource.produceTileType || null,
-        produces_resource: resource.producesResource || null,
-        produces_amount: resource.producesAmount ?? 1,
-        produces_interval_hours: resource.producesIntervalHours ?? 24,
-      }]);
+      const repoData = gameResourceToRepository(resource, userId);
+      const { error } = await supabase.from('resource_marketplace').insert([repoData]);
 
       if (error) throw error;
       toast.success(`Added "${resource.name}" to the repository!`);
@@ -249,45 +141,8 @@ const ResourceRepository = ({
     }
 
     try {
-      const { error } = await supabase.from('resource_marketplace').insert([{
-        name: resource.name,
-        icon: resource.icon,
-        rarity: resource.rarity,
-        description: resource.description,
-        spawn_tiles: resource.spawnTiles,
-        spawn_chance: resource.spawnChance,
-        base_value: resource.coinValue,
-        recipe: resource.recipes?.[0] ? JSON.parse(JSON.stringify(resource.recipes[0])) : null,
-        created_by: userId,
-        is_container: resource.isContainer || false,
-        is_floating: resource.isFloating || false,
-        can_float_on_water: resource.canFloatOnWater || false,
-        holds_player: resource.holdsPlayer || false,
-        display: resource.display || false,
-        placeable: resource.placeable || false,
-        passable: resource.passable || false,
-        consumable: resource.consumable || false,
-        health_gain: resource.healthGain || 0,
-        can_inflict_damage: resource.canInflictDamage || false,
-        damage: resource.damage || 0,
-        category: resource.category || null,
-        gather_time: resource.gatherTime || 1000,
-        has_limited_lifetime: resource.hasLimitedLifetime || false,
-        lifetime_hours: resource.lifetimeHours,
-        tile_width: resource.tileWidth ?? 1,
-        tile_height: resource.tileHeight ?? 1,
-        use_life: resource.useLife || false,
-        life_decrease_per_use: resource.lifeDecreasePerUse ?? 100,
-        destructible: resource.destructible || false,
-        max_life: resource.maxLife ?? 100,
-        destroyed_by: resource.destroyedBy || null,
-        produce_tile: resource.produceTile || false,
-        produce_tile_type: resource.produceTileType || null,
-        produces_resource: resource.producesResource || null,
-        produces_amount: resource.producesAmount ?? 1,
-        produces_interval_hours: resource.producesIntervalHours ?? 24,
-        emits_light: resource.emitsLight || false,
-      }]);
+      const repoData = gameResourceToRepository(resource, userId);
+      const { error } = await supabase.from('resource_marketplace').insert([repoData]);
 
       if (error) throw error;
       toast.success(`Created "${resource.name}" in the repository!`);
@@ -312,46 +167,10 @@ const ResourceRepository = ({
     if (!editingRepoResource || !userId) return;
 
     try {
+      const repoData = gameResourceToRepository(resource, userId);
       const { error } = await supabase
         .from('resource_marketplace')
-        .update({
-          name: resource.name,
-          icon: resource.icon,
-          rarity: resource.rarity,
-          description: resource.description,
-          spawn_tiles: resource.spawnTiles,
-          spawn_chance: resource.spawnChance,
-          base_value: resource.coinValue,
-          recipe: resource.recipes?.[0] ? JSON.parse(JSON.stringify(resource.recipes[0])) : null,
-          is_container: resource.isContainer || false,
-          is_floating: resource.isFloating || false,
-          can_float_on_water: resource.canFloatOnWater || false,
-          holds_player: resource.holdsPlayer || false,
-          display: resource.display || false,
-          placeable: resource.placeable || false,
-          passable: resource.passable || false,
-          consumable: resource.consumable || false,
-          health_gain: resource.healthGain || 0,
-          can_inflict_damage: resource.canInflictDamage || false,
-          damage: resource.damage || 0,
-          category: resource.category || null,
-          gather_time: resource.gatherTime || 1000,
-          has_limited_lifetime: resource.hasLimitedLifetime || false,
-          lifetime_hours: resource.lifetimeHours,
-          tile_width: resource.tileWidth ?? 1,
-          tile_height: resource.tileHeight ?? 1,
-          use_life: resource.useLife || false,
-          life_decrease_per_use: resource.lifeDecreasePerUse ?? 100,
-          destructible: resource.destructible || false,
-          max_life: resource.maxLife ?? 100,
-          destroyed_by: resource.destroyedBy || null,
-          produce_tile: resource.produceTile || false,
-          produce_tile_type: resource.produceTileType || null,
-          produces_resource: resource.producesResource || null,
-          produces_amount: resource.producesAmount ?? 1,
-          produces_interval_hours: resource.producesIntervalHours ?? 24,
-          emits_light: resource.emitsLight || false,
-        })
+        .update(repoData)
         .eq('id', editingRepoResource.id);
 
       if (error) throw error;

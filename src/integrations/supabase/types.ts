@@ -208,6 +208,7 @@ export type Database = {
           markets: Json
           name: string
           npc_count: number
+          resource_ids: string[]
           resources: Json
           stranger_density: number
           updated_at: string
@@ -223,6 +224,7 @@ export type Database = {
           markets?: Json
           name: string
           npc_count?: number
+          resource_ids?: string[]
           resources: Json
           stranger_density?: number
           updated_at?: string
@@ -238,6 +240,7 @@ export type Database = {
           markets?: Json
           name?: string
           npc_count?: number
+          resource_ids?: string[]
           resources?: Json
           stranger_density?: number
           updated_at?: string
@@ -249,16 +252,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      create_world_with_owner: {
-        Args: {
-          _map_data: Json
-          _name: string
-          _player_data: Json
-          _resources: Json
-          _user_id: string
-        }
-        Returns: string
-      }
+      create_world_with_owner:
+        | {
+            Args: {
+              _map_data: Json
+              _name: string
+              _player_data: Json
+              _resource_ids: string[]
+              _user_id: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _map_data: Json
+              _name: string
+              _player_data: Json
+              _resources: Json
+              _user_id: string
+            }
+            Returns: string
+          }
       get_user_world_ids: { Args: { _user_id: string }; Returns: string[] }
       get_world_by_join_code: {
         Args: { code: string }
@@ -276,6 +290,57 @@ export type Database = {
           user_id: string
           username: string
         }[]
+      }
+      get_world_resources: {
+        Args: { _world_id: string }
+        Returns: {
+          base_value: number
+          can_float_on_water: boolean
+          can_inflict_damage: boolean
+          category: string | null
+          consumable: boolean
+          created_at: string
+          created_by: string | null
+          damage: number
+          description: string | null
+          destroyed_by: string[] | null
+          destructible: boolean
+          display: boolean
+          download_count: number
+          emits_light: boolean
+          gather_time: number
+          has_limited_lifetime: boolean
+          health_gain: number
+          holds_player: boolean
+          icon: string
+          id: string
+          is_container: boolean
+          is_floating: boolean
+          life_decrease_per_use: number
+          lifetime_hours: number | null
+          max_life: number
+          name: string
+          passable: boolean
+          placeable: boolean
+          produce_tile: boolean
+          produce_tile_type: string | null
+          produces_amount: number
+          produces_interval_hours: number
+          produces_resource: string | null
+          rarity: string
+          recipe: Json | null
+          spawn_chance: number
+          spawn_tiles: string[]
+          tile_height: number
+          tile_width: number
+          use_life: boolean
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "resource_marketplace"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       is_world_member: {
         Args: { _user_id: string; _world_id: string }

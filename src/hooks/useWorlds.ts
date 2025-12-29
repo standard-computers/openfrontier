@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { generateMap, Resource, TileProbabilities } from '@/types/game';
-import type { Json } from '@/integrations/supabase/types';
+import { addResourceToRepository } from '@/utils/resourceConverter';
 
 interface WorldMembership {
   id: string;
@@ -92,9 +92,26 @@ export const useWorlds = (userId: string | undefined) => {
   ) => {
     if (!userId) throw new Error('Not authenticated');
 
-    // Use custom resources if provided, otherwise empty array
-    const resources = customResources;
-    const map = generateMap(width, height, resources, options?.tileProbabilities);
+    // Auto-publish resources to repository and collect their IDs
+    const resourceIds: string[] = [];
+    for (const resource of customResources) {
+      // Check if this resource already exists in repository by ID (it's a UUID from repo)
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(resource.id);
+      
+      if (isUuid) {
+        // Resource already exists in repository, just use its ID
+        resourceIds.push(resource.id);
+      } else {
+        // New resource, add to repository
+        const newId = await addResourceToRepository(resource, userId);
+        if (newId) {
+          resourceIds.push(newId);
+        }
+      }
+    }
+
+    // Generate map with resources (use full resource data for map generation)
+    const map = generateMap(width, height, customResources, options?.tileProbabilities);
 
     const playerData = {
       position: map.spawnPoint,
@@ -108,7 +125,7 @@ export const useWorlds = (userId: string | undefined) => {
       .rpc('create_world_with_owner', {
         _name: name,
         _map_data: JSON.parse(JSON.stringify(map)),
-        _resources: JSON.parse(JSON.stringify(resources)),
+        _resource_ids: resourceIds,
         _user_id: userId,
         _player_data: JSON.parse(JSON.stringify(playerData)),
       });

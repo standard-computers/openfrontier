@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { GameWorld, Resource, Sovereignty, Market, NPC, Area, Position, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap, TILE_TYPES, generateNPCs, generateStrangers, Stranger, canAddResourceToTile, isLargeResource } from '@/types/game';
 import type { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
+import { fetchWorldResources, addResourceToRepository, updateResourceInRepository, deleteResourceFromRepository } from '@/utils/resourceConverter';
 
 // Hook version marker for HMR compatibility
 
@@ -108,7 +109,9 @@ export const useGameWorld = () => {
         };
 
         const mapData = worldData.map_data as unknown as WorldMap;
-        const resources = worldData.resources as unknown as Resource[];
+        // Fetch resources from repository using resource_ids
+        const resourceIds = (worldData as any).resource_ids as string[] || [];
+        const resources = await fetchWorldResources(resourceIds);
 
         setDbWorldId(worldId);
         setIsOwner(membershipData.role === 'owner');
@@ -286,15 +289,18 @@ export const useGameWorld = () => {
       .eq('id', dbWorldId);
   }, [dbWorldId, world.map]);
 
-  // Save world data (name, resources) - only for owners
+  // Save world data (name, resource_ids) - only for owners
   const saveWorldData = useCallback(async () => {
     if (!dbWorldId || !isOwner) return;
+
+    // Get the resource IDs from the current resources
+    const resourceIds = world.resources.map(r => r.id);
 
     await supabase
       .from('worlds')
       .update({
         name: world.name,
-        resources: JSON.parse(JSON.stringify(world.resources)) as Json,
+        resource_ids: resourceIds,
       })
       .eq('id', dbWorldId);
   }, [dbWorldId, isOwner, world.name, world.resources]);
@@ -505,23 +511,36 @@ export const useGameWorld = () => {
     setTimeout(() => saveMapData(newMapData), 500);
   }, [world, saveMapData]);
 
-  const addResource = useCallback((resource: Resource) => {
+  const addResource = useCallback(async (resource: Resource) => {
     if (!isOwner) return;
-    setWorld(prev => ({ ...prev, resources: [...prev.resources, resource] }));
-    setTimeout(saveWorldData, 500);
-  }, [isOwner, saveWorldData]);
+    
+    // Add to repository and get the new ID
+    const newId = await addResourceToRepository(resource, world.userId);
+    if (newId) {
+      const resourceWithId = { ...resource, id: newId };
+      setWorld(prev => ({ ...prev, resources: [...prev.resources, resourceWithId] }));
+      setTimeout(saveWorldData, 500);
+    }
+  }, [isOwner, world.userId, saveWorldData]);
 
-  const updateResource = useCallback((resource: Resource) => {
+  const updateResource = useCallback(async (resource: Resource) => {
     if (!isOwner) return;
+    
+    // Update in repository
+    await updateResourceInRepository(resource.id, resource, world.userId);
+    
     setWorld(prev => ({
       ...prev,
       resources: prev.resources.map(r => r.id === resource.id ? resource : r),
     }));
     setTimeout(saveWorldData, 500);
-  }, [isOwner, saveWorldData]);
+  }, [isOwner, world.userId, saveWorldData]);
 
-  const deleteResource = useCallback((id: string) => {
+  const deleteResource = useCallback(async (id: string) => {
     if (!isOwner) return;
+    
+    // Note: We don't delete from repository since other worlds might use it
+    // We just remove the reference from this world
     setWorld(prev => ({
       ...prev,
       resources: prev.resources.filter(r => r.id !== id),
