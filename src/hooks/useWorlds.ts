@@ -93,7 +93,10 @@ export const useWorlds = (userId: string | undefined) => {
     if (!userId) throw new Error('Not authenticated');
 
     // Auto-publish resources to repository and collect their IDs
+    // Also build a mapping from old IDs to new repository IDs
     const resourceIds: string[] = [];
+    const idMapping: Record<string, string> = {};
+    
     for (const resource of customResources) {
       // Check if this resource already exists in repository by ID (it's a UUID from repo)
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(resource.id);
@@ -101,17 +104,25 @@ export const useWorlds = (userId: string | undefined) => {
       if (isUuid) {
         // Resource already exists in repository, just use its ID
         resourceIds.push(resource.id);
+        idMapping[resource.id] = resource.id;
       } else {
         // New resource, add to repository
         const newId = await addResourceToRepository(resource, userId);
         if (newId) {
           resourceIds.push(newId);
+          idMapping[resource.id] = newId;
         }
       }
     }
 
-    // Generate map with resources (use full resource data for map generation)
-    const map = generateMap(width, height, customResources, options?.tileProbabilities);
+    // Create resources with updated IDs for map generation
+    const resourcesWithNewIds = customResources.map(r => ({
+      ...r,
+      id: idMapping[r.id] || r.id
+    }));
+
+    // Generate map with resources using the new repository IDs
+    const map = generateMap(width, height, resourcesWithNewIds, options?.tileProbabilities);
 
     const playerData = {
       position: map.spawnPoint,
