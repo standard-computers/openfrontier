@@ -160,7 +160,7 @@ const WorldsDashboard = () => {
       for (const repoResource of data || []) {
         if (!existingNames.has(repoResource.name.toLowerCase())) {
           const newResource: Resource = {
-            id: `res-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            id: repoResource.id, // Keep the original repository UUID
             name: repoResource.name,
             icon: repoResource.icon,
             iconType: repoResource.icon?.startsWith('http') ? 'image' : 'emoji',
