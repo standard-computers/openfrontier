@@ -21,7 +21,7 @@ import ClaimedTilesPanel from '@/components/game/ClaimedTilesPanel';
 import MarketplacePanel from '@/components/game/MarketplacePanel';
 import PlayerRankingPanel from '@/components/game/PlayerRankingPanel';
 import StrangerInfoPanel from '@/components/game/StrangerInfoPanel';
-import { Market, Position, calculateTileValue, Sovereignty, Stranger } from '@/types/game';
+import { Market, Position, calculateTileValue, Sovereignty, Stranger, TILE_TYPES } from '@/types/game';
 import { toast } from 'sonner';
 
 const MIN_TILE_SIZE = 12;
@@ -313,6 +313,50 @@ const Index = () => {
       handlePlaceItem();
     }
   }, [getAdjacentMarket, handlePlaceItem]);
+
+  // Handle requesting a stranger to move
+  const handleRequestStrangerMove = useCallback((strangerId: string) => {
+    setWorld(prev => {
+      if (!prev.strangers) return prev;
+      
+      const strangerIndex = prev.strangers.findIndex(s => s.id === strangerId);
+      if (strangerIndex === -1) return prev;
+      
+      const stranger = prev.strangers[strangerIndex];
+      const { x, y } = stranger.position;
+      
+      // Get adjacent walkable tiles
+      const directions = [
+        { dx: 0, dy: -1 }, { dx: 0, dy: 1 },
+        { dx: 1, dy: 0 }, { dx: -1, dy: 0 },
+      ];
+      
+      const adjacentTiles = directions
+        .map(({ dx, dy }) => ({ x: x + dx, y: y + dy }))
+        .filter(pos => {
+          if (pos.x < 0 || pos.x >= prev.map.width || pos.y < 0 || pos.y >= prev.map.height) return false;
+          const tile = prev.map.tiles[pos.y][pos.x];
+          const tileInfo = TILE_TYPES.find(t => t.type === tile.type);
+          return tileInfo?.walkable ?? tile.walkable;
+        });
+      
+      if (adjacentTiles.length === 0) {
+        toast.error("Stranger has nowhere to move!");
+        return prev;
+      }
+      
+      // Pick a random adjacent tile
+      const newPos = adjacentTiles[Math.floor(Math.random() * adjacentTiles.length)];
+      const updatedStranger = { ...stranger, position: newPos };
+      
+      const newStrangers = [...prev.strangers];
+      newStrangers[strangerIndex] = updatedStranger;
+      
+      toast.success(`${stranger.name} moved to (${newPos.x}, ${newPos.y})`);
+      
+      return { ...prev, strangers: newStrangers };
+    });
+  }, [setWorld]);
 
   // Handle using item on facing tile (E key)
   const handleUseItem = useCallback(() => {
@@ -633,6 +677,7 @@ const Index = () => {
         <StrangerInfoPanel
           stranger={selectedStranger}
           onClose={() => setSelectedStranger(null)}
+          onRequestMove={handleRequestStrangerMove}
         />
       )}
     </div>

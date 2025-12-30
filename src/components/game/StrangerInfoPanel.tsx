@@ -1,14 +1,23 @@
-import { X, User, Flag, Heart, Package } from 'lucide-react';
+import { X, User, Flag, Heart, Package, ArrowRightLeft } from 'lucide-react';
 import { Stranger } from '@/types/game';
 import PixelCharacter from './PixelCharacter';
+import { Button } from '@/components/ui/button';
 
 interface StrangerInfoPanelProps {
   stranger: Stranger;
   onClose: () => void;
+  onRequestMove?: (strangerId: string) => void;
 }
 
-const StrangerInfoPanel = ({ stranger, onClose }: StrangerInfoPanelProps) => {
+const StrangerInfoPanel = ({ stranger, onClose, onRequestMove }: StrangerInfoPanelProps) => {
   const totalItems = stranger.inventory.reduce((sum, slot) => sum + (slot.quantity || 0), 0);
+
+  const handleRequestMove = () => {
+    if (onRequestMove) {
+      onRequestMove(stranger.id);
+      onClose();
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
@@ -81,6 +90,18 @@ const StrangerInfoPanel = ({ stranger, onClose }: StrangerInfoPanelProps) => {
           <div className="text-sm text-muted-foreground text-center">
             Position: ({stranger.position.x}, {stranger.position.y})
           </div>
+
+          {/* Actions */}
+          {onRequestMove && (
+            <Button 
+              onClick={handleRequestMove}
+              variant="outline" 
+              className="w-full"
+            >
+              <ArrowRightLeft className="w-4 h-4 mr-2" />
+              Ask to Move
+            </Button>
+          )}
         </div>
       </div>
     </div>
