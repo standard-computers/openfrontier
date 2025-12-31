@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
+import { useEffect, useRef, useMemo, useState, useCallback, memo } from 'react';
 import { WorldMap, Position, Resource, TileType, TILE_TYPES, Market, NPC, Area, Stranger } from '@/types/game';
 import { cn } from '@/lib/utils';
 import ResourceIcon from './ResourceIcon';
@@ -10,7 +10,7 @@ type FacingDirection = 'north' | 'south' | 'east' | 'west';
 interface GameMapProps {
   map: WorldMap;
   playerPosition: Position;
-  cameraPosition: Position | null; // null = follow player
+  cameraPosition: Position | null;
   resources: Resource[];
   selectedTile: Position | null;
   selectedTiles: Position[];
@@ -25,13 +25,302 @@ interface GameMapProps {
   areas?: Area[];
   facingDirection: FacingDirection;
   isMoving: boolean;
-  worldCreatedAt?: string; // For calculating game time
+  worldCreatedAt?: string;
   onMove: (dx: number, dy: number) => void;
   onTileSelect: (x: number, y: number) => void;
   onMultiTileSelect: (tiles: Position[]) => void;
   onZoom: (delta: number) => void;
   onStrangerClick?: (stranger: Stranger) => void;
 }
+
+// Memoized tile component to prevent unnecessary re-renders
+const TileOverlay = memo(({
+  x,
+  y,
+  screenX,
+  screenY,
+  tileSize,
+  isPlayerHere,
+  isSelected,
+  isMultiSelected,
+  isInDragSelection,
+  isWalkable,
+  isClaimed,
+  isOwnClaim,
+  claimColor,
+  borderStyles,
+  marketOnTile,
+  tileArea,
+  displayableResource,
+  resourceWidth,
+  resourceHeight,
+  playerBehindResource,
+  isDamaged,
+  lifePercent,
+  hasLightEmitter,
+  isNighttime,
+  npcOnTile,
+  strangerOnTile,
+  hoveredStrangerId,
+  facingDirection,
+  isMoving,
+  userColor,
+  onMouseDown,
+  onMouseEnter,
+  onClick,
+  onStrangerHover,
+  onStrangerLeave,
+  onStrangerClick,
+}: {
+  x: number;
+  y: number;
+  screenX: number;
+  screenY: number;
+  tileSize: number;
+  isPlayerHere: boolean;
+  isSelected: boolean;
+  isMultiSelected: boolean;
+  isInDragSelection: boolean;
+  isWalkable: boolean;
+  isClaimed: boolean;
+  isOwnClaim: boolean;
+  claimColor: string;
+  borderStyles: React.CSSProperties;
+  marketOnTile: Market | null;
+  tileArea: Area | undefined;
+  displayableResource: Resource | undefined;
+  resourceWidth: number;
+  resourceHeight: number;
+  playerBehindResource: boolean;
+  isDamaged: boolean;
+  lifePercent: number;
+  hasLightEmitter: boolean;
+  isNighttime: boolean;
+  npcOnTile: NPC | undefined;
+  strangerOnTile: Stranger | undefined;
+  hoveredStrangerId: string | null;
+  facingDirection: FacingDirection;
+  isMoving: boolean;
+  userColor: string;
+  onMouseDown: () => void;
+  onMouseEnter: () => void;
+  onClick: () => void;
+  onStrangerHover: (stranger: Stranger) => void;
+  onStrangerLeave: () => void;
+  onStrangerClick: (stranger: Stranger) => void;
+}) => {
+  let selectionStyle: React.CSSProperties = {};
+  if (isSelected) {
+    selectionStyle.boxShadow = 'inset 0 0 0 3px #fff';
+  } else if (isMultiSelected) {
+    selectionStyle.boxShadow = 'inset 0 0 0 2px #3b82f6';
+  } else if (isInDragSelection && isWalkable) {
+    selectionStyle.boxShadow = 'inset 0 0 0 2px rgba(59, 130, 246, 0.6)';
+  }
+
+  const isMultiTileResource = resourceWidth > 1 || resourceHeight > 1;
+
+  return (
+    <div
+      className={cn(
+        'cursor-pointer relative box-border select-none',
+        marketOnTile && 'bg-amber-800/80',
+        (isInDragSelection || isMultiSelected) && isWalkable && 'bg-blue-500/20'
+      )}
+      style={{
+        gridColumn: screenX + 1,
+        gridRow: screenY + 1,
+        width: tileSize,
+        height: tileSize,
+        fontSize: Math.max(10, tileSize * 0.5),
+        ...borderStyles,
+        ...selectionStyle,
+      }}
+      onMouseDown={onMouseDown}
+      onMouseEnter={onMouseEnter}
+      onClick={onClick}
+    >
+      {/* Area color overlay */}
+      {tileArea && (
+        <div 
+          className="absolute inset-0 pointer-events-none z-5"
+          style={{ 
+            backgroundColor: tileArea.color,
+            opacity: 0.25,
+          }}
+        />
+      )}
+      {/* Show market icon */}
+      {marketOnTile && (
+        <span 
+          className="absolute inset-0 flex items-center justify-center drop-shadow-lg z-20"
+          style={{ fontSize: Math.max(16, tileSize * 0.8) }}
+        >
+          🏪
+        </span>
+      )}
+      {/* Show displayable resources */}
+      {displayableResource && (
+        <div 
+          className="absolute flex flex-col items-center drop-shadow-md pointer-events-none"
+          style={{ 
+            bottom: 0,
+            left: 0,
+            width: isMultiTileResource ? tileSize * resourceWidth : tileSize,
+            height: isMultiTileResource ? tileSize * resourceHeight : tileSize,
+            opacity: playerBehindResource ? 0.7 : 1,
+            zIndex: 5,
+          }}
+        >
+          {/* Light glow effect */}
+          {hasLightEmitter && isNighttime && (
+            <div 
+              className="absolute rounded-full pointer-events-none"
+              style={{
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: tileSize * 5,
+                height: tileSize * 5,
+                background: 'radial-gradient(circle, rgba(255, 220, 100, 0.45) 0%, rgba(255, 180, 50, 0.2) 35%, rgba(255, 150, 30, 0.08) 60%, transparent 80%)',
+                zIndex: -1,
+              }}
+            />
+          )}
+          {/* Health bar */}
+          {isDamaged && (
+            <div 
+              className="absolute bg-muted/60 rounded-full overflow-hidden"
+              style={{
+                top: -4,
+                left: '10%',
+                right: '10%',
+                height: Math.max(3, tileSize * 0.08),
+              }}
+            >
+              <div 
+                className={`h-full transition-all duration-200 ${
+                  lifePercent > 50 ? 'bg-emerald-400' : 
+                  lifePercent > 25 ? 'bg-amber-400' : 'bg-red-400'
+                }`}
+                style={{ width: `${lifePercent}%` }}
+              />
+            </div>
+          )}
+          <div className="flex items-end justify-start w-full h-full">
+            <ResourceIcon 
+              icon={displayableResource.icon} 
+              iconType={displayableResource.icon.startsWith('http') ? 'image' : 'emoji'}
+              size={isMultiTileResource ? 'custom' : 'md'}
+              className="drop-shadow-md w-full h-full object-contain"
+              style={isMultiTileResource ? {
+                fontSize: Math.max(16, tileSize * Math.min(resourceWidth, resourceHeight) * 0.8),
+                width: '100%',
+                height: '100%',
+              } : undefined}
+            />
+          </div>
+        </div>
+      )}
+      {/* Player character */}
+      {isPlayerHere && (
+        <div 
+          className="absolute z-20 flex items-end justify-center pointer-events-none"
+          style={{
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: tileSize * 2,
+          }}
+        >
+          <PixelCharacter 
+            direction={facingDirection} 
+            isMoving={isMoving} 
+            size={tileSize} 
+            userColor={userColor}
+          />
+        </div>
+      )}
+      {/* NPC character */}
+      {npcOnTile && !isPlayerHere && (
+        <div 
+          className="absolute z-15 flex items-end justify-center pointer-events-none"
+          style={{
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: tileSize * 2,
+          }}
+        >
+          <PixelCharacter 
+            direction="south" 
+            isMoving={false} 
+            size={tileSize} 
+            userColor={npcOnTile.color}
+          />
+        </div>
+      )}
+      {/* Stranger on tile */}
+      {strangerOnTile && !isPlayerHere && !npcOnTile && (
+        <div 
+          className="absolute z-14 flex items-end justify-center cursor-pointer group"
+          style={{
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: tileSize * 2,
+          }}
+          onMouseEnter={() => onStrangerHover(strangerOnTile)}
+          onMouseLeave={onStrangerLeave}
+          onClick={(e) => {
+            e.stopPropagation();
+            onStrangerClick(strangerOnTile);
+          }}
+        >
+          <div className="opacity-80 group-hover:opacity-100 transition-opacity">
+            <PixelCharacter 
+              direction="south" 
+              isMoving={false} 
+              size={tileSize} 
+              userColor={strangerOnTile.color}
+            />
+          </div>
+          {hoveredStrangerId === strangerOnTile.id && (
+            <div 
+              className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-card/95 border border-border rounded shadow-lg text-xs whitespace-nowrap z-50 pointer-events-none"
+              style={{ minWidth: '120px' }}
+            >
+              <div className="font-medium text-foreground text-center">{strangerOnTile.name}</div>
+              <div className="text-muted-foreground text-center mt-0.5">
+                {strangerOnTile.allegiance ? (
+                  <span className="flex items-center justify-center gap-1">
+                    <span>{strangerOnTile.allegiance.sovereigntyFlag}</span>
+                    <span>{strangerOnTile.allegiance.sovereigntyName}</span>
+                  </span>
+                ) : (
+                  <span className="italic">No Allegiance</span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      {/* Claim indicator */}
+      {isClaimed && !isPlayerHere && !npcOnTile && (
+        <div 
+          className="absolute top-0.5 right-0.5 rounded-full"
+          style={{ 
+            backgroundColor: claimColor,
+            width: Math.max(4, tileSize * 0.15),
+            height: Math.max(4, tileSize * 0.15),
+          }}
+        />
+      )}
+    </div>
+  );
+});
+
+TileOverlay.displayName = 'TileOverlay';
 
 const GameMap = ({
   map,
@@ -63,16 +352,18 @@ const GameMap = ({
   const [dragStart, setDragStart] = useState<Position | null>(null);
   const [dragEnd, setDragEnd] = useState<Position | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  // Calculate game hour based on world creation time (1 real hour = 1 game day)
+  const [hoveredStranger, setHoveredStranger] = useState<Stranger | null>(null);
+  
+  // Calculate game hour based on world creation time
   const [gameHour, setGameHour] = useState(() => {
-    if (!worldCreatedAt) return 12; // Default to noon if no creation time
+    if (!worldCreatedAt) return 12;
     const createdAt = new Date(worldCreatedAt).getTime();
     const elapsedMs = Date.now() - createdAt;
     const totalGameHours = (elapsedMs / 3600000) * 24;
     return Math.floor(totalGameHours % 24);
   });
 
-  // Update game time every 2.5 seconds (= 1 game minute, since 1 real hour = 24 game hours)
+  // Update game time every 2.5 seconds
   useEffect(() => {
     if (!worldCreatedAt) return;
     
@@ -80,52 +371,78 @@ const GameMap = ({
       const createdAt = new Date(worldCreatedAt).getTime();
       const elapsedMs = Date.now() - createdAt;
       const totalGameHours = (elapsedMs / 3600000) * 24;
-      const hour = Math.floor(totalGameHours % 24);
-      setGameHour(hour);
+      setGameHour(Math.floor(totalGameHours % 24));
     };
     
     updateGameTime();
-    // Update every 2.5 seconds for smooth transitions (1 game hour = 150 real seconds)
     const interval = setInterval(updateGameTime, 2500);
     return () => clearInterval(interval);
   }, [worldCreatedAt]);
 
-  // Calculate time-of-day lighting overlay
+  // Time of day overlay
   const timeOfDayOverlay = useMemo(() => {
-    // 0-5: Night (dark)
-    // 5-7: Dawn (transitioning to light)
-    // 7-19: Day (bright)
-    // 19-22: Dusk (transitioning to dark)
-    // 22-24: Night (dark)
-    
     if (gameHour >= 0 && gameHour < 5) {
-      // Night - dark blue overlay
       return { color: 'rgba(10, 20, 50, 0.6)', blend: 'multiply' };
     } else if (gameHour >= 5 && gameHour < 7) {
-      // Dawn - warm orange/pink gradient
       const progress = (gameHour - 5) / 2;
-      const opacity = 0.5 - progress * 0.4;
-      return { color: `rgba(255, 150, 100, ${opacity})`, blend: 'overlay' };
+      return { color: `rgba(255, 150, 100, ${0.5 - progress * 0.4})`, blend: 'overlay' };
     } else if (gameHour >= 7 && gameHour < 19) {
-      // Daytime - no overlay or very subtle warm tint
       return { color: 'rgba(255, 255, 200, 0.05)', blend: 'overlay' };
     } else if (gameHour >= 19 && gameHour < 22) {
-      // Dusk - orange/purple transition
       const progress = (gameHour - 19) / 3;
-      const opacity = 0.1 + progress * 0.4;
-      return { color: `rgba(50, 30, 80, ${opacity})`, blend: 'multiply' };
+      return { color: `rgba(50, 30, 80, ${0.1 + progress * 0.4})`, blend: 'multiply' };
     } else {
-      // Late night (22-24) - dark blue overlay
       return { color: 'rgba(10, 20, 50, 0.55)', blend: 'multiply' };
     }
   }, [gameHour]);
 
-  // Check if it's nighttime (when light-emitting resources should glow)
-  const isNighttime = useMemo(() => {
-    return gameHour >= 0 && gameHour < 7 || gameHour >= 19;
-  }, [gameHour]);
+  const isNighttime = useMemo(() => gameHour >= 0 && gameHour < 7 || gameHour >= 19, [gameHour]);
 
-  const [hoveredStranger, setHoveredStranger] = useState<Stranger | null>(null);
+  // Create resource lookup map for O(1) access
+  const resourceMap = useMemo(() => {
+    const map = new Map<string, Resource>();
+    for (const r of resources) {
+      map.set(r.id, r);
+    }
+    return map;
+  }, [resources]);
+
+  // Create NPC position lookup map
+  const npcPositionMap = useMemo(() => {
+    const map = new Map<string, NPC>();
+    for (const npc of npcs) {
+      map.set(`${npc.position.x}-${npc.position.y}`, npc);
+    }
+    return map;
+  }, [npcs]);
+
+  // Create stranger position lookup map
+  const strangerPositionMap = useMemo(() => {
+    const map = new Map<string, Stranger>();
+    for (const s of strangers) {
+      map.set(`${s.position.x}-${s.position.y}`, s);
+    }
+    return map;
+  }, [strangers]);
+
+  // Create market position lookup map
+  const marketPositionMap = useMemo(() => {
+    if (!enableMarkets) return new Map<string, Market>();
+    const map = new Map<string, Market>();
+    for (const m of markets) {
+      map.set(`${m.position.x}-${m.position.y}`, m);
+    }
+    return map;
+  }, [markets, enableMarkets]);
+
+  // Create selected tiles set for O(1) lookup
+  const selectedTilesSet = useMemo(() => {
+    const set = new Set<string>();
+    for (const t of selectedTiles) {
+      set.add(`${t.x}-${t.y}`);
+    }
+    return set;
+  }, [selectedTiles]);
 
   const updateViewport = useCallback(() => {
     if (containerRef.current) {
@@ -150,7 +467,6 @@ const GameMap = ({
     }
   }, [onZoom]);
 
-  // Calculate tiles in drag selection
   const getDragSelectedTiles = useCallback((): Position[] => {
     if (!dragStart || !dragEnd) return [];
     const minX = Math.min(dragStart.x, dragEnd.x);
@@ -203,7 +519,6 @@ const GameMap = ({
     return () => window.removeEventListener('mouseup', handleMouseUp);
   }, [handleMouseUp]);
 
-  // Calculate if a tile is in the current drag selection
   const isTileInDragSelection = useCallback((x: number, y: number): boolean => {
     if (!dragStart || !dragEnd || !isDragging) return false;
     const minX = Math.min(dragStart.x, dragEnd.x);
@@ -213,17 +528,10 @@ const GameMap = ({
     return x >= minX && x <= maxX && y >= minY && y <= maxY;
   }, [dragStart, dragEnd, isDragging]);
 
-  // Check if tile is in selectedTiles array
-  const isTileMultiSelected = useCallback((x: number, y: number): boolean => {
-    return selectedTiles.some(t => t.x === x && t.y === y);
-  }, [selectedTiles]);
-
-  // Get area for a tile position
   const getAreaForTile = useCallback((x: number, y: number): Area | undefined => {
     return areas.find(area => area.tiles.some(t => t.x === x && t.y === y));
   }, [areas]);
 
-  // Use camera position if set, otherwise follow player
   const centerPosition = cameraPosition || playerPosition;
   
   const viewportOffset = useMemo(() => {
@@ -240,7 +548,6 @@ const GameMap = ({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if typing in an input or textarea
       const target = e.target as HTMLElement;
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
         return;
@@ -273,20 +580,161 @@ const GameMap = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onMove]);
 
-  const visibleTiles = useMemo(() => {
-    const tiles: { x: number; y: number; tile: typeof map.tiles[0][0] }[] = [];
+  // Compute visible tiles data with all derived properties
+  const visibleTilesData = useMemo(() => {
     const endX = Math.min(viewportOffset.x + viewportSize.tilesX, map.width);
     const endY = Math.min(viewportOffset.y + viewportSize.tilesY, map.height);
     
+    const result: Array<{
+      x: number;
+      y: number;
+      screenX: number;
+      screenY: number;
+      tile: typeof map.tiles[0][0];
+      isPlayerHere: boolean;
+      isSelected: boolean;
+      isWalkable: boolean;
+      isClaimed: boolean;
+      isOwnClaim: boolean;
+      claimColor: string;
+      borderStyles: React.CSSProperties;
+      marketOnTile: Market | null;
+      tileArea: Area | undefined;
+      displayableResource: Resource | undefined;
+      resourceWidth: number;
+      resourceHeight: number;
+      playerBehindResource: boolean;
+      isDamaged: boolean;
+      lifePercent: number;
+      hasLightEmitter: boolean;
+      npcOnTile: NPC | undefined;
+      strangerOnTile: Stranger | undefined;
+    }> = [];
+    
     for (let y = viewportOffset.y; y < endY; y++) {
       for (let x = viewportOffset.x; x < endX; x++) {
-        if (map.tiles[y] && map.tiles[y][x]) {
-          tiles.push({ x, y, tile: map.tiles[y][x] });
+        const tile = map.tiles[y]?.[x];
+        if (!tile) continue;
+        
+        const screenX = x - viewportOffset.x;
+        const screenY = y - viewportOffset.y;
+        const posKey = `${x}-${y}`;
+        
+        const isPlayerHere = x === playerPosition.x && y === playerPosition.y;
+        const isSelected = selectedTile?.x === x && selectedTile?.y === y;
+        const tileTypeInfo = TILE_TYPES.find(t => t.type === tile.type);
+        const isWalkable = tileTypeInfo?.walkable ?? tile.walkable;
+        const isClaimed = !!tile.claimedBy;
+        const isOwnClaim = tile.claimedBy === userId;
+        
+        // Get NPC claim owner
+        const npcClaimOwner = tile.claimedBy?.startsWith('npc-') 
+          ? npcs.find(npc => npc.id === tile.claimedBy)
+          : null;
+        
+        const claimColor = isOwnClaim 
+          ? userColor 
+          : npcClaimOwner 
+            ? npcClaimOwner.color 
+            : '#888';
+        
+        // Calculate border styles
+        let borderStyles: React.CSSProperties = {};
+        if (isClaimed && !isSelected && !selectedTilesSet.has(posKey)) {
+          const borderWidth = 2;
+          const topTile = map.tiles[y - 1]?.[x];
+          const bottomTile = map.tiles[y + 1]?.[x];
+          const leftTile = map.tiles[y]?.[x - 1];
+          const rightTile = map.tiles[y]?.[x + 1];
+          
+          borderStyles = {
+            borderTop: topTile?.claimedBy !== tile.claimedBy ? `${borderWidth}px solid ${claimColor}` : 'none',
+            borderBottom: bottomTile?.claimedBy !== tile.claimedBy ? `${borderWidth}px solid ${claimColor}` : 'none',
+            borderLeft: leftTile?.claimedBy !== tile.claimedBy ? `${borderWidth}px solid ${claimColor}` : 'none',
+            borderRight: rightTile?.claimedBy !== tile.claimedBy ? `${borderWidth}px solid ${claimColor}` : 'none',
+          };
         }
+        
+        const marketOnTile = marketPositionMap.get(posKey) || null;
+        const tileArea = getAreaForTile(x, y);
+        const npcOnTile = npcPositionMap.get(posKey);
+        const strangerOnTile = strangerPositionMap.get(posKey);
+        
+        // Get displayable resources
+        const displayableResources = tile.resources
+          .map(resId => resourceMap.get(resId))
+          .filter((r): r is Resource => !!(r?.isFloating || r?.display))
+          .sort((a, b) => {
+            const aSize = (a.tileWidth ?? 1) * (a.tileHeight ?? 1);
+            const bSize = (b.tileWidth ?? 1) * (b.tileHeight ?? 1);
+            return bSize - aSize;
+          });
+        
+        const displayableResource = displayableResources[0];
+        const resourceWidth = displayableResource?.tileWidth ?? 1;
+        const resourceHeight = displayableResource?.tileHeight ?? 1;
+        
+        const playerBehindResource = !!(displayableResource && (
+          playerPosition.x >= x && 
+          playerPosition.x < x + resourceWidth &&
+          playerPosition.y <= y && 
+          playerPosition.y > y - resourceHeight
+        ));
+        
+        const resourceLife = displayableResource ? tile.resourceLife?.[displayableResource.id] : undefined;
+        const maxLife = displayableResource?.maxLife ?? 100;
+        const isDamaged = !!(displayableResource?.destructible && resourceLife !== undefined && resourceLife < maxLife);
+        const lifePercent = isDamaged ? (resourceLife! / maxLife) * 100 : 100;
+        
+        const hasLightEmitter = isNighttime && displayableResources.some(r => r.emitsLight);
+        
+        result.push({
+          x,
+          y,
+          screenX,
+          screenY,
+          tile,
+          isPlayerHere,
+          isSelected,
+          isWalkable,
+          isClaimed,
+          isOwnClaim,
+          claimColor,
+          borderStyles,
+          marketOnTile,
+          tileArea,
+          displayableResource,
+          resourceWidth,
+          resourceHeight,
+          playerBehindResource,
+          isDamaged,
+          lifePercent,
+          hasLightEmitter,
+          npcOnTile,
+          strangerOnTile,
+        });
       }
     }
-    return tiles;
-  }, [map, viewportOffset, viewportSize]);
+    return result;
+  }, [
+    map.tiles, map.width, map.height,
+    viewportOffset, viewportSize,
+    playerPosition, selectedTile, userId, userColor,
+    resourceMap, npcPositionMap, strangerPositionMap, marketPositionMap, selectedTilesSet,
+    npcs, isNighttime, getAreaForTile
+  ]);
+
+  const handleStrangerHover = useCallback((stranger: Stranger) => {
+    setHoveredStranger(stranger);
+  }, []);
+
+  const handleStrangerLeave = useCallback(() => {
+    setHoveredStranger(null);
+  }, []);
+
+  const handleStrangerClickInternal = useCallback((stranger: Stranger) => {
+    onStrangerClick?.(stranger);
+  }, [onStrangerClick]);
 
   return (
     <div
@@ -295,14 +743,12 @@ const GameMap = ({
       tabIndex={0}
       onWheel={handleWheel}
     >
-      {/* Canvas-based tile renderer for modern pixel art look */}
       <CanvasTileRenderer
         map={map}
         viewportOffset={viewportOffset}
         viewportSize={viewportSize}
         tileSize={tileSize}
       />
-      {/* Interactive overlay grid */}
       <div
         className="absolute inset-0 grid"
         style={{
@@ -310,330 +756,60 @@ const GameMap = ({
           gridTemplateRows: `repeat(${viewportSize.tilesY}, ${tileSize}px)`,
         }}
       >
-        {visibleTiles.map(({ x, y, tile }) => {
-          const isPlayerHere = x === playerPosition.x && y === playerPosition.y;
-          const isSelected = selectedTile?.x === x && selectedTile?.y === y;
-          const isInDragSelection = isTileInDragSelection(x, y);
-          const isMultiSelected = isTileMultiSelected(x, y);
-          const isClaimed = !!tile.claimedBy;
-          const isOwnClaim = tile.claimedBy === userId;
-          const screenX = x - viewportOffset.x;
-          const screenY = y - viewportOffset.y;
-          // Check walkability from TILE_TYPES (source of truth) instead of stored tile data
-          const tileTypeInfo = TILE_TYPES.find(t => t.type === tile.type);
-          const isWalkable = tileTypeInfo?.walkable ?? tile.walkable;
-
-          // Check if an NPC is on this tile
-          const npcOnTile = npcs.find(npc => npc.position.x === x && npc.position.y === y);
+        {visibleTilesData.map((data) => {
+          const posKey = `${data.x}-${data.y}`;
+          const isMultiSelected = selectedTilesSet.has(posKey);
+          const isInDragSelection = isTileInDragSelection(data.x, data.y);
           
-          // Check if a stranger is on this tile
-          const strangerOnTile = strangers.find(s => s.position.x === x && s.position.y === y);
-
-          // Get displayable resources on this tile (floating OR display enabled)
-          const displayableResources = tile.resources
-            .map(resId => resources.find(r => r.id === resId))
-            .filter(r => r?.isFloating || r?.display)
-            // Sort so larger resources (by tile size) take visual precedence
-            .sort((a, b) => {
-              const aSize = (a?.tileWidth ?? 1) * (a?.tileHeight ?? 1);
-              const bSize = (b?.tileWidth ?? 1) * (b?.tileHeight ?? 1);
-              return bSize - aSize; // Larger first
-            });
-
-          // Get the first displayable resource for multi-tile rendering (largest takes precedence)
-          const primaryDisplayResource = displayableResources[0];
-          const resourceWidth = primaryDisplayResource?.tileWidth ?? 1;
-          const resourceHeight = primaryDisplayResource?.tileHeight ?? 1;
-          const isMultiTileResource = resourceWidth > 1 || resourceHeight > 1;
-
-          // Check if player is behind this resource (resource covers tiles the player is on or behind)
-          // Resource spans from (x, y) to (x + width - 1, y - height + 1) visually (upward)
-          // Player is "behind" if the resource is in front of them (higher Y or same Y but resource covers player)
-          const playerBehindResource = primaryDisplayResource && (
-            playerPosition.x >= x && 
-            playerPosition.x < x + resourceWidth &&
-            playerPosition.y <= y && 
-            playerPosition.y > y - resourceHeight
-          );
-
-          // Check if this tile is a market (1x1 building)
-          const marketOnTile = enableMarkets ? markets.find(m => 
-            x === m.position.x && y === m.position.y
-          ) : null;
-
-          // Check if this tile is claimed by an NPC
-          const npcClaimOwner = tile.claimedBy?.startsWith('npc-') 
-            ? npcs.find(npc => npc.id === tile.claimedBy)
-            : null;
-
-          // Check if tile belongs to an area
-          const tileArea = getAreaForTile(x, y);
-
-          // Calculate which borders to show for claimed tiles
-          // Only show border on edges that don't have an adjacent tile claimed by the same owner
-          let borderStyles: React.CSSProperties = {};
-          if (isClaimed && !isSelected && !isMultiSelected) {
-            const claimColor = isOwnClaim 
-              ? userColor 
-              : npcClaimOwner 
-                ? npcClaimOwner.color 
-                : '#888';
-            const borderWidth = 2;
-            
-            // Check adjacent tiles
-            const topTile = map.tiles[y - 1]?.[x];
-            const bottomTile = map.tiles[y + 1]?.[x];
-            const leftTile = map.tiles[y]?.[x - 1];
-            const rightTile = map.tiles[y]?.[x + 1];
-            
-            const showTop = topTile?.claimedBy !== tile.claimedBy;
-            const showBottom = bottomTile?.claimedBy !== tile.claimedBy;
-            const showLeft = leftTile?.claimedBy !== tile.claimedBy;
-            const showRight = rightTile?.claimedBy !== tile.claimedBy;
-            
-            borderStyles = {
-              borderTop: showTop ? `${borderWidth}px solid ${claimColor}` : 'none',
-              borderBottom: showBottom ? `${borderWidth}px solid ${claimColor}` : 'none',
-              borderLeft: showLeft ? `${borderWidth}px solid ${claimColor}` : 'none',
-              borderRight: showRight ? `${borderWidth}px solid ${claimColor}` : 'none',
-            };
-          }
-
-          // Determine selection visual
-          let selectionStyle: React.CSSProperties = {};
-          if (isSelected) {
-            selectionStyle.boxShadow = 'inset 0 0 0 3px #fff';
-          } else if (isMultiSelected) {
-            selectionStyle.boxShadow = 'inset 0 0 0 2px #3b82f6';
-          } else if (isInDragSelection && isWalkable) {
-            selectionStyle.boxShadow = 'inset 0 0 0 2px rgba(59, 130, 246, 0.6)';
-          }
-
           return (
-            <div
-              key={`${x}-${y}`}
-              className={cn(
-                'cursor-pointer relative box-border select-none',
-                marketOnTile && 'bg-amber-800/80',
-                (isInDragSelection || isMultiSelected) && isWalkable && 'bg-blue-500/20'
-              )}
-              style={{
-                gridColumn: screenX + 1,
-                gridRow: screenY + 1,
-                width: tileSize,
-                height: tileSize,
-                fontSize: Math.max(10, tileSize * 0.5),
-                ...borderStyles,
-                ...selectionStyle,
-              }}
-              onMouseDown={() => handleTileMouseDown(x, y)}
-              onMouseEnter={() => handleTileMouseEnter(x, y)}
+            <TileOverlay
+              key={posKey}
+              x={data.x}
+              y={data.y}
+              screenX={data.screenX}
+              screenY={data.screenY}
+              tileSize={tileSize}
+              isPlayerHere={data.isPlayerHere}
+              isSelected={data.isSelected}
+              isMultiSelected={isMultiSelected}
+              isInDragSelection={isInDragSelection}
+              isWalkable={data.isWalkable}
+              isClaimed={data.isClaimed}
+              isOwnClaim={data.isOwnClaim}
+              claimColor={data.claimColor}
+              borderStyles={data.borderStyles}
+              marketOnTile={data.marketOnTile}
+              tileArea={data.tileArea}
+              displayableResource={data.displayableResource}
+              resourceWidth={data.resourceWidth}
+              resourceHeight={data.resourceHeight}
+              playerBehindResource={data.playerBehindResource}
+              isDamaged={data.isDamaged}
+              lifePercent={data.lifePercent}
+              hasLightEmitter={data.hasLightEmitter}
+              isNighttime={isNighttime}
+              npcOnTile={data.npcOnTile}
+              strangerOnTile={data.strangerOnTile}
+              hoveredStrangerId={hoveredStranger?.id || null}
+              facingDirection={facingDirection}
+              isMoving={isMoving}
+              userColor={userColor}
+              onMouseDown={() => handleTileMouseDown(data.x, data.y)}
+              onMouseEnter={() => handleTileMouseEnter(data.x, data.y)}
               onClick={() => {
-                if (!multiSelectMode && isWalkable && !marketOnTile) {
-                  onTileSelect(x, y);
+                if (!multiSelectMode && data.isWalkable && !data.marketOnTile) {
+                  onTileSelect(data.x, data.y);
                 }
               }}
-            >
-              {/* Area color overlay */}
-              {tileArea && (
-                <div 
-                  className="absolute inset-0 pointer-events-none z-5"
-                  style={{ 
-                    backgroundColor: tileArea.color,
-                    opacity: 0.25,
-                  }}
-                />
-              )}
-              {/* Show market icon */}
-              {marketOnTile && (
-                <span 
-                  className="absolute inset-0 flex items-center justify-center drop-shadow-lg z-20"
-                  style={{ fontSize: Math.max(16, tileSize * 0.8) }}
-                >
-                  🏪
-                </span>
-              )}
-              {/* Show displayable resources - extends upward and to the right for multi-tile */}
-              {displayableResources.length > 0 && primaryDisplayResource && (() => {
-                // Get resource life for health bar display
-                const resourceLife = tile.resourceLife?.[primaryDisplayResource.id];
-                const maxLife = primaryDisplayResource.maxLife ?? 100;
-                const isDamaged = primaryDisplayResource.destructible && resourceLife !== undefined && resourceLife < maxLife;
-                const lifePercent = isDamaged ? (resourceLife / maxLife) * 100 : 100;
-                
-                // Check if any resource on this tile emits light
-                const hasLightEmitter = isNighttime && displayableResources.some(r => r?.emitsLight);
-                
-                return (
-                  <div 
-                    className="absolute flex flex-col items-center drop-shadow-md pointer-events-none"
-                    style={{ 
-                      // Position at bottom-left of this tile, extend upward and right
-                      bottom: 0,
-                      left: 0,
-                      width: isMultiTileResource ? tileSize * resourceWidth : tileSize,
-                      height: isMultiTileResource ? tileSize * resourceHeight : tileSize,
-                      opacity: playerBehindResource ? 0.7 : 1,
-                      zIndex: 5,
-                    }}
-                  >
-                    {/* Light glow effect for light-emitting resources at night */}
-                    {hasLightEmitter && (
-                      <div 
-                        className="absolute rounded-full pointer-events-none"
-                        style={{
-                          top: '50%',
-                          left: '50%',
-                          transform: 'translate(-50%, -50%)',
-                          width: tileSize * 5,
-                          height: tileSize * 5,
-                          background: 'radial-gradient(circle, rgba(255, 220, 100, 0.45) 0%, rgba(255, 180, 50, 0.2) 35%, rgba(255, 150, 30, 0.08) 60%, transparent 80%)',
-                          zIndex: -1,
-                        }}
-                      />
-                    )}
-                    {/* Health bar for damaged destructible resources */}
-                    {isDamaged && (
-                      <div 
-                        className="absolute bg-muted/60 rounded-full overflow-hidden"
-                        style={{
-                          top: -4,
-                          left: '10%',
-                          right: '10%',
-                          height: Math.max(3, tileSize * 0.08),
-                        }}
-                      >
-                        <div 
-                          className={`h-full transition-all duration-200 ${
-                            lifePercent > 50 ? 'bg-emerald-400' : 
-                            lifePercent > 25 ? 'bg-amber-400' : 'bg-red-400'
-                          }`}
-                          style={{ width: `${lifePercent}%` }}
-                        />
-                      </div>
-                    )}
-                    <div className="flex items-end justify-start w-full h-full">
-                      <ResourceIcon 
-                        icon={primaryDisplayResource.icon} 
-                        iconType={primaryDisplayResource.icon.startsWith('http') ? 'image' : 'emoji'}
-                        size={isMultiTileResource ? 'custom' : 'md'}
-                        className="drop-shadow-md w-full h-full object-contain"
-                        style={isMultiTileResource ? {
-                          fontSize: Math.max(16, tileSize * Math.min(resourceWidth, resourceHeight) * 0.8),
-                          width: '100%',
-                          height: '100%',
-                        } : undefined}
-                      />
-                    </div>
-                  </div>
-                );
-              })()}
-              {/* Show player character */}
-              {isPlayerHere && (
-                <div 
-                  className="absolute z-20 flex items-end justify-center pointer-events-none"
-                  style={{
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    height: tileSize * 2, // Character spans 2 tiles tall
-                  }}
-                >
-                  <PixelCharacter 
-                    direction={facingDirection} 
-                    isMoving={isMoving} 
-                    size={tileSize} 
-                    userColor={userColor}
-                  />
-                </div>
-              )}
-              {/* Show NPC character */}
-              {npcOnTile && !isPlayerHere && (
-                <div 
-                  className="absolute z-15 flex items-end justify-center pointer-events-none"
-                  style={{
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    height: tileSize * 2,
-                  }}
-                >
-                  <PixelCharacter 
-                    direction="south" 
-                    isMoving={false} 
-                    size={tileSize} 
-                    userColor={npcOnTile.color}
-                  />
-                </div>
-              )}
-
-              {/* Render stranger on tile */}
-              {strangerOnTile && !isPlayerHere && !npcOnTile && (
-                <div 
-                  className="absolute z-14 flex items-end justify-center cursor-pointer group"
-                  style={{
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    height: tileSize * 2,
-                  }}
-                  onMouseEnter={() => setHoveredStranger(strangerOnTile)}
-                  onMouseLeave={() => setHoveredStranger(null)}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onStrangerClick?.(strangerOnTile);
-                  }}
-                >
-                  <div className="opacity-80 group-hover:opacity-100 transition-opacity">
-                    <PixelCharacter 
-                      direction="south" 
-                      isMoving={false} 
-                      size={tileSize} 
-                      userColor={strangerOnTile.color}
-                    />
-                  </div>
-                  {/* Hover tooltip */}
-                  {hoveredStranger?.id === strangerOnTile.id && (
-                    <div 
-                      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-card/95 border border-border rounded shadow-lg text-xs whitespace-nowrap z-50 pointer-events-none"
-                      style={{ minWidth: '120px' }}
-                    >
-                      <div className="font-medium text-foreground text-center">{strangerOnTile.name}</div>
-                      <div className="text-muted-foreground text-center mt-0.5">
-                        {strangerOnTile.allegiance ? (
-                          <span className="flex items-center justify-center gap-1">
-                            <span>{strangerOnTile.allegiance.sovereigntyFlag}</span>
-                            <span>{strangerOnTile.allegiance.sovereigntyName}</span>
-                          </span>
-                        ) : (
-                          <span className="italic">No Allegiance</span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-              {/* Show claim indicator */}
-              {isClaimed && !isPlayerHere && !npcOnTile && (
-                <div 
-                  className="absolute top-0.5 right-0.5 rounded-full"
-                  style={{ 
-                    backgroundColor: isOwnClaim 
-                      ? userColor 
-                      : npcClaimOwner 
-                        ? npcClaimOwner.color 
-                        : '#888',
-                    width: Math.max(4, tileSize * 0.15),
-                    height: Math.max(4, tileSize * 0.15),
-                  }}
-                />
-              )}
-            </div>
+              onStrangerHover={handleStrangerHover}
+              onStrangerLeave={handleStrangerLeave}
+              onStrangerClick={handleStrangerClickInternal}
+            />
           );
         })}
       </div>
       
-      {/* Time of day lighting overlay - above game elements but below UI controls */}
+      {/* Time of day lighting overlay */}
       <div 
         className="absolute inset-0 pointer-events-none transition-colors duration-[30000ms]"
         style={{
