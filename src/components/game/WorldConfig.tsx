@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Resource, RARITY_COLORS } from '@/types/game';
-import { X, Plus, Save, RefreshCw, Map, Package, Hammer, Copy, Lock, Database, LogOut, AlertTriangle } from 'lucide-react';
+import { X, Plus, Save, RefreshCw, Map, Package, Hammer, Copy, Lock, Database, LogOut, AlertTriangle, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import ResourceEditorModal from './ResourceEditorModal';
@@ -67,6 +68,7 @@ const WorldConfig = ({
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
   const [isNewResource, setIsNewResource] = useState(false);
   const [repositoryOpen, setRepositoryOpen] = useState(false);
+  const [resourceSearch, setResourceSearch] = useState('');
 
   if (!isOpen) return null;
 
@@ -369,6 +371,17 @@ const WorldConfig = ({
                       </div>
                     )}
                   </div>
+                  
+                  <div className="relative">
+                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Search resources..."
+                      value={resourceSearch}
+                      onChange={(e) => setResourceSearch(e.target.value)}
+                      className="pl-8 h-8 text-sm"
+                    />
+                  </div>
 
                   {!isOwner && (
                     <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
@@ -378,7 +391,10 @@ const WorldConfig = ({
                   )}
 
                   <div className="grid gap-2">
-                    {resources.map((resource) => (
+                    {resources
+                      .filter(r => r.name.toLowerCase().includes(resourceSearch.toLowerCase()))
+                      .sort((a, b) => a.name.localeCompare(b.name))
+                      .map((resource) => (
                       <div
                         key={resource.id}
                         onClick={() => isOwner && handleEditResource(resource)}
