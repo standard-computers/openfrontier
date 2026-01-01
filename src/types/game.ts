@@ -75,6 +75,8 @@ export interface Resource {
   producesAmount?: number; // Amount produced each cycle (default 1)
   producesIntervalHours?: number; // Game hours between production cycles (default 24)
   emitsLight?: boolean; // If true, resource emits light during nighttime when on a tile
+  givesXp?: boolean; // If true, using this item gives XP to the player
+  xpAmount?: number; // Amount of XP given when item is used
 }
 
 export interface MapTile {

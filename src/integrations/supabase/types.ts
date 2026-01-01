@@ -49,6 +49,7 @@ export type Database = {
           download_count: number
           emits_light: boolean
           gather_time: number
+          gives_xp: boolean
           has_limited_lifetime: boolean
           health_gain: number
           holds_player: boolean
@@ -74,6 +75,7 @@ export type Database = {
           tile_height: number
           tile_width: number
           use_life: boolean
+          xp_amount: number
         }
         Insert: {
           base_value?: number
@@ -91,6 +93,7 @@ export type Database = {
           download_count?: number
           emits_light?: boolean
           gather_time?: number
+          gives_xp?: boolean
           has_limited_lifetime?: boolean
           health_gain?: number
           holds_player?: boolean
@@ -116,6 +119,7 @@ export type Database = {
           tile_height?: number
           tile_width?: number
           use_life?: boolean
+          xp_amount?: number
         }
         Update: {
           base_value?: number
@@ -133,6 +137,7 @@ export type Database = {
           download_count?: number
           emits_light?: boolean
           gather_time?: number
+          gives_xp?: boolean
           has_limited_lifetime?: boolean
           health_gain?: number
           holds_player?: boolean
@@ -158,6 +163,7 @@ export type Database = {
           tile_height?: number
           tile_width?: number
           use_life?: boolean
+          xp_amount?: number
         }
         Relationships: []
       }
@@ -309,6 +315,7 @@ export type Database = {
           download_count: number
           emits_light: boolean
           gather_time: number
+          gives_xp: boolean
           has_limited_lifetime: boolean
           health_gain: number
           holds_player: boolean
@@ -334,6 +341,7 @@ export type Database = {
           tile_height: number
           tile_width: number
           use_life: boolean
+          xp_amount: number
         }[]
         SetofOptions: {
           from: "*"
