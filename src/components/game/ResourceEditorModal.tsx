@@ -107,6 +107,9 @@ const ResourceEditorModal = ({
         producesResource: data.produces_resource || undefined,
         producesAmount: data.produces_amount ?? 1,
         producesIntervalHours: data.produces_interval_hours ?? 24,
+        emitsLight: data.emits_light || false,
+        givesXp: data.gives_xp || false,
+        xpAmount: data.xp_amount ?? 0,
       });
 
       // Update icon mode based on copied resource
