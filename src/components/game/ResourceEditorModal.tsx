@@ -912,6 +912,39 @@ const ResourceEditorModal = ({
                     </p>
                   </div>
                 </div>
+
+                {/* XP Gain Section */}
+                <div className="bg-secondary/30 rounded-lg p-3 mt-3">
+                  <div className="flex items-center gap-2 mb-3">
+                    <input
+                      type="checkbox"
+                      id="givesXp"
+                      checked={form.givesXp || false}
+                      onChange={(e) => setForm({ ...form, givesXp: e.target.checked, xpAmount: e.target.checked ? (form.xpAmount || 1) : 0 })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="givesXp" className="text-sm font-medium">⭐ Gives XP</label>
+                  </div>
+                  
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">XP Amount</label>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min="0"
+                      value={form.xpAmount || 0}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 0;
+                        setForm({ ...form, xpAmount: Math.max(0, val) });
+                      }}
+                      className="input-field w-full"
+                      disabled={!form.givesXp}
+                    />
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      XP earned each time the player uses this item
+                    </p>
+                  </div>
+                </div>
               </div>
 
               {/* Destructible Section */}

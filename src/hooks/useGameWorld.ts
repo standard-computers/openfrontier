@@ -783,14 +783,22 @@ export const useGameWorld = () => {
       const healthGain = resource.healthGain || 0;
       const newHealth = Math.min(MAX_HEALTH, prev.health + healthGain);
       
+      // Apply XP gain
+      const xpGain = resource.givesXp ? (resource.xpAmount || 0) : 0;
+      const newXp = prev.xp + xpGain;
+      
+      const messages: string[] = [];
+      if (healthGain > 0) messages.push(`+${healthGain} health`);
+      if (xpGain > 0) messages.push(`+${xpGain} XP`);
+      
       result = { 
         success: true, 
-        message: healthGain > 0 
-          ? `Consumed ${resource.name}! +${healthGain} health` 
+        message: messages.length > 0 
+          ? `Consumed ${resource.name}! ${messages.join(', ')}` 
           : `Consumed ${resource.name}!` 
       };
       
-      return { ...prev, inventory: newInventory, health: newHealth };
+      return { ...prev, inventory: newInventory, health: newHealth, xp: newXp };
     });
     
     return result;

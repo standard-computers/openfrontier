@@ -42,6 +42,8 @@ export interface RepositoryResource {
   produces_amount: number;
   produces_interval_hours: number;
   emits_light: boolean;
+  gives_xp: boolean;
+  xp_amount: number;
 }
 
 /**
@@ -87,6 +89,8 @@ export const repositoryToGameResource = (repoResource: RepositoryResource): Reso
     producesAmount: repoResource.produces_amount ?? 1,
     producesIntervalHours: repoResource.produces_interval_hours ?? 24,
     emitsLight: repoResource.emits_light || false,
+    givesXp: repoResource.gives_xp || false,
+    xpAmount: repoResource.xp_amount ?? 0,
   };
 };
 
@@ -134,6 +138,8 @@ export const gameResourceToRepository = (resource: Resource, userId?: string) =>
     produces_amount: resource.producesAmount ?? 1,
     produces_interval_hours: resource.producesIntervalHours ?? 24,
     emits_light: resource.emitsLight || false,
+    gives_xp: resource.givesXp || false,
+    xp_amount: resource.xpAmount ?? 0,
   };
 };
 
