@@ -93,6 +93,12 @@ const WorldConfig = ({
       spawnTiles: [],
       spawnChance: 0,
       coinValue: 10,
+      tileWidth: 0,
+      tileHeight: 0,
+      placeable: true,
+      passable: true,
+      destructible: true,
+      maxLife: 10,
     });
     setIsNewResource(true);
   };

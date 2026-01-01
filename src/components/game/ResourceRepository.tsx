@@ -128,8 +128,12 @@ const ResourceRepository = ({
       recipes: [],
       isContainer: false,
       isFloating: false,
-      placeable: false,
-      passable: false,
+      tileWidth: 0,
+      tileHeight: 0,
+      placeable: true,
+      passable: true,
+      destructible: true,
+      maxLife: 10,
     });
     setShowCreateModal(true);
   };
