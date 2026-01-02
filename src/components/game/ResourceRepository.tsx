@@ -486,6 +486,8 @@ const ResourceRepository = ({
             producesAmount: r.produces_amount ?? 1,
             producesIntervalHours: r.produces_interval_hours ?? 24,
             emitsLight: r.emits_light || false,
+            givesXp: r.gives_xp || false,
+            xpAmount: r.xp_amount ?? 0,
           }))}
           categories={categories}
           isNew={true}
@@ -539,6 +541,8 @@ const ResourceRepository = ({
             producesAmount: editingRepoResource.produces_amount ?? 1,
             producesIntervalHours: editingRepoResource.produces_interval_hours ?? 24,
             emitsLight: editingRepoResource.emits_light || false,
+            givesXp: editingRepoResource.gives_xp || false,
+            xpAmount: editingRepoResource.xp_amount ?? 0,
           }}
           allResources={resources.map(r => ({
             id: r.id,
@@ -579,6 +583,8 @@ const ResourceRepository = ({
             producesAmount: r.produces_amount ?? 1,
             producesIntervalHours: r.produces_interval_hours ?? 24,
             emitsLight: r.emits_light || false,
+            givesXp: r.gives_xp || false,
+            xpAmount: r.xp_amount ?? 0,
           }))}
           categories={categories}
           isNew={false}
