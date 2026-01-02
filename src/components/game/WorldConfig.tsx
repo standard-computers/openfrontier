@@ -89,7 +89,7 @@ const WorldConfig = ({
       icon: '🪵',
       rarity: 'common',
       description: '',
-      gatherTime: 2,
+      gatherTime: 1000,
       spawnTiles: [],
       spawnChance: 0,
       coinValue: 10,
