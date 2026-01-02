@@ -28,6 +28,7 @@ interface WorldConfigProps {
   mapHeight?: number;
   onUpdateWorldName: (name: string) => void;
   onAddResource: (resource: Resource) => void;
+  onAddExistingResource: (resource: Resource) => void;
   onUpdateResource: (resource: Resource) => void;
   onDeleteResource: (id: string) => void;
   onRespawnResources: () => void;
@@ -55,6 +56,7 @@ const WorldConfig = ({
   mapHeight = 100,
   onUpdateWorldName,
   onAddResource,
+  onAddExistingResource,
   onUpdateResource,
   onDeleteResource,
   onRespawnResources,
@@ -150,7 +152,7 @@ const WorldConfig = ({
 
       for (const repoResource of missingResources) {
         const newResource = repositoryToGameResource(repoResource);
-        onAddResource(newResource);
+        onAddExistingResource(newResource);
       }
 
       toast.success(`Added ${missingResources.length} missing resource(s) to your world`);
