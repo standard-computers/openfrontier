@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Resource, Recipe, RecipeIngredient, TileType, TILE_TYPES, RARITY_COLORS } from '@/types/game';
-import { X, Save, Trash2, Plus, ChevronRight, Upload, Smile, Image, ChevronDown, Tag, Copy, ClipboardPaste, Search } from 'lucide-react';
+import { X, Save, Trash2, Plus, ChevronRight, Upload, Image, ChevronDown, Tag, Copy, ClipboardPaste, Search } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
@@ -30,8 +30,7 @@ const ResourceEditorModal = ({
   categories = [],
 }: ResourceEditorModalProps) => {
   const [activeTab, setActiveTab] = useState<'general' | 'controls' | 'recipes'>('general');
-  const [iconMode, setIconMode] = useState<'emoji' | 'image'>(resource.iconType === 'image' ? 'image' : 'emoji');
-  const [form, setForm] = useState<Resource>({ ...resource, iconType: resource.iconType || 'emoji' });
+  const [form, setForm] = useState<Resource>({ ...resource, iconType: 'image' });
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [isNewRecipe, setIsNewRecipe] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -111,9 +110,6 @@ const ResourceEditorModal = ({
         givesXp: data.gives_xp || false,
         xpAmount: data.xp_amount ?? 0,
       });
-
-      // Update icon mode based on copied resource
-      setIconMode(data.icon?.startsWith('http') ? 'image' : 'emoji');
 
       toast.success(`Copied values from "${data.name}"`);
       setShowCopyFromIdDialog(false);
@@ -345,62 +341,31 @@ const ResourceEditorModal = ({
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Icon</label>
                 
-                {/* Icon Type Tabs */}
-                <div className="flex gap-1 mb-2">
-                  <button
-                    onClick={() => setIconMode('emoji')}
-                    className={cn(
-                      'flex items-center gap-1 px-3 py-1.5 text-xs rounded transition-colors',
-                      iconMode === 'emoji' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
-                    )}
-                  >
-                    <Smile className="w-3 h-3" /> Emoji
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
-                    className={cn(
-                      'flex items-center gap-1 px-3 py-1.5 text-xs rounded transition-colors',
-                      iconMode === 'image' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
-                    )}
-                  >
-                    <Image className="w-3 h-3" /> {uploading ? 'Uploading...' : 'Upload Image'}
-                  </button>
-                </div>
+                {/* Image Upload */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="flex items-center gap-1 px-3 py-1.5 text-xs rounded transition-colors bg-primary text-primary-foreground hover:bg-primary/90 mb-2"
+                >
+                  <Image className="w-3 h-3" /> {uploading ? 'Uploading...' : 'Upload Image'}
+                </button>
 
-                {iconMode === 'emoji' ? (
-                  <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto p-1 bg-secondary/30 rounded">
-                    {ICONS.map((icon) => (
-                      <button
-                        key={icon}
-                        onClick={() => selectEmoji(icon)}
-                        className={cn(
-                          'w-8 h-8 flex items-center justify-center rounded hover:bg-muted transition-colors',
-                          form.icon === icon && form.iconType !== 'image' && 'bg-primary'
-                        )}
-                      >
-                        {icon}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {form.iconType === 'image' && form.icon.startsWith('http') && (
-                      <div className="flex items-center gap-2 p-2 bg-secondary/30 rounded">
-                        <img src={form.icon} alt="Preview" className="w-10 h-10 object-cover rounded" />
-                        <span className="text-xs text-muted-foreground flex-1 truncate">{form.icon}</span>
-                      </div>
-                    )}
-                    <p className="text-[10px] text-muted-foreground">Max 2MB. PNG, JPG, or GIF.</p>
-                  </div>
-                )}
+                <div className="space-y-2">
+                  {form.icon.startsWith('http') && (
+                    <div className="flex items-center gap-2 p-2 bg-secondary/30 rounded">
+                      <img src={form.icon} alt="Preview" className="w-10 h-10 object-cover rounded" />
+                      <span className="text-xs text-muted-foreground flex-1 truncate">{form.icon}</span>
+                    </div>
+                  )}
+                  <p className="text-[10px] text-muted-foreground">Max 2MB. PNG, JPG, or GIF.</p>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
