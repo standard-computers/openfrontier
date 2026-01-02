@@ -67,6 +67,7 @@ const Index = () => {
     claimMultipleTiles,
     gatherFromTile,
     addResource,
+    addExistingResource,
     updateResource,
     deleteResource,
     respawnResources,
@@ -592,6 +593,7 @@ const Index = () => {
         mapHeight={world.map.height}
         onUpdateWorldName={updateWorldName}
         onAddResource={addResource}
+        onAddExistingResource={addExistingResource}
         onUpdateResource={updateResource}
         onDeleteResource={deleteResource}
         onRespawnResources={respawnResources}

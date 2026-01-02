@@ -523,6 +523,19 @@ export const useGameWorld = () => {
     }
   }, [isOwner, world.userId, saveWorldData]);
 
+  // Add an existing repository resource to this world (doesn't create new in repository)
+  const addExistingResource = useCallback((resource: Resource) => {
+    if (!isOwner) return;
+    
+    // Check if already exists
+    if (world.resources.some(r => r.id === resource.id)) {
+      return;
+    }
+    
+    setWorld(prev => ({ ...prev, resources: [...prev.resources, resource] }));
+    setTimeout(saveWorldData, 500);
+  }, [isOwner, world.resources, saveWorldData]);
+
   const updateResource = useCallback(async (resource: Resource) => {
     if (!isOwner) return;
     
@@ -1397,6 +1410,7 @@ export const useGameWorld = () => {
     claimMultipleTiles,
     gatherFromTile,
     addResource,
+    addExistingResource,
     updateResource,
     deleteResource,
     respawnResources,
