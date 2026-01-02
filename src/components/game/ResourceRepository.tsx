@@ -117,7 +117,7 @@ const ResourceRepository = ({
       iconType: 'emoji',
       rarity: 'common',
       description: '',
-      gatherTime: 1000,
+      gatherTime: 1,
       spawnTiles: [],
       spawnChance: 0,
       coinValue: 10,
