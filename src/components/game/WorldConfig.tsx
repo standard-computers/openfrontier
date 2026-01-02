@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Resource, RARITY_COLORS } from '@/types/game';
-import { X, Plus, Save, RefreshCw, Map, Package, Hammer, Copy, Lock, Database, LogOut, AlertTriangle, Search } from 'lucide-react';
+import { X, Plus, Save, RefreshCw, Map, Package, Hammer, Copy, Lock, Database, LogOut, AlertTriangle, Search, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import ResourceEditorModal from './ResourceEditorModal';
 import ResourceIcon from './ResourceIcon';
 import ResourceRepository from './ResourceRepository';
+import { supabase } from '@/integrations/supabase/client';
+import { repositoryToGameResource, RepositoryResource } from '@/utils/resourceConverter';
 
 interface WorldConfigProps {
   isOpen: boolean;
@@ -69,6 +71,7 @@ const WorldConfig = ({
   const [isNewResource, setIsNewResource] = useState(false);
   const [repositoryOpen, setRepositoryOpen] = useState(false);
   const [resourceSearch, setResourceSearch] = useState('');
+  const [addingMissing, setAddingMissing] = useState(false);
 
   if (!isOpen) return null;
 
@@ -125,6 +128,36 @@ const WorldConfig = ({
       onDeleteResource(editingResource.id);
       setEditingResource(null);
       toast.success('Resource deleted');
+    }
+  };
+
+  const handleAddMissingResources = async () => {
+    setAddingMissing(true);
+    try {
+      const { data, error } = await supabase
+        .from('resource_marketplace')
+        .select('*');
+
+      if (error) throw error;
+
+      const existingIds = new Set(resources.map(r => r.id));
+      const missingResources = (data as RepositoryResource[]).filter(r => !existingIds.has(r.id));
+
+      if (missingResources.length === 0) {
+        toast.info('All repository resources are already in your world');
+        return;
+      }
+
+      for (const repoResource of missingResources) {
+        const newResource = repositoryToGameResource(repoResource);
+        onAddResource(newResource);
+      }
+
+      toast.success(`Added ${missingResources.length} missing resource(s) to your world`);
+    } catch (err: any) {
+      toast.error('Failed to add missing resources: ' + err.message);
+    } finally {
+      setAddingMissing(false);
     }
   };
 
@@ -368,6 +401,13 @@ const WorldConfig = ({
                     <h3 className="text-sm font-medium">Resources ({resources.length})</h3>
                     {isOwner && (
                       <div className="flex gap-2">
+                        <button 
+                          onClick={handleAddMissingResources} 
+                          disabled={addingMissing}
+                          className="btn text-xs"
+                        >
+                          <Download className="w-3 h-3 mr-1" /> {addingMissing ? 'Adding...' : '+ Missing'}
+                        </button>
                         <button onClick={() => setRepositoryOpen(true)} className="btn text-xs">
                           <Database className="w-3 h-3 mr-1" /> Repository
                         </button>
