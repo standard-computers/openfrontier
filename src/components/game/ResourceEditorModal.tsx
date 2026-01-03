@@ -560,7 +560,7 @@ const ResourceEditorModal = ({
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Spawns On Tiles</label>
                     <div className="flex flex-wrap gap-1">
-                      {TILE_TYPES.filter(t => t.walkable).map((tile) => (
+                      {TILE_TYPES.map((tile) => (
                         <button
                           key={tile.type}
                           onClick={() => toggleSpawnTile(tile.type)}

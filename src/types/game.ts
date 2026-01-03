@@ -225,7 +225,7 @@ export const TILE_TYPES: { type: TileType; label: string; walkable: boolean; col
   { type: 'snow', label: 'Snow', walkable: true, color: 'bg-slate-100', baseValue: 6 },
   { type: 'ice', label: 'Ice', walkable: true, color: 'bg-cyan-200', baseValue: 7 },
   { type: 'swamp', label: 'Swamp', walkable: true, color: 'bg-lime-800', baseValue: 8 },
-  { type: 'water', label: 'Water', walkable: false, color: 'bg-blue-500', baseValue: 0 },
+  { type: 'water', label: 'Water', walkable: false, color: 'bg-blue-500', baseValue: 12 },
   { type: 'lava', label: 'Lava', walkable: false, color: 'bg-orange-600', baseValue: 50 },
 ];
 
