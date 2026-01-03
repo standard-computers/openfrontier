@@ -319,6 +319,17 @@ export const useGameWorld = () => {
       
       if (!isWalkable) return prev;
       
+      // Check if any non-passable resources are on the target tile
+      const allResources = [...(targetTile.resources || []), ...(targetTile.placedResources || [])];
+      if (allResources.length > 0) {
+        const hasBlockingResource = allResources.some(resourceName => {
+          const resourceDef = prev.resources.find(r => r.name === resourceName);
+          // If resource definition exists and passable is explicitly false, block movement
+          return resourceDef && resourceDef.passable === false;
+        });
+        if (hasBlockingResource) return prev;
+      }
+      
       // Mountain tiles deplete health by 0.05 per step
       let newHealth = prev.health;
       if (targetTile.type === 'mountain') {
