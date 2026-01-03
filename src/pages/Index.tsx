@@ -25,8 +25,8 @@ import { Market, Position, calculateTileValue, Sovereignty, Stranger, TILE_TYPES
 import { toast } from 'sonner';
 
 const MIN_TILE_SIZE = 12;
-const MAX_TILE_SIZE = 48;
-const DEFAULT_TILE_SIZE = 28;
+const MAX_TILE_SIZE = 64;
+const DEFAULT_TILE_SIZE = 39;
 
 type FacingDirection = 'north' | 'south' | 'east' | 'west';
 
