@@ -14,7 +14,6 @@ interface MarketplaceItem {
   rarity: string;
   description: string;
   baseValue: number;
-  downloadCount: number;
 }
 
 interface MarketplacePanelProps {
@@ -55,7 +54,7 @@ const MarketplacePanel = ({
       const { data, error } = await supabase
         .from('resource_marketplace')
         .select('*')
-        .order('download_count', { ascending: false });
+        .order('name', { ascending: true });
 
       if (error) throw error;
 
@@ -67,7 +66,6 @@ const MarketplacePanel = ({
         rarity: item.rarity,
         description: item.description || '',
         baseValue: item.base_value,
-        downloadCount: item.download_count,
       })));
     } catch (error) {
       console.error('Error loading marketplace:', error);

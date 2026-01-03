@@ -46,7 +46,6 @@ export type Database = {
           destroyed_by: string[] | null
           destructible: boolean
           display: boolean
-          download_count: number
           emits_light: boolean
           gather_time: number
           gives_xp: boolean
@@ -90,7 +89,6 @@ export type Database = {
           destroyed_by?: string[] | null
           destructible?: boolean
           display?: boolean
-          download_count?: number
           emits_light?: boolean
           gather_time?: number
           gives_xp?: boolean
@@ -134,7 +132,6 @@ export type Database = {
           destroyed_by?: string[] | null
           destructible?: boolean
           display?: boolean
-          download_count?: number
           emits_light?: boolean
           gather_time?: number
           gives_xp?: boolean
@@ -312,7 +309,6 @@ export type Database = {
           destroyed_by: string[] | null
           destructible: boolean
           display: boolean
-          download_count: number
           emits_light: boolean
           gather_time: number
           gives_xp: boolean

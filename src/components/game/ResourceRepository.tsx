@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Plus, Download, Search, Database, Upload, Edit2, Filter, Tag, Check } from 'lucide-react';
+import { X, Plus, Search, Database, Upload, Edit2, Filter, Tag, Check } from 'lucide-react';
 import { Resource, RARITY_COLORS, TileType } from '@/types/game';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -80,12 +80,6 @@ const ResourceRepository = ({
     const newResource = repositoryToGameResource(repoResource);
 
     onAddResource(newResource);
-
-    // Increment download count
-    await supabase
-      .from('resource_marketplace')
-      .update({ download_count: (repoResource.download_count || 0) + 1 })
-      .eq('id', repoResource.id);
 
     toast.success(`Added "${repoResource.name}" to your world`);
   };
@@ -419,10 +413,7 @@ const ResourceRepository = ({
                       <p className="text-xs text-muted-foreground line-clamp-2">{resource.description}</p>
                     )}
 
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Download className="w-3 h-3" /> {resource.download_count || 0}
-                      </span>
+                    <div className="flex items-center justify-end">
                       {canAddToWorld && (
                         <button
                           onClick={(e) => {
