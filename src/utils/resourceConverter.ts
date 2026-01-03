@@ -12,7 +12,6 @@ export interface RepositoryResource {
   spawn_chance: number;
   base_value: number;
   recipe: any;
-  download_count: number;
   created_by: string | null;
   is_container: boolean;
   is_floating: boolean;
