@@ -114,7 +114,7 @@ const TileOverlay = memo(({
     selectionStyle.boxShadow = 'inset 0 0 0 3px #fff';
   } else if (isMultiSelected) {
     selectionStyle.boxShadow = 'inset 0 0 0 2px #3b82f6';
-  } else if (isInDragSelection && isWalkable) {
+  } else if (isInDragSelection) {
     selectionStyle.boxShadow = 'inset 0 0 0 2px rgba(59, 130, 246, 0.6)';
   }
 
@@ -478,9 +478,7 @@ const GameMap = ({
     for (let y = minY; y <= maxY; y++) {
       for (let x = minX; x <= maxX; x++) {
         const tile = map.tiles[y]?.[x];
-        const tileTypeInfo = TILE_TYPES.find(t => t.type === tile?.type);
-        const isWalkable = tileTypeInfo?.walkable ?? tile?.walkable;
-        if (tile && isWalkable) {
+        if (tile) {
           tiles.push({ x, y });
         }
       }
@@ -797,7 +795,7 @@ const GameMap = ({
               onMouseDown={() => handleTileMouseDown(data.x, data.y)}
               onMouseEnter={() => handleTileMouseEnter(data.x, data.y)}
               onClick={() => {
-                if (!multiSelectMode && data.isWalkable && !data.marketOnTile) {
+                if (!multiSelectMode && !data.marketOnTile) {
                   onTileSelect(data.x, data.y);
                 }
               }}
