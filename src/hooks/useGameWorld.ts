@@ -1288,29 +1288,39 @@ export const useGameWorld = () => {
     return result;
   }, []);
 
-  const sellToMarket = useCallback((resourceId: string, value: number): { success: boolean; message: string } => {
-    let result = { success: false, message: '' };
+  const sellToMarket = useCallback((resourceId: string, value: number, quantity: number = 1): { success: boolean; message: string; soldCount: number } => {
+    let result = { success: false, message: '', soldCount: 0 };
     
     setWorld(prev => {
-      const slotIndex = prev.inventory.findIndex(s => s.resourceId === resourceId && s.quantity > 0);
+      let newInventory = [...prev.inventory];
+      let totalSold = 0;
+      let remainingToSell = quantity;
       
-      if (slotIndex === -1) {
-        result = { success: false, message: "You don't have this item" };
+      // Process all slots that contain this resource
+      for (let i = 0; i < newInventory.length && remainingToSell > 0; i++) {
+        if (newInventory[i].resourceId === resourceId && newInventory[i].quantity > 0) {
+          const sellFromSlot = Math.min(newInventory[i].quantity, remainingToSell);
+          newInventory[i] = {
+            ...newInventory[i],
+            quantity: newInventory[i].quantity - sellFromSlot
+          };
+          
+          if (newInventory[i].quantity === 0) {
+            newInventory[i] = { resourceId: null, quantity: 0 };
+          }
+          
+          totalSold += sellFromSlot;
+          remainingToSell -= sellFromSlot;
+        }
+      }
+      
+      if (totalSold === 0) {
+        result = { success: false, message: "You don't have this item", soldCount: 0 };
         return prev;
       }
       
-      const newInventory = [...prev.inventory];
-      newInventory[slotIndex] = { 
-        ...newInventory[slotIndex], 
-        quantity: newInventory[slotIndex].quantity - 1 
-      };
-      
-      if (newInventory[slotIndex].quantity === 0) {
-        newInventory[slotIndex] = { resourceId: null, quantity: 0 };
-      }
-      
-      result = { success: true, message: `Sold for ${value} coins!` };
-      return { ...prev, coins: prev.coins + value, inventory: newInventory };
+      result = { success: true, message: `Sold ${totalSold} for ${value * totalSold} coins!`, soldCount: totalSold };
+      return { ...prev, coins: prev.coins + (value * totalSold), inventory: newInventory };
     });
     
     return result;
