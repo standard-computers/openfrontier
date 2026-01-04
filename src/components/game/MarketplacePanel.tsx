@@ -156,6 +156,28 @@ const MarketplacePanel = ({
     }
   };
 
+  const handleSellAll = (resourceId: string, quantity: number) => {
+    const resource = resources.find(r => r.id === resourceId);
+    if (!resource) return;
+
+    // Market buys at 0.5x the base value
+    const value = Math.floor(resource.coinValue * 0.5);
+    let soldCount = 0;
+    
+    for (let i = 0; i < quantity; i++) {
+      const result = onSellResource(resourceId, value);
+      if (result.success) {
+        soldCount++;
+      } else {
+        break;
+      }
+    }
+    
+    if (soldCount > 0) {
+      toast.success(`Sold ${soldCount}x ${resource.name} for ${value * soldCount} coins!`);
+    }
+  };
+
   const filteredItems = items.filter(item =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -316,12 +338,22 @@ const MarketplacePanel = ({
                             <span>{value} coins each</span>
                           </div>
                         </div>
-                        <button
-                          onClick={() => handleSell(slot.resourceId!, slot.quantity)}
-                          className="btn text-xs"
-                        >
-                          Sell 1
-                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleSell(slot.resourceId!, slot.quantity)}
+                            className="btn text-xs"
+                          >
+                            Sell 1
+                          </button>
+                          {slot.quantity > 1 && (
+                            <button
+                              onClick={() => handleSellAll(slot.resourceId!, slot.quantity)}
+                              className="btn btn-primary text-xs"
+                            >
+                              Sell All
+                            </button>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
