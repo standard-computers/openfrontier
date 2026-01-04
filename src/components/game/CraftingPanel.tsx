@@ -27,6 +27,7 @@ const CraftingPanel = ({ isOpen, onClose, resources, inventory, onCraft }: Craft
   };
 
   const canCraft = (recipe: Recipe) => {
+    if (!recipe.ingredients || recipe.ingredients.length === 0) return false;
     return recipe.ingredients.every(ing => getInventoryCount(ing.resourceId) >= ing.quantity);
   };
 
@@ -93,7 +94,7 @@ const CraftingPanel = ({ isOpen, onClose, resources, inventory, onCraft }: Craft
                           <div className="flex-1">
                             <div className="text-sm font-medium mb-1">{recipe.name}</div>
                             <div className="flex items-center gap-1 flex-wrap">
-                              {recipe.ingredients.map((ing, i) => {
+                              {(recipe.ingredients || []).map((ing, i) => {
                                 const r = getResource(ing.resourceId);
                                 const owned = getInventoryCount(ing.resourceId);
                                 const hasEnough = owned >= ing.quantity;
