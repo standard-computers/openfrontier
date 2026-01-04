@@ -156,15 +156,22 @@ const MarketplacePanel = ({
     }
   };
 
-  const handleSellAll = (resourceId: string, quantity: number) => {
+  const handleSellAll = (resourceId: string) => {
     const resource = resources.find(r => r.id === resourceId);
     if (!resource) return;
+
+    // Calculate total quantity across all inventory slots
+    const totalQuantity = inventory
+      .filter(slot => slot.resourceId === resourceId)
+      .reduce((sum, slot) => sum + slot.quantity, 0);
+
+    if (totalQuantity === 0) return;
 
     // Market buys at 0.5x the base value
     const value = Math.floor(resource.coinValue * 0.5);
     let soldCount = 0;
     
-    for (let i = 0; i < quantity; i++) {
+    for (let i = 0; i < totalQuantity; i++) {
       const result = onSellResource(resourceId, value);
       if (result.success) {
         soldCount++;
@@ -347,7 +354,7 @@ const MarketplacePanel = ({
                           </button>
                           {slot.quantity > 1 && (
                             <button
-                              onClick={() => handleSellAll(slot.resourceId!, slot.quantity)}
+                              onClick={() => handleSellAll(slot.resourceId!)}
                               className="btn btn-primary text-xs"
                             >
                               Sell All
