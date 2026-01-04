@@ -222,6 +222,22 @@ const ResourceEditorModal = ({
     setForm({ ...form, recipes: recipes.filter(r => r.id !== recipeId) });
   };
 
+  const handleAdoptPrice = (recipe: Recipe) => {
+    // Calculate total cost of all ingredients
+    let totalCost = 0;
+    for (const ingredient of recipe.ingredients) {
+      const ingredientResource = getResource(ingredient.resourceId);
+      if (ingredientResource) {
+        totalCost += ingredientResource.coinValue * ingredient.quantity;
+      }
+    }
+    
+    // Add 10% markup and round up
+    const newPrice = Math.ceil(totalCost * 1.1);
+    setForm({ ...form, coinValue: newPrice });
+    toast.success(`Price set to ${newPrice} coins (ingredients: ${totalCost} + 10% markup)`);
+  };
+
   const handleDuplicateRecipe = (recipe: Recipe) => {
     const recipes = form.recipes || [];
     const duplicatedRecipe: Recipe = {
@@ -1356,6 +1372,13 @@ const ResourceEditorModal = ({
                                 className="btn btn-ghost text-xs px-2"
                               >
                                 Edit
+                              </button>
+                              <button 
+                                onClick={() => handleAdoptPrice(recipe)}
+                                className="btn btn-ghost text-xs px-2"
+                                title="Set resource price based on ingredient costs + 10% markup"
+                              >
+                                Adopt Price
                               </button>
                               <button 
                                 onClick={() => handleDuplicateRecipe(recipe)}
