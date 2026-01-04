@@ -24,7 +24,7 @@ interface MarketplacePanelProps {
   inventory: { resourceId: string | null; quantity: number }[];
   resources: Resource[];
   onBuyResource: (resource: Resource, cost: number) => { success: boolean; message: string };
-  onSellResource: (resourceId: string, value: number) => { success: boolean; message: string };
+  onSellResource: (resourceId: string, value: number, quantity?: number) => { success: boolean; message: string; soldCount?: number };
 }
 
 const MarketplacePanel = ({
@@ -169,19 +169,12 @@ const MarketplacePanel = ({
 
     // Market buys at 0.5x the base value
     const value = Math.floor(resource.coinValue * 0.5);
-    let soldCount = 0;
     
-    for (let i = 0; i < totalQuantity; i++) {
-      const result = onSellResource(resourceId, value);
-      if (result.success) {
-        soldCount++;
-      } else {
-        break;
-      }
-    }
-    
-    if (soldCount > 0) {
-      toast.success(`Sold ${soldCount}x ${resource.name} for ${value * soldCount} coins!`);
+    const result = onSellResource(resourceId, value, totalQuantity);
+    if (result.success && result.soldCount) {
+      toast.success(`Sold ${result.soldCount}x ${resource.name} for ${value * result.soldCount} coins!`);
+    } else if (!result.success) {
+      toast.error(result.message);
     }
   };
 
