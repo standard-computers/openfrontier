@@ -46,6 +46,41 @@ export interface RepositoryResource {
 }
 
 /**
+ * Normalize recipes from database - handles malformed data like double-nested arrays or objects
+ */
+const normalizeRecipes = (recipe: any): any[] => {
+  if (!recipe) return [];
+  
+  // If it's an array
+  if (Array.isArray(recipe)) {
+    // Check if it's a double-nested array [[...]] - unwrap it
+    if (recipe.length === 1 && Array.isArray(recipe[0])) {
+      return recipe[0].map(normalizeRecipeItem);
+    }
+    // Check if it's an array of arrays (all elements are arrays) - flatten
+    if (recipe.every((item: any) => Array.isArray(item))) {
+      return recipe.flat().map(normalizeRecipeItem);
+    }
+    // Normal array of recipes
+    return recipe.map(normalizeRecipeItem);
+  }
+  
+  // If it's a single recipe object, wrap it
+  return [normalizeRecipeItem(recipe)];
+};
+
+/**
+ * Normalize a single recipe item to ensure ingredients array exists
+ */
+const normalizeRecipeItem = (item: any): any => {
+  if (!item || typeof item !== 'object') return item;
+  return {
+    ...item,
+    ingredients: Array.isArray(item.ingredients) ? item.ingredients : []
+  };
+};
+
+/**
  * Convert a repository resource (database row) to a game Resource
  */
 export const repositoryToGameResource = (repoResource: RepositoryResource): Resource => {
@@ -64,7 +99,7 @@ export const repositoryToGameResource = (repoResource: RepositoryResource): Reso
     healthGain: repoResource.health_gain || 0,
     canInflictDamage: repoResource.can_inflict_damage || false,
     damage: repoResource.damage || 0,
-    recipes: repoResource.recipe ? (Array.isArray(repoResource.recipe) ? repoResource.recipe : [repoResource.recipe]) : [],
+    recipes: normalizeRecipes(repoResource.recipe),
     isContainer: repoResource.is_container || false,
     isFloating: repoResource.is_floating || false,
     canFloatOnWater: repoResource.can_float_on_water || false,
