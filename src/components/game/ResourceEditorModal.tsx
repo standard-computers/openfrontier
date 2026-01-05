@@ -202,7 +202,7 @@ const ResourceEditorModal = ({
 
   const handleSaveRecipe = () => {
     if (!editingRecipe) return;
-    if (editingRecipe.ingredients.length === 0) {
+    if ((editingRecipe.ingredients || []).length === 0) {
       toast.error('Add at least one ingredient');
       return;
     }
@@ -251,21 +251,22 @@ const ResourceEditorModal = ({
 
   const handleAddIngredient = () => {
     if (!editingRecipe) return;
+    const ingredients = editingRecipe.ingredients || [];
     const available = allResources.find(r => 
       r.id !== form.id && 
-      !editingRecipe.ingredients.some(i => i.resourceId === r.id)
+      !ingredients.some(i => i.resourceId === r.id)
     );
     if (available) {
       setEditingRecipe({
         ...editingRecipe,
-        ingredients: [...editingRecipe.ingredients, { resourceId: available.id, quantity: 1 }],
+        ingredients: [...ingredients, { resourceId: available.id, quantity: 1 }],
       });
     }
   };
 
   const handleUpdateIngredient = (index: number, updates: Partial<RecipeIngredient>) => {
     if (!editingRecipe) return;
-    const newIngredients = [...editingRecipe.ingredients];
+    const newIngredients = [...(editingRecipe.ingredients || [])];
     newIngredients[index] = { ...newIngredients[index], ...updates };
     setEditingRecipe({ ...editingRecipe, ingredients: newIngredients });
   };
@@ -274,7 +275,7 @@ const ResourceEditorModal = ({
     if (!editingRecipe) return;
     setEditingRecipe({
       ...editingRecipe,
-      ingredients: editingRecipe.ingredients.filter((_, i) => i !== index),
+      ingredients: (editingRecipe.ingredients || []).filter((_, i) => i !== index),
     });
   };
 
@@ -1230,13 +1231,13 @@ const ResourceEditorModal = ({
                       </button>
                     </div>
 
-                    {editingRecipe.ingredients.length === 0 ? (
+                    {(editingRecipe.ingredients || []).length === 0 ? (
                       <div className="text-sm text-muted-foreground text-center py-4 bg-secondary/30 rounded">
                         No ingredients added
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        {editingRecipe.ingredients.map((ingredient, index) => (
+                        {(editingRecipe.ingredients || []).map((ingredient, index) => (
                           <div key={index} className="flex items-center gap-2 bg-secondary/30 p-2 rounded">
                             <Popover onOpenChange={(open) => {
                               if (!open) {
@@ -1320,11 +1321,11 @@ const ResourceEditorModal = ({
                   </div>
 
                   {/* Preview */}
-                  {editingRecipe.ingredients.length > 0 && (
+                  {(editingRecipe.ingredients || []).length > 0 && (
                     <div className="bg-secondary/50 rounded p-3">
                       <div className="text-xs text-muted-foreground mb-2">Preview</div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        {editingRecipe.ingredients.map((ing, i) => {
+                        {(editingRecipe.ingredients || []).map((ing, i) => {
                           const r = getResource(ing.resourceId);
                           return (
                             <span key={i} className="flex items-center gap-1">
