@@ -48,7 +48,7 @@ export interface RepositoryResource {
 /**
  * Normalize recipes from database - handles malformed data like double-nested arrays or objects
  */
-const normalizeRecipes = (recipe: any): any[] => {
+export const normalizeRecipes = (recipe: any): any[] => {
   if (!recipe) return [];
   
   // If it's an array
