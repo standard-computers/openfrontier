@@ -225,7 +225,7 @@ const ResourceEditorModal = ({
   const handleAdoptPrice = (recipe: Recipe) => {
     // Calculate total cost of all ingredients
     let totalCost = 0;
-    for (const ingredient of recipe.ingredients) {
+    for (const ingredient of (recipe.ingredients || [])) {
       const ingredientResource = getResource(ingredient.resourceId);
       if (ingredientResource) {
         totalCost += ingredientResource.coinValue * ingredient.quantity;
@@ -1395,7 +1395,7 @@ const ResourceEditorModal = ({
                             </div>
                           </div>
                           <div className="flex items-center gap-1 flex-wrap">
-                            {recipe.ingredients.map((ing, i) => {
+                            {(recipe.ingredients || []).map((ing, i) => {
                               const r = getResource(ing.resourceId);
                               return (
                                 <span key={i} className="flex items-center gap-0.5 text-xs">
