@@ -725,7 +725,7 @@ export const useGameWorld = () => {
         }
       });
 
-      for (const ingredient of recipe.ingredients) {
+      for (const ingredient of (recipe.ingredients || [])) {
         if ((inventoryCounts[ingredient.resourceId] || 0) < ingredient.quantity) {
           const ingResource = prev.resources.find(r => r.id === ingredient.resourceId);
           result = { success: false, message: `Not enough ${ingResource?.name || ingredient.resourceId}` };
@@ -734,7 +734,7 @@ export const useGameWorld = () => {
       }
 
       let newInventory = [...prev.inventory];
-      for (const ingredient of recipe.ingredients) {
+      for (const ingredient of (recipe.ingredients || [])) {
         let remaining = ingredient.quantity;
         for (let i = 0; i < newInventory.length && remaining > 0; i++) {
           if (newInventory[i].resourceId === ingredient.resourceId) {
@@ -1127,7 +1127,7 @@ export const useGameWorld = () => {
         // If the resource has a recipe, break it into ingredients; otherwise give the resource itself
         if (destructibleResource.recipes && destructibleResource.recipes.length > 0) {
           const recipe = destructibleResource.recipes[0];
-          for (const ingredient of recipe.ingredients) {
+          for (const ingredient of (recipe.ingredients || [])) {
             for (let i = 0; i < ingredient.quantity; i++) {
               // Add ingredient to inventory
               let slotIndex = newInventory.findIndex(s => s.resourceId === ingredient.resourceId && s.quantity < 99);
