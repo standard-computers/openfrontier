@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import ResourceIcon from './ResourceIcon';
+import { normalizeRecipes } from '@/utils/resourceConverter';
 
 interface ResourceEditorModalProps {
   resource: Resource;
@@ -83,7 +84,7 @@ const ResourceEditorModal = ({
         healthGain: data.health_gain || 0,
         canInflictDamage: data.can_inflict_damage || false,
         damage: data.damage || 0,
-        recipes: data.recipe ? [data.recipe as unknown as Recipe] : [],
+        recipes: normalizeRecipes(data.recipe),
         isContainer: data.is_container || false,
         isFloating: data.is_floating || false,
         canFloatOnWater: data.can_float_on_water || false,
