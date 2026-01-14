@@ -21,6 +21,8 @@ import ClaimedTilesPanel from '@/components/game/ClaimedTilesPanel';
 import MarketplacePanel from '@/components/game/MarketplacePanel';
 import PlayerRankingPanel from '@/components/game/PlayerRankingPanel';
 import StrangerInfoPanel from '@/components/game/StrangerInfoPanel';
+import DemoOverlay from '@/components/game/DemoOverlay';
+import { useDemoWorld } from '@/hooks/useDemoWorld';
 import { Market, Position, calculateTileValue, Sovereignty, Stranger, TILE_TYPES } from '@/types/game';
 import { toast } from 'sonner';
 
@@ -51,9 +53,19 @@ const Index = () => {
   const [isMoving, setIsMoving] = useState(false);
   const [multiSelectMode, setMultiSelectMode] = useState(false);
   const [selectedTiles, setSelectedTiles] = useState<Position[]>([]);
-  const [cameraPosition, setCameraPosition] = useState<Position | null>(null); // null = follow player
+  const [cameraPosition, setCameraPosition] = useState<Position | null>(null);
   const [selectedStranger, setSelectedStranger] = useState<Stranger | null>(null);
   
+  // Determine if we're in demo mode (not logged in)
+  const isDemoMode = !loading && !user;
+  
+  // Use demo world when not authenticated
+  const demoWorld = useDemoWorld();
+  
+  // Use real game world when authenticated
+  const gameWorld = useGameWorld();
+  
+  // Select which world data to use
   const {
     world,
     setWorld,
@@ -93,36 +105,32 @@ const Index = () => {
     toggleEnableStrangers,
     updateStrangerDensity,
     saveMapData,
-  } = useGameWorld();
+  } = isDemoMode ? demoWorld : gameWorld;
 
   // Build member sovereignty map for stranger allegiance
   const memberSovereignties = useMemo(() => {
     const map = new Map<string, { username: string; sovereignty?: Sovereignty }>();
-    // Add current player's sovereignty
     if (world.userId && world.sovereignty) {
       map.set(world.userId, { username: username || 'Player', sovereignty: world.sovereignty });
     }
-    // Add other members (they would need to have their sovereignty loaded separately)
-    // For now we only track the current player's sovereignty since that's what we have access to
     members.forEach(member => {
       if (member.userId !== world.userId) {
-        // We don't have direct access to other members' sovereignties from here
-        // but we include them so the system knows about them
         map.set(member.userId, { username: member.username });
       }
     });
     return map;
   }, [world.userId, world.sovereignty, username, members]);
 
-  // Enable NPC behavior
-  useNPCBehavior({ world, setWorld, saveMapData });
+  // Enable NPC behavior (only in non-demo mode)
+  useNPCBehavior({ world, setWorld, saveMapData: isDemoMode ? async () => {} : saveMapData });
   
-  // Enable Stranger behavior
-  useStrangerBehavior({ world, setWorld, saveMapData, memberSovereignties });
+  // Enable Stranger behavior (only in non-demo mode)
+  useStrangerBehavior({ world, setWorld, saveMapData: isDemoMode ? async () => {} : saveMapData, memberSovereignties });
 
+  // Redirect authenticated users to worlds dashboard if no world selected
   useEffect(() => {
-    if (!loading && !user) {
-      navigate('/auth');
+    if (!loading && user && !localStorage.getItem('currentWorldId')) {
+      navigate('/worlds');
     }
   }, [user, loading, navigate]);
 
@@ -131,6 +139,10 @@ const Index = () => {
     : null;
 
   const handleClaim = () => {
+    if (isDemoMode) {
+      toast.error('Sign up to claim tiles!');
+      return;
+    }
     if (selectedTile) {
       const result = claimTile(selectedTile.x, selectedTile.y);
       if (result.success) {
@@ -142,6 +154,10 @@ const Index = () => {
   };
 
   const handleClaimAll = useCallback(() => {
+    if (isDemoMode) {
+      toast.error('Sign up to claim tiles!');
+      return;
+    }
     const result = claimMultipleTiles(selectedTiles);
     
     if (result.success) {
@@ -150,22 +166,30 @@ const Index = () => {
     } else {
       toast.error(result.message);
     }
-  }, [selectedTiles, claimMultipleTiles]);
+  }, [selectedTiles, claimMultipleTiles, isDemoMode]);
 
   const handleMultiTileSelect = useCallback((tiles: Position[]) => {
     setSelectedTiles(tiles);
   }, []);
 
   const handleMultiGather = useCallback((x: number, y: number, resourceId: string) => {
+    if (isDemoMode) {
+      toast.error('Sign up to gather resources!');
+      return;
+    }
     const resource = world.resources.find(r => r.id === resourceId);
     gatherFromTile(x, y, resourceId);
     if (resource) {
       const iconDisplay = resource.iconType === 'image' ? '✓' : resource.icon;
       toast.success(`Gathered ${iconDisplay} ${resource.name}`);
     }
-  }, [world.resources, gatherFromTile]);
+  }, [world.resources, gatherFromTile, isDemoMode]);
 
   const handleGather = (resourceId: string) => {
+    if (isDemoMode) {
+      toast.error('Sign up to gather resources!');
+      return;
+    }
     if (selectedTile) {
       const resource = world.resources.find(r => r.id === resourceId);
       gatherFromTile(selectedTile.x, selectedTile.y, resourceId);
@@ -176,8 +200,11 @@ const Index = () => {
     }
   };
 
-  // Gather all resources from selected tile
   const handleGatherAll = useCallback(() => {
+    if (isDemoMode) {
+      toast.error('Sign up to gather resources!');
+      return;
+    }
     if (!selectedTile) {
       toast.error('No tile selected');
       return;
@@ -186,7 +213,6 @@ const Index = () => {
     const tile = world.map.tiles[selectedTile.y]?.[selectedTile.x];
     if (!tile) return;
     
-    // Check distance from player
     const distance = Math.max(
       Math.abs(selectedTile.x - world.playerPosition.x),
       Math.abs(selectedTile.y - world.playerPosition.y)
@@ -198,13 +224,11 @@ const Index = () => {
       return;
     }
     
-    // Check if tile is claimed by someone else
     if (tile.claimedBy && tile.claimedBy !== world.userId) {
       toast.error('Cannot gather from another player\'s tile');
       return;
     }
     
-    // Gather all resources
     if (tile.resources.length === 0) {
       toast.info('No resources to gather');
       return;
@@ -217,9 +241,10 @@ const Index = () => {
     }
     
     toast.success(`Gathered ${gatheredCount} resource${gatheredCount > 1 ? 's' : ''}`);
-  }, [selectedTile, world.map.tiles, world.playerPosition, world.userId, gatherFromTile]);
+  }, [selectedTile, world.map.tiles, world.playerPosition, world.userId, gatherFromTile, isDemoMode]);
 
   const handleRenameTile = (name: string) => {
+    if (isDemoMode) return;
     if (selectedTile) {
       renameTile(selectedTile.x, selectedTile.y, name);
     }
@@ -229,7 +254,6 @@ const Index = () => {
     setTileSize(prev => Math.max(MIN_TILE_SIZE, Math.min(MAX_TILE_SIZE, prev + delta)));
   }, []);
 
-  // Handle movement with direction tracking and animation
   const handleMove = useCallback((dx: number, dy: number) => {
     if (dy < 0) setFacingDirection('north');
     else if (dy > 0) setFacingDirection('south');
@@ -238,23 +262,19 @@ const Index = () => {
     
     setIsMoving(true);
     movePlayer(dx, dy);
-    setCameraPosition(null); // Reset camera to follow player when moving
+    setCameraPosition(null);
     
-    // Stop moving animation after a short delay
     setTimeout(() => setIsMoving(false), 200);
   }, [movePlayer]);
 
-  // Navigate camera to a specific position
   const handleNavigateToPosition = useCallback((position: Position) => {
     setCameraPosition(position);
   }, []);
 
-  // Return camera to player
   const handleReturnToPlayer = useCallback(() => {
     setCameraPosition(null);
   }, []);
 
-  // Get current selected resource
   const selectedResource = world.inventory[selectedSlot]?.resourceId 
     ? world.resources.find(r => r.id === world.inventory[selectedSlot].resourceId)
     : null;
@@ -262,8 +282,11 @@ const Index = () => {
   const canPlaceSelectedItem = !!(selectedResource?.placeable && world.inventory[selectedSlot]?.quantity > 0);
   const canUseSelectedItem = !!(selectedResource?.canInflictDamage && world.inventory[selectedSlot]?.quantity > 0);
 
-  // Handle placing items
   const handlePlaceItem = useCallback(() => {
+    if (isDemoMode) {
+      toast.error('Sign up to place items!');
+      return;
+    }
     const slot = world.inventory[selectedSlot];
     if (!slot?.resourceId) {
       toast.error('No item selected');
@@ -276,9 +299,8 @@ const Index = () => {
     } else {
       toast.error(result.message);
     }
-  }, [world.inventory, selectedSlot, facingDirection, placeItem]);
+  }, [world.inventory, selectedSlot, facingDirection, placeItem, isDemoMode]);
 
-  // Check if player is adjacent to and facing a market
   const getAdjacentMarket = useCallback((): Market | null => {
     if (!world.enableMarkets || !world.markets?.length) return null;
     
@@ -293,7 +315,6 @@ const Index = () => {
       case 'west': targetX -= 1; break;
     }
     
-    // Check if the target tile is a market (1x1)
     for (const market of world.markets) {
       if (targetX === market.position.x && targetY === market.position.y) {
         return market;
@@ -303,20 +324,22 @@ const Index = () => {
     return null;
   }, [world.playerPosition, world.enableMarkets, world.markets, facingDirection]);
 
-  // Handle opening marketplace
   const handleOpenMarketplace = useCallback(() => {
+    if (isDemoMode) {
+      toast.error('Sign up to use the marketplace!');
+      return;
+    }
     const market = getAdjacentMarket();
     if (market) {
       setCurrentMarket(market);
       setMarketplaceOpen(true);
     } else {
-      // If not near a market, use Q for placing items instead
       handlePlaceItem();
     }
-  }, [getAdjacentMarket, handlePlaceItem]);
+  }, [getAdjacentMarket, handlePlaceItem, isDemoMode]);
 
-  // Handle requesting a stranger to move
   const handleRequestStrangerMove = useCallback((strangerId: string) => {
+    if (isDemoMode) return;
     setWorld(prev => {
       if (!prev.strangers) return prev;
       
@@ -326,7 +349,6 @@ const Index = () => {
       const stranger = prev.strangers[strangerIndex];
       const { x, y } = stranger.position;
       
-      // Get adjacent walkable tiles
       const directions = [
         { dx: 0, dy: -1 }, { dx: 0, dy: 1 },
         { dx: 1, dy: 0 }, { dx: -1, dy: 0 },
@@ -346,7 +368,6 @@ const Index = () => {
         return prev;
       }
       
-      // Pick a random adjacent tile
       const newPos = adjacentTiles[Math.floor(Math.random() * adjacentTiles.length)];
       const updatedStranger = { ...stranger, position: newPos };
       
@@ -357,10 +378,13 @@ const Index = () => {
       
       return { ...prev, strangers: newStrangers };
     });
-  }, [setWorld]);
+  }, [setWorld, isDemoMode]);
 
-  // Handle using item on facing tile (E key)
   const handleUseItem = useCallback(() => {
+    if (isDemoMode) {
+      toast.error('Sign up to use items!');
+      return;
+    }
     const result = useItemOnFacingTile(selectedSlot, facingDirection);
     if (result.message) {
       if (result.success) {
@@ -369,18 +393,15 @@ const Index = () => {
         toast.error(result.message);
       }
     }
-  }, [useItemOnFacingTile, selectedSlot, facingDirection]);
+  }, [useItemOnFacingTile, selectedSlot, facingDirection, isDemoMode]);
 
-  // Handle keyboard input for slot selection and placement
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if typing in an input or textarea
       const target = e.target as HTMLElement;
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
         return;
       }
       
-      // Number keys 1-9, 0, -, = for slots 0-11
       const slotKeys: Record<string, number> = {
         '1': 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5,
         '7': 6, '8': 7, '9': 8, '0': 9, '-': 10, '=': 11
@@ -391,19 +412,16 @@ const Index = () => {
         setSelectedSlot(slotKeys[e.key]);
       }
       
-      // Q key for marketplace (when adjacent) or placing items
       if (e.key.toLowerCase() === 'q') {
         e.preventDefault();
         handleOpenMarketplace();
       }
       
-      // G key for gathering all resources from selected tile
       if (e.key.toLowerCase() === 'g') {
         e.preventDefault();
         handleGatherAll();
       }
       
-      // E key for using item on facing tile (attack/destroy)
       if (e.key.toLowerCase() === 'e') {
         e.preventDefault();
         handleUseItem();
@@ -426,8 +444,17 @@ const Index = () => {
 
   const claimedCount = world.map.tiles.flat().filter(t => t.claimedBy === world.userId).length;
 
+  // Build tiles with position data for MultiTileInfoPanel
+  const selectedTilesWithData = selectedTiles.map(pos => ({
+    tile: world.map.tiles[pos.y]?.[pos.x],
+    position: pos
+  })).filter(t => t.tile);
+
   return (
     <div className="h-screen w-screen flex bg-background overflow-hidden">
+      {/* Demo mode overlay with login/signup buttons */}
+      {isDemoMode && <DemoOverlay />}
+      
       {/* Main map area */}
       <div className="flex-1 relative">
         <GameMap
@@ -456,34 +483,37 @@ const Index = () => {
           onStrangerClick={setSelectedStranger}
         />
         
-        <GameHUD
-          world={world}
-          resources={world.resources}
-          zoomPercent={zoomPercent}
-          username={username}
-          selectedSlot={selectedSlot}
-          multiSelectMode={multiSelectMode}
-          members={members}
-          cameraOffset={cameraPosition !== null}
-          onSelectSlot={setSelectedSlot}
-          onOpenConfig={() => setConfigOpen(true)}
-          onOpenAccount={() => setAccountOpen(true)}
-          onOpenSovereignty={() => setSovereigntyOpen(true)}
-          onOpenStats={() => setStatsOpen(true)}
-          onOpenCrafting={() => setCraftingOpen(true)}
-          onOpenClaimedTiles={() => setClaimedTilesOpen(true)}
-          onOpenRanking={() => setRankingOpen(true)}
-          onOpenMarketplace={() => setMarketplaceOpen(true)}
-          onZoom={handleZoom}
-          onConsumeResource={consumeResource}
-          onToggleMultiSelect={() => {
-            setMultiSelectMode(prev => !prev);
-            setSelectedTiles([]);
-          }}
-          onReturnToPlayer={handleReturnToPlayer}
-        />
+        {/* Only show HUD in non-demo mode */}
+        {!isDemoMode && (
+          <GameHUD
+            world={world}
+            resources={world.resources}
+            zoomPercent={zoomPercent}
+            username={username}
+            selectedSlot={selectedSlot}
+            multiSelectMode={multiSelectMode}
+            members={members}
+            cameraOffset={cameraPosition !== null}
+            onSelectSlot={setSelectedSlot}
+            onOpenConfig={() => setConfigOpen(true)}
+            onOpenAccount={() => setAccountOpen(true)}
+            onOpenSovereignty={() => setSovereigntyOpen(true)}
+            onOpenStats={() => setStatsOpen(true)}
+            onOpenCrafting={() => setCraftingOpen(true)}
+            onOpenClaimedTiles={() => setClaimedTilesOpen(true)}
+            onOpenRanking={() => setRankingOpen(true)}
+            onOpenMarketplace={() => setMarketplaceOpen(true)}
+            onZoom={handleZoom}
+            onConsumeResource={consumeResource}
+            onToggleMultiSelect={() => {
+              setMultiSelectMode(prev => !prev);
+              setSelectedTiles([]);
+            }}
+            onReturnToPlayer={handleReturnToPlayer}
+          />
+        )}
 
-        {/* Minimap */}
+        {/* Minimap - show in both modes */}
         <div className="absolute bottom-4 left-4 z-10 pointer-events-auto">
           <Minimap
             map={world.map}
@@ -496,191 +526,185 @@ const Index = () => {
 
         {isTouchDevice && (
           <TouchControls 
-            onMove={handleMove} 
+            onMove={handleMove}
             onPlace={handlePlaceItem}
-            onUse={handleUseItem}
             canPlace={canPlaceSelectedItem}
             canUse={canUseSelectedItem}
+            onUse={handleUseItem}
           />
         )}
       </div>
 
-      {/* Tile info panel - single tile */}
-      {selectedTile && selectedTileData && !multiSelectMode && (
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20">
-          <TileInfoPanel
-            tile={selectedTileData}
-            position={selectedTile}
-            playerPosition={world.playerPosition}
+      {/* Tile Info Panel - show in both modes */}
+      {selectedTileData && !multiSelectMode && (
+        <TileInfoPanel
+          tile={selectedTileData}
+          resources={world.resources}
+          position={selectedTile!}
+          playerPosition={world.playerPosition}
+          userId={world.userId}
+          userColor={world.userColor}
+          userCoins={world.coins}
+          members={members}
+          onClose={() => selectTile(selectedTile!.x, selectedTile!.y)}
+          onClaim={handleClaim}
+          onGather={handleGather}
+          onRename={handleRenameTile}
+          onViewUser={(member) => {
+            setSelectedMember(member);
+            setUserProfileOpen(true);
+          }}
+        />
+      )}
+
+      {/* Multi-tile selection panel - only in non-demo mode */}
+      {multiSelectMode && selectedTilesWithData.length > 0 && !isDemoMode && (
+        <MultiTileInfoPanel
+          tiles={selectedTilesWithData}
+          playerPosition={world.playerPosition}
+          resources={world.resources}
+          userId={world.userId}
+          userColor={world.userColor}
+          userCoins={world.coins}
+          onClose={() => {
+            setMultiSelectMode(false);
+            setSelectedTiles([]);
+          }}
+          onClaimAll={handleClaimAll}
+          onGather={handleMultiGather}
+          onCreateArea={createArea}
+        />
+      )}
+
+      {/* All panels - only in non-demo mode */}
+      {!isDemoMode && (
+        <>
+          <AccountPanel
+            isOpen={accountOpen}
+            username={username}
+            userColor={world.userColor}
+            coins={world.coins}
+            claimedTiles={claimedCount}
+            onColorChange={setUserColor}
+            onClose={() => setAccountOpen(false)}
+          />
+
+          <SovereigntyPanel
+            isOpen={sovereigntyOpen}
+            sovereignty={world.sovereignty}
+            areas={world.areas || []}
+            userColor={world.userColor}
+            coins={world.coins}
+            claimedTiles={claimedCount}
+            username={username}
+            onClose={() => setSovereigntyOpen(false)}
+            onColorChange={setUserColor}
+            onCreateSovereignty={createSovereignty}
+            onUpdateSovereignty={updateSovereignty}
+            onDeleteArea={deleteArea}
+            onUpdateArea={updateArea}
+          />
+
+          <WorldConfig
+            isOpen={configOpen}
+            worldName={world.name}
+            joinCode={world.joinCode}
+            isOwner={isOwner}
             resources={world.resources}
             userId={world.userId}
-            userColor={world.userColor}
-            userCoins={world.coins}
+            enableMarkets={world.enableMarkets}
+            enableNpcs={world.enableNpcs}
+            npcCount={world.npcCount}
+            enableStrangers={world.enableStrangers}
+            strangerDensity={world.strangerDensity}
+            mapWidth={world.map.width}
+            mapHeight={world.map.height}
+            onClose={() => setConfigOpen(false)}
+            onUpdateWorldName={updateWorldName}
+            onAddResource={addResource}
+            onAddExistingResource={addExistingResource}
+            onUpdateResource={updateResource}
+            onDeleteResource={deleteResource}
+            onRespawnResources={respawnResources}
+            onToggleMarkets={toggleEnableMarkets}
+            onToggleNpcs={toggleEnableNpcs}
+            onUpdateNpcCount={updateNpcCount}
+            onToggleStrangers={toggleEnableStrangers}
+            onUpdateStrangerDensity={updateStrangerDensity}
+          />
+
+          <WorldStatsPanel
+            isOpen={statsOpen}
+            world={world}
+            resources={world.resources}
             members={members}
-            onClose={() => selectTile(selectedTile.x, selectedTile.y)}
-            onClaim={handleClaim}
-            onGather={handleGather}
-            onRename={handleRenameTile}
+            onClose={() => setStatsOpen(false)}
             onViewUser={(member) => {
               setSelectedMember(member);
               setUserProfileOpen(true);
             }}
+            onNavigateToPosition={handleNavigateToPosition}
           />
-        </div>
-      )}
 
-      {/* Multi-tile info panel */}
-      {multiSelectMode && selectedTiles.length > 0 && (
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20">
-          <MultiTileInfoPanel
-            tiles={selectedTiles.map(pos => ({
-              tile: world.map.tiles[pos.y][pos.x],
-              position: pos,
-            }))}
-            playerPosition={world.playerPosition}
+          <CraftingPanel
+            isOpen={craftingOpen}
             resources={world.resources}
-            userId={world.userId}
-            userColor={world.userColor}
-            userCoins={world.coins}
-            onClose={() => setSelectedTiles([])}
-            onClaimAll={handleClaimAll}
-            onGather={handleMultiGather}
-            onCreateArea={createArea}
+            inventory={world.inventory}
+            onCraft={craftResource}
+            onClose={() => setCraftingOpen(false)}
           />
-        </div>
-      )}
 
-      <AccountPanel
-        isOpen={accountOpen}
-        onClose={() => setAccountOpen(false)}
-        userColor={world.userColor}
-        coins={world.coins}
-        claimedTiles={claimedCount}
-        username={username}
-        onColorChange={setUserColor}
-      />
+          <UserProfilePanel
+            isOpen={userProfileOpen}
+            member={selectedMember}
+            world={world}
+            onClose={() => {
+              setUserProfileOpen(false);
+              setSelectedMember(null);
+            }}
+          />
 
-      <SovereigntyPanel
-        isOpen={sovereigntyOpen}
-        onClose={() => setSovereigntyOpen(false)}
-        userColor={world.userColor}
-        coins={world.coins}
-        claimedTiles={claimedCount}
-        username={username}
-        sovereignty={world.sovereignty}
-        areas={world.areas}
-        onColorChange={setUserColor}
-        onCreateSovereignty={createSovereignty}
-        onUpdateSovereignty={updateSovereignty}
-        onDeleteArea={deleteArea}
-        onUpdateArea={updateArea}
-      />
+          <ClaimedTilesPanel
+            isOpen={claimedTilesOpen}
+            world={world}
+            onClose={() => setClaimedTilesOpen(false)}
+          />
 
-      <WorldConfig
-        isOpen={configOpen}
-        onClose={() => setConfigOpen(false)}
-        worldName={world.name}
-        joinCode={world.joinCode}
-        isOwner={isOwner}
-        resources={world.resources}
-        userId={world.userId}
-        enableMarkets={world.enableMarkets}
-        enableNpcs={world.enableNpcs}
-        npcCount={world.npcCount}
-        enableStrangers={world.enableStrangers}
-        strangerDensity={world.strangerDensity}
-        mapWidth={world.map.width}
-        mapHeight={world.map.height}
-        onUpdateWorldName={updateWorldName}
-        onAddResource={addResource}
-        onAddExistingResource={addExistingResource}
-        onUpdateResource={updateResource}
-        onDeleteResource={deleteResource}
-        onRespawnResources={respawnResources}
-        onToggleMarkets={toggleEnableMarkets}
-        onToggleNpcs={toggleEnableNpcs}
-        onUpdateNpcCount={updateNpcCount}
-        onToggleStrangers={toggleEnableStrangers}
-        onUpdateStrangerDensity={updateStrangerDensity}
-      />
+          <MarketplacePanel
+            isOpen={marketplaceOpen}
+            marketName={currentMarket?.name || 'Marketplace'}
+            playerCoins={world.coins}
+            inventory={world.inventory}
+            resources={world.resources}
+            onBuyResource={buyFromMarket}
+            onSellResource={sellToMarket}
+            onClose={() => {
+              setMarketplaceOpen(false);
+              setCurrentMarket(null);
+            }}
+          />
 
-      <WorldStatsPanel
-        isOpen={statsOpen}
-        onClose={() => setStatsOpen(false)}
-        world={world}
-        resources={world.resources}
-        members={members}
-        onViewUser={(member) => {
-          setSelectedMember(member);
-          setUserProfileOpen(true);
-        }}
-        onNavigateToPosition={(pos) => {
-          handleNavigateToPosition(pos);
-          setStatsOpen(false);
-        }}
-      />
+          <PlayerRankingPanel
+            isOpen={rankingOpen}
+            world={world}
+            resources={world.resources}
+            members={members}
+            onClose={() => setRankingOpen(false)}
+            onViewUser={(member) => {
+              setSelectedMember(member);
+              setUserProfileOpen(true);
+            }}
+            onNavigateToPosition={handleNavigateToPosition}
+          />
 
-      <CraftingPanel
-        isOpen={craftingOpen}
-        onClose={() => setCraftingOpen(false)}
-        resources={world.resources}
-        inventory={world.inventory}
-        onCraft={craftResource}
-      />
-
-      <UserProfilePanel
-        isOpen={userProfileOpen}
-        onClose={() => {
-          setUserProfileOpen(false);
-          setSelectedMember(null);
-        }}
-        member={selectedMember}
-        world={world}
-      />
-
-      <ClaimedTilesPanel
-        isOpen={claimedTilesOpen}
-        onClose={() => setClaimedTilesOpen(false)}
-        world={world}
-      />
-
-      <MarketplacePanel
-        isOpen={marketplaceOpen}
-        onClose={() => {
-          setMarketplaceOpen(false);
-          setCurrentMarket(null);
-        }}
-        marketName={currentMarket?.name || 'Marketplace'}
-        playerCoins={world.coins}
-        inventory={world.inventory}
-        resources={world.resources}
-        onBuyResource={buyFromMarket}
-        onSellResource={sellToMarket}
-      />
-
-      <PlayerRankingPanel
-        isOpen={rankingOpen}
-        onClose={() => setRankingOpen(false)}
-        world={world}
-        resources={world.resources}
-        members={members}
-        onViewUser={(member) => {
-          setSelectedMember(member);
-          setUserProfileOpen(true);
-          setRankingOpen(false);
-        }}
-        onNavigateToPosition={(pos) => {
-          handleNavigateToPosition(pos);
-          setRankingOpen(false);
-        }}
-      />
-
-      {selectedStranger && (
-        <StrangerInfoPanel
-          stranger={selectedStranger}
-          onClose={() => setSelectedStranger(null)}
-          onRequestMove={handleRequestStrangerMove}
-        />
+          {selectedStranger && (
+            <StrangerInfoPanel
+              stranger={selectedStranger}
+              onClose={() => setSelectedStranger(null)}
+              onRequestMove={handleRequestStrangerMove}
+            />
+          )}
+        </>
       )}
     </div>
   );
