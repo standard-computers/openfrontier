@@ -13,7 +13,7 @@ const DemoOverlay = () => {
             <Map className="w-8 h-8 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">WorldSmith</h1>
+            <h1 className="text-2xl font-bold text-foreground">OpenFrontier</h1>
             <p className="text-muted-foreground text-sm">Explore • Claim • Build</p>
           </div>
         </div>
