@@ -21,7 +21,7 @@ const DemoOverlay = () => {
         {/* Description */}
         <div className="text-center max-w-xs">
           <p className="text-muted-foreground text-sm">
-            Walk around and explore the world! Sign up to claim tiles, gather resources, and build your empire.
+            Walk around and explore the world! Sign up to claim tiles, gather resources, and build your empire in a completely customizable open source 32bit world.
           </p>
         </div>
 
