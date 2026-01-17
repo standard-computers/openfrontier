@@ -51,7 +51,7 @@ const WorldConfig = ({
   enableNpcs,
   npcCount,
   enableStrangers,
-  strangerDensity = 0.02,
+  strangerDensity = 100,
   mapWidth = 100,
   mapHeight = 100,
   onUpdateWorldName,
@@ -353,29 +353,25 @@ const WorldConfig = ({
                         {enableStrangers && (
                           <div className="space-y-3 pt-2 border-t border-border/50">
                             <div className="flex items-center gap-3">
-                              <label className="text-sm text-muted-foreground">Population Density:</label>
+                              <label className="text-sm text-muted-foreground">Population Count:</label>
                               <input
                                 type="number"
-                                min={0.001}
-                                max={1}
-                                step={0.01}
-                                value={strangerDensity}
+                                min={1}
+                                max={10000}
+                                step={1}
+                                value={Math.round(strangerDensity)}
                                 onChange={(e) => {
-                                  const value = Math.min(Math.max(parseFloat(e.target.value) || 0.02, 0.001), 1);
+                                  const value = Math.min(Math.max(parseInt(e.target.value) || 100, 1), 10000);
                                   onUpdateStrangerDensity?.(value);
                                 }}
-                                className="input-field w-24 text-center"
+                                className="input-field w-28 text-center"
                               />
                             </div>
                             
-                            <div className="text-sm text-muted-foreground">
-                              Computed strangers: <span className="font-medium text-foreground">{Math.floor(mapWidth * mapHeight * strangerDensity)}</span>
-                            </div>
-                            
-                            {strangerDensity > 0.5 && (
+                            {strangerDensity > 5000 && (
                               <div className="flex items-center gap-2 p-2 bg-destructive/20 rounded text-sm text-destructive">
                                 <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                                <span>High density may cause performance issues!</span>
+                                <span>High population may cause performance issues!</span>
                               </div>
                             )}
                           </div>

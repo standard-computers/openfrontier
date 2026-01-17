@@ -75,6 +75,14 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
             <ChevronRight className="w-4 h-4 text-muted-foreground" />
           </button>
 
+          {/* Population indicator */}
+          {world.enableStrangers && world.strangers && world.strangers.length > 0 && (
+            <div className="game-panel px-3 py-2 flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="text-lg">👤</span>
+              <span className="font-medium text-foreground">{world.strangers.length.toLocaleString()}</span>
+            </div>
+          )}
+
           {/* Clock and position tile */}
           <div className="game-panel px-3 py-2 flex items-center gap-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
