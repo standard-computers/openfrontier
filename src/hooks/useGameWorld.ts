@@ -1394,10 +1394,10 @@ export const useGameWorld = () => {
       .eq('id', dbWorldId);
   }, [isOwner, dbWorldId]);
 
-  const updateStrangerDensity = useCallback(async (density: number) => {
+  const updateStrangerDensity = useCallback(async (populationCount: number) => {
     if (!isOwner || !dbWorldId) return;
     
-    const strangerDensity = Math.min(Math.max(density, 0.001), 1);
+    const strangerDensity = Math.min(Math.max(Math.round(populationCount), 1), 10000);
     
     setWorld(prev => {
       const strangers = generateStrangers(strangerDensity, prev.map);
