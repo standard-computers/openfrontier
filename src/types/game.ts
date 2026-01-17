@@ -1074,12 +1074,11 @@ const STRANGER_FIRST_NAMES = ['Wandering', 'Lost', 'Curious', 'Quiet', 'Humble',
 const STRANGER_LAST_NAMES = ['Traveler', 'Nomad', 'Drifter', 'Seeker', 'Walker', 'Gatherer', 'Scout', 'Rover', 'Wanderer', 'Forager', 'Hunter', 'Pilgrim'];
 
 export const generateStrangers = (
-  density: number,
+  populationCount: number,
   map: WorldMap,
   existingStrangers?: Stranger[]
 ): Stranger[] => {
-  const totalTiles = map.width * map.height;
-  const strangerCount = Math.floor(totalTiles * density);
+  const strangerCount = Math.max(0, Math.round(populationCount));
   
   // If we already have strangers with the right count, return them
   if (existingStrangers && existingStrangers.length === strangerCount) {
