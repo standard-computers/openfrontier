@@ -537,24 +537,26 @@ const Index = () => {
 
       {/* Tile Info Panel - show in both modes */}
       {selectedTileData && !multiSelectMode && (
-        <TileInfoPanel
-          tile={selectedTileData}
-          resources={world.resources}
-          position={selectedTile!}
-          playerPosition={world.playerPosition}
-          userId={world.userId}
-          userColor={world.userColor}
-          userCoins={world.coins}
-          members={members}
-          onClose={() => selectTile(selectedTile!.x, selectedTile!.y)}
-          onClaim={handleClaim}
-          onGather={handleGather}
-          onRename={handleRenameTile}
-          onViewUser={(member) => {
-            setSelectedMember(member);
-            setUserProfileOpen(true);
-          }}
-        />
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 z-50">
+          <TileInfoPanel
+            tile={selectedTileData}
+            resources={world.resources}
+            position={selectedTile!}
+            playerPosition={world.playerPosition}
+            userId={world.userId}
+            userColor={world.userColor}
+            userCoins={world.coins}
+            members={members}
+            onClose={() => selectTile(selectedTile!.x, selectedTile!.y)}
+            onClaim={handleClaim}
+            onGather={handleGather}
+            onRename={handleRenameTile}
+            onViewUser={(member) => {
+              setSelectedMember(member);
+              setUserProfileOpen(true);
+            }}
+          />
+        </div>
       )}
 
       {/* Multi-tile selection panel - only in non-demo mode */}
