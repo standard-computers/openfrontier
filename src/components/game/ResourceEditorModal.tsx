@@ -755,7 +755,11 @@ const ResourceEditorModal = ({
                     <label htmlFor="passable" className={cn("text-sm", !form.placeable && "text-muted-foreground")}>Passable</label>
                   </div>
                   
-                  <div className="flex items-center gap-2">
+                </div>
+
+                {/* Limited Lifetime Section */}
+                <div className="bg-secondary/30 rounded-lg p-3 mt-4">
+                  <div className="flex items-center gap-2 mb-3">
                     <input
                       type="checkbox"
                       id="hasLimitedLifetime"
@@ -763,16 +767,11 @@ const ResourceEditorModal = ({
                       onChange={(e) => setForm({ ...form, hasLimitedLifetime: e.target.checked, lifetimeHours: e.target.checked ? (form.lifetimeHours || 24) : undefined })}
                       className="w-4 h-4"
                     />
-                    <label htmlFor="hasLimitedLifetime" className="text-sm">Limited Lifetime</label>
+                    <label htmlFor="hasLimitedLifetime" className="text-sm font-medium">⏳ Limited Lifetime</label>
                   </div>
                   
-                </div>
-
-                {form.hasLimitedLifetime && (
-                  <div className="mt-4">
-                    <label className="text-xs text-muted-foreground mb-1 block">
-                      Lifetime (game hours)
-                    </label>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Lifetime (game hours)</label>
                     <input
                       type="number"
                       inputMode="decimal"
@@ -784,12 +783,13 @@ const ResourceEditorModal = ({
                         setForm({ ...form, lifetimeHours: Math.max(0.01, Math.round(val * 100) / 100) });
                       }}
                       className="input-field w-full"
+                      disabled={!form.hasLimitedLifetime}
                     />
                     <p className="text-[10px] text-muted-foreground mt-0.5">
                       Hours before resource expires
                     </p>
                   </div>
-                )}
+                </div>
 
                 {/* Use Life Section */}
                 <div className="bg-secondary/30 rounded-lg p-3 mt-4">
