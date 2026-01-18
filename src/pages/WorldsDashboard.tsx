@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Globe, Trash2, Play, LogOut, Users, Crown, Copy, UserPlus, Database, Download, AlertTriangle, X } from 'lucide-react';
+import { Plus, Globe, Trash2, Play, LogOut, Users, Crown, Copy, UserPlus, Database, Download, AlertTriangle, X, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
@@ -9,6 +9,7 @@ import ResourceRepository from '@/components/game/ResourceRepository';
 import ResourceIcon from '@/components/game/ResourceIcon';
 import { Resource, TileProbabilities, DEFAULT_TILE_PROBABILITIES, TILE_TYPES, TileType } from '@/types/game';
 import { supabase } from '@/integrations/supabase/client';
+import { generateRandomWorldName } from '@/utils/nameGenerator';
 
 const WorldsDashboard = () => {
   const navigate = useNavigate();
@@ -343,14 +344,24 @@ const WorldsDashboard = () => {
             
             {createTab === 'settings' && (
               <>
-                <input
-                  value={newWorldName}
-                  onChange={(e) => setNewWorldName(e.target.value)}
-                  placeholder="World name..."
-                  className="input-field w-full"
-                  autoFocus
-                  onKeyDown={(e) => e.key === 'Enter' && !isSubmitting && handleCreateWorld()}
-                />
+                <div className="flex gap-2">
+                  <input
+                    value={newWorldName}
+                    onChange={(e) => setNewWorldName(e.target.value)}
+                    placeholder="World name..."
+                    className="input-field flex-1"
+                    autoFocus
+                    onKeyDown={(e) => e.key === 'Enter' && !isSubmitting && handleCreateWorld()}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setNewWorldName(generateRandomWorldName())}
+                    className="btn btn-ghost p-2"
+                    title="Generate random name"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                  </button>
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Width (min 12)</label>

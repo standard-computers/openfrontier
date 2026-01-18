@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Sovereignty, USER_COLORS, Area, AREA_COLORS } from '@/types/game';
-import { X, Flag, Crown, Palette, Coins, Info, Settings, Plus, MapPin, Trash2 } from 'lucide-react';
+import { X, Flag, Crown, Palette, Coins, Info, Settings, Plus, MapPin, Trash2, RefreshCw } from 'lucide-react';
+import { generateRandomSovereigntyName } from '@/utils/nameGenerator';
 import { cn } from '@/lib/utils';
 
 const FLAG_OPTIONS = ['🏴', '🏳️', '🚩', '⚔️', '🛡️', '👑', '🦁', '🦅', '🐉', '🌟', '⭐', '🔱', '🏰', '⚜️', '🗡️', '🎭'];
@@ -71,13 +72,23 @@ const SovereigntyPanel = ({
           <div className="p-4 space-y-4">
             <div>
               <label className="text-sm text-muted-foreground mb-1 block">Sovereignty Name</label>
-              <input
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="Kingdom of..."
-                className="input-field w-full"
-                autoFocus
-              />
+              <div className="flex gap-2">
+                <input
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Kingdom of..."
+                  className="input-field flex-1"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => setNewName(generateRandomSovereigntyName())}
+                  className="btn btn-ghost p-2"
+                  title="Generate random name"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             <div>
