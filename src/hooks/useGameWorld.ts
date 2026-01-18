@@ -290,7 +290,7 @@ export const useGameWorld = () => {
   }, [dbWorldId, world.map]);
 
   // Save world data (name, resource_ids) - only for owners
-  const saveWorldData = useCallback(async () => {
+  const saveWorldData = useCallback(async (overrideName?: string) => {
     if (!dbWorldId || !isOwner) return;
 
     // Get the resource IDs from the current resources
@@ -299,7 +299,7 @@ export const useGameWorld = () => {
     await supabase
       .from('worlds')
       .update({
-        name: world.name,
+        name: overrideName ?? world.name,
         resource_ids: resourceIds,
       })
       .eq('id', dbWorldId);
@@ -615,7 +615,8 @@ export const useGameWorld = () => {
   const updateWorldName = useCallback((name: string) => {
     if (!isOwner) return;
     setWorld(prev => ({ ...prev, name }));
-    setTimeout(saveWorldData, 500);
+    // Pass the new name directly to avoid stale closure issue
+    saveWorldData(name);
   }, [isOwner, saveWorldData]);
 
   const renameTile = useCallback((x: number, y: number, name: string) => {
