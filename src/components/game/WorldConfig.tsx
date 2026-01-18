@@ -241,7 +241,11 @@ const WorldConfig = ({
                       {isOwner && (
                         <button
                           type="button"
-                          onClick={() => handleNameChange(generateRandomWorldName())}
+                          onClick={() => {
+                            const newName = generateRandomWorldName();
+                            handleNameChange(newName);
+                            toast.success('World name updated!');
+                          }}
                           className="btn btn-ghost p-2"
                           title="Generate random name"
                         >
