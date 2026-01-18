@@ -86,6 +86,9 @@ const ResourceEditorModal = ({
         damage: data.damage || 0,
         recipes: normalizeRecipes(data.recipe),
         isContainer: data.is_container || false,
+        containerSpawnsResources: data.container_spawns_resources || false,
+        containerSpawnRandom: data.container_spawn_random ?? true,
+        containerSpawnResourceIds: data.container_spawn_resource_ids || undefined,
         isFloating: data.is_floating || false,
         canFloatOnWater: data.can_float_on_water || false,
         holdsPlayer: data.holds_player || false,
@@ -624,16 +627,6 @@ const ResourceEditorModal = ({
                     <label htmlFor="canInflictDamage" className="text-sm">Inflict Damage</label>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="isContainer"
-                      checked={form.isContainer || false}
-                      onChange={(e) => setForm({ ...form, isContainer: e.target.checked })}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="isContainer" className="text-sm">Is Container</label>
-                  </div>
                   
                   <div className="flex items-center gap-2">
                     <input
@@ -1016,6 +1009,116 @@ const ResourceEditorModal = ({
                       </button>
                     )}
                   </div>
+                </div>
+              </div>
+
+              {/* Container Section */}
+              <div className="bg-secondary/30 rounded-lg p-3">
+                <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                  📦 Container
+                </h4>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="isContainer"
+                      checked={form.isContainer || false}
+                      onChange={(e) => setForm({ ...form, isContainer: e.target.checked })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="isContainer" className="text-sm">Is Container</label>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    When enabled, this item can hold an inventory of resources
+                  </p>
+                  
+                  {form.isContainer && (
+                    <>
+                      <div className="flex items-center gap-2 mt-2">
+                        <input
+                          type="checkbox"
+                          id="containerSpawnsResources"
+                          checked={form.containerSpawnsResources || false}
+                          onChange={(e) => setForm({ ...form, containerSpawnsResources: e.target.checked })}
+                          className="w-4 h-4"
+                        />
+                        <label htmlFor="containerSpawnsResources" className="text-sm">Spawn Resources Inside</label>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">
+                        When enabled, this container will spawn with resources inside it
+                      </p>
+                      
+                      {form.containerSpawnsResources && (
+                        <div className="space-y-3 mt-2 pl-4 border-l-2 border-border">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              id="containerSpawnRandom"
+                              name="containerSpawnMode"
+                              checked={form.containerSpawnRandom !== false}
+                              onChange={() => setForm({ ...form, containerSpawnRandom: true, containerSpawnResourceIds: [] })}
+                              className="w-4 h-4"
+                            />
+                            <label htmlFor="containerSpawnRandom" className="text-sm">Random Resources</label>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground -mt-2">
+                            Spawn random resources from the world's resource pool
+                          </p>
+                          
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              id="containerSpawnSelected"
+                              name="containerSpawnMode"
+                              checked={form.containerSpawnRandom === false}
+                              onChange={() => setForm({ ...form, containerSpawnRandom: false })}
+                              className="w-4 h-4"
+                            />
+                            <label htmlFor="containerSpawnSelected" className="text-sm">Specific Resources</label>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground -mt-2">
+                            Select which resources can spawn in this container
+                          </p>
+                          
+                          {form.containerSpawnRandom === false && (
+                            <div className="mt-2">
+                              <label className="text-xs text-muted-foreground mb-1 block">Select Resources to Spawn</label>
+                              <div className="max-h-32 overflow-y-auto bg-background/50 rounded-md p-2 space-y-1">
+                                {allResources.filter(r => r.id !== form.id).length === 0 ? (
+                                  <p className="text-xs text-muted-foreground">No other resources available</p>
+                                ) : (
+                                  allResources.filter(r => r.id !== form.id).map(r => (
+                                    <label key={r.id} className="flex items-center gap-2 cursor-pointer p-1 hover:bg-secondary/50 rounded">
+                                      <input
+                                        type="checkbox"
+                                        checked={(form.containerSpawnResourceIds || []).includes(r.id)}
+                                        onChange={(e) => {
+                                          const currentIds = form.containerSpawnResourceIds || [];
+                                          if (e.target.checked) {
+                                            setForm({ ...form, containerSpawnResourceIds: [...currentIds, r.id] });
+                                          } else {
+                                            setForm({ ...form, containerSpawnResourceIds: currentIds.filter(id => id !== r.id) });
+                                          }
+                                        }}
+                                        className="w-3 h-3"
+                                      />
+                                      <ResourceIcon icon={r.icon} iconType={r.iconType} size="sm" />
+                                      <span className="text-xs">{r.name}</span>
+                                    </label>
+                                  ))
+                                )}
+                              </div>
+                              {(form.containerSpawnResourceIds?.length || 0) > 0 && (
+                                <p className="text-[10px] text-muted-foreground mt-1">
+                                  {form.containerSpawnResourceIds?.length} resource(s) selected
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
 

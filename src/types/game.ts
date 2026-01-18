@@ -53,6 +53,9 @@ export interface Resource {
   canInflictDamage?: boolean;
   damage?: number;
   isContainer?: boolean; // Can hold inventory
+  containerSpawnsResources?: boolean; // If true, container will have resources spawned inside
+  containerSpawnRandom?: boolean; // If true, spawn random resources; if false, use selected resources
+  containerSpawnResourceIds?: string[]; // Specific resource IDs to spawn in container
   isFloating?: boolean; // Hovers above tile (like dropped items)
   canFloatOnWater?: boolean; // Can be placed on water tiles
   holdsPlayer?: boolean; // Player can enter/ride this resource (vehicles, boats)

@@ -39,6 +39,9 @@ export type Database = {
           can_inflict_damage: boolean
           category: string | null
           consumable: boolean
+          container_spawn_random: boolean
+          container_spawn_resource_ids: string[] | null
+          container_spawns_resources: boolean
           created_at: string
           created_by: string | null
           damage: number
@@ -82,6 +85,9 @@ export type Database = {
           can_inflict_damage?: boolean
           category?: string | null
           consumable?: boolean
+          container_spawn_random?: boolean
+          container_spawn_resource_ids?: string[] | null
+          container_spawns_resources?: boolean
           created_at?: string
           created_by?: string | null
           damage?: number
@@ -125,6 +131,9 @@ export type Database = {
           can_inflict_damage?: boolean
           category?: string | null
           consumable?: boolean
+          container_spawn_random?: boolean
+          container_spawn_resource_ids?: string[] | null
+          container_spawns_resources?: boolean
           created_at?: string
           created_by?: string | null
           damage?: number
@@ -302,6 +311,9 @@ export type Database = {
           can_inflict_damage: boolean
           category: string | null
           consumable: boolean
+          container_spawn_random: boolean
+          container_spawn_resource_ids: string[] | null
+          container_spawns_resources: boolean
           created_at: string
           created_by: string | null
           damage: number
