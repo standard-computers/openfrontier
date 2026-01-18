@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Resource, RARITY_COLORS } from '@/types/game';
-import { X, Plus, Save, RefreshCw, Map, Package, Hammer, Copy, Lock, Database, LogOut, AlertTriangle, Search, Download } from 'lucide-react';
+import { X, Plus, RefreshCw, Map, Package, Hammer, Copy, Lock, Database, LogOut, AlertTriangle, Search, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -82,9 +82,9 @@ const WorldConfig = ({
     navigate('/worlds');
   };
 
-  const handleSaveName = () => {
-    onUpdateWorldName(name);
-    toast.success('World name updated');
+  const handleNameChange = (newName: string) => {
+    setName(newName);
+    onUpdateWorldName(newName);
   };
 
   const handleNewResource = () => {
@@ -230,19 +230,12 @@ const WorldConfig = ({
 
                   <div>
                     <label className="text-sm text-muted-foreground mb-1 block">World Name</label>
-                    <div className="flex gap-2">
-                      <input
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="input-field flex-1"
-                        disabled={!isOwner}
-                      />
-                      {isOwner && (
-                        <button onClick={handleSaveName} className="btn btn-primary">
-                          <Save className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
+                    <input
+                      value={name}
+                      onChange={(e) => handleNameChange(e.target.value)}
+                      className="input-field w-full"
+                      disabled={!isOwner}
+                    />
                   </div>
 
                   {isOwner && (
