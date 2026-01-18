@@ -14,6 +14,9 @@ export interface RepositoryResource {
   recipe: any;
   created_by: string | null;
   is_container: boolean;
+  container_spawns_resources: boolean;
+  container_spawn_random: boolean;
+  container_spawn_resource_ids: string[] | null;
   is_floating: boolean;
   can_float_on_water: boolean;
   holds_player: boolean;
@@ -101,6 +104,9 @@ export const repositoryToGameResource = (repoResource: RepositoryResource): Reso
     damage: repoResource.damage || 0,
     recipes: normalizeRecipes(repoResource.recipe),
     isContainer: repoResource.is_container || false,
+    containerSpawnsResources: repoResource.container_spawns_resources || false,
+    containerSpawnRandom: repoResource.container_spawn_random ?? true,
+    containerSpawnResourceIds: repoResource.container_spawn_resource_ids || undefined,
     isFloating: repoResource.is_floating || false,
     canFloatOnWater: repoResource.can_float_on_water || false,
     holdsPlayer: repoResource.holds_player || false,
@@ -145,6 +151,9 @@ export const gameResourceToRepository = (resource: Resource, userId?: string) =>
       : null,
     created_by: userId || null,
     is_container: resource.isContainer || false,
+    container_spawns_resources: resource.containerSpawnsResources || false,
+    container_spawn_random: resource.containerSpawnRandom ?? true,
+    container_spawn_resource_ids: resource.containerSpawnResourceIds || null,
     is_floating: resource.isFloating || false,
     can_float_on_water: resource.canFloatOnWater || false,
     holds_player: resource.holdsPlayer || false,
