@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import ResourceEditorModal from './ResourceEditorModal';
 import ResourceIcon from './ResourceIcon';
 import ResourceRepository from './ResourceRepository';
+import { generateRandomWorldName } from '@/utils/nameGenerator';
 import { supabase } from '@/integrations/supabase/client';
 import { repositoryToGameResource, RepositoryResource } from '@/utils/resourceConverter';
 
@@ -230,12 +231,24 @@ const WorldConfig = ({
 
                   <div>
                     <label className="text-sm text-muted-foreground mb-1 block">World Name</label>
-                    <input
-                      value={name}
-                      onChange={(e) => handleNameChange(e.target.value)}
-                      className="input-field w-full"
-                      disabled={!isOwner}
-                    />
+                    <div className="flex gap-2">
+                      <input
+                        value={name}
+                        onChange={(e) => handleNameChange(e.target.value)}
+                        className="input-field flex-1"
+                        disabled={!isOwner}
+                      />
+                      {isOwner && (
+                        <button
+                          type="button"
+                          onClick={() => handleNameChange(generateRandomWorldName())}
+                          className="btn btn-ghost p-2"
+                          title="Generate random name"
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {isOwner && (
