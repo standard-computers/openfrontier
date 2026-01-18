@@ -599,6 +599,69 @@ const ResourceEditorModal = ({
                 </div>
               </div>
 
+              {/* Tile Dimensions */}
+              <div className="border-t border-border pt-4">
+                <h4 className="text-sm font-medium mb-3">Tile Dimensions</h4>
+                <p className="text-[10px] text-muted-foreground mb-3">
+                  Size in tiles. 0 = smaller than tile, 1 = full tile (default), 2+ = multi-tile. Placement anchor is bottom-left.
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Width (tiles)</label>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      step="1"
+                      min="0"
+                      max={form.isFloating ? 1 : 99}
+                      value={form.tileWidth ?? 1}
+                      onChange={(e) => {
+                        const rawVal = e.target.value;
+                        if (rawVal === '') {
+                          setForm({ ...form, tileWidth: 0 });
+                          return;
+                        }
+                        const val = parseInt(rawVal, 10);
+                        if (!isNaN(val)) {
+                          const maxVal = form.isFloating ? 1 : 99;
+                          setForm({ ...form, tileWidth: Math.max(0, Math.min(maxVal, val)) });
+                        }
+                      }}
+                      className="input-field w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Height (tiles)</label>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      step="1"
+                      min="0"
+                      max={form.isFloating ? 1 : 99}
+                      value={form.tileHeight ?? 1}
+                      onChange={(e) => {
+                        const rawVal = e.target.value;
+                        if (rawVal === '') {
+                          setForm({ ...form, tileHeight: 0 });
+                          return;
+                        }
+                        const val = parseInt(rawVal, 10);
+                        if (!isNaN(val)) {
+                          const maxVal = form.isFloating ? 1 : 99;
+                          setForm({ ...form, tileHeight: Math.max(0, Math.min(maxVal, val)) });
+                        }
+                      }}
+                      className="input-field w-full"
+                    />
+                  </div>
+                </div>
+                {form.isFloating && (
+                  <p className="text-[10px] text-amber-500 mt-2">
+                    Floating items are limited to 1x1 or smaller
+                  </p>
+                )}
+              </div>
+
               {/* Optional Properties */}
               <div className="border-t border-border pt-4">
                 <h4 className="text-sm font-medium mb-3">Optional Properties</h4>
@@ -788,68 +851,6 @@ const ResourceEditorModal = ({
                   </div>
                 </div>
 
-                {/* Tile Dimensions */}
-                <div className="border-t border-border pt-4 mt-4">
-                  <h4 className="text-sm font-medium mb-3">Tile Dimensions</h4>
-                  <p className="text-[10px] text-muted-foreground mb-3">
-                    Size in tiles. 0 = smaller than tile, 1 = full tile (default), 2+ = multi-tile. Placement anchor is bottom-left.
-                  </p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs text-muted-foreground mb-1 block">Width (tiles)</label>
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        step="1"
-                        min="0"
-                        max={form.isFloating ? 1 : 99}
-                        value={form.tileWidth ?? 1}
-                        onChange={(e) => {
-                          const rawVal = e.target.value;
-                          if (rawVal === '') {
-                            setForm({ ...form, tileWidth: 0 });
-                            return;
-                          }
-                          const val = parseInt(rawVal, 10);
-                          if (!isNaN(val)) {
-                            const maxVal = form.isFloating ? 1 : 99;
-                            setForm({ ...form, tileWidth: Math.max(0, Math.min(maxVal, val)) });
-                          }
-                        }}
-                        className="input-field w-full"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-muted-foreground mb-1 block">Height (tiles)</label>
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        step="1"
-                        min="0"
-                        max={form.isFloating ? 1 : 99}
-                        value={form.tileHeight ?? 1}
-                        onChange={(e) => {
-                          const rawVal = e.target.value;
-                          if (rawVal === '') {
-                            setForm({ ...form, tileHeight: 0 });
-                            return;
-                          }
-                          const val = parseInt(rawVal, 10);
-                          if (!isNaN(val)) {
-                            const maxVal = form.isFloating ? 1 : 99;
-                            setForm({ ...form, tileHeight: Math.max(0, Math.min(maxVal, val)) });
-                          }
-                        }}
-                        className="input-field w-full"
-                      />
-                    </div>
-                  </div>
-                  {form.isFloating && (
-                    <p className="text-[10px] text-amber-500 mt-2">
-                      Floating items are limited to 1x1 or smaller
-                    </p>
-                  )}
-                </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
