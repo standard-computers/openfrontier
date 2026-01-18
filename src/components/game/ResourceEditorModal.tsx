@@ -671,19 +671,6 @@ const ResourceEditorModal = ({
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
-                      id="consumable"
-                      checked={form.consumable || false}
-                      onChange={(e) => setForm({ ...form, consumable: e.target.checked })}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="consumable" className="text-sm">Consumable</label>
-                  </div>
-                  
-
-                  
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
                       id="isFloating"
                       checked={form.isFloating || false}
                       onChange={(e) => {
@@ -842,11 +829,21 @@ const ResourceEditorModal = ({
                 </div>
 
 
-                {form.consumable && (
-                  <div className="mt-3">
-                    <label className="text-xs text-muted-foreground mb-1 block">
-                      Health Gain (on consumption)
-                    </label>
+                {/* Consumable Section */}
+                <div className="bg-secondary/30 rounded-lg p-3 mt-3">
+                  <div className="flex items-center gap-2 mb-3">
+                    <input
+                      type="checkbox"
+                      id="consumable"
+                      checked={form.consumable || false}
+                      onChange={(e) => setForm({ ...form, consumable: e.target.checked, healthGain: e.target.checked ? (form.healthGain || 0) : 0 })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="consumable" className="text-sm font-medium">🍎 Consumable</label>
+                  </div>
+                  
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Health Gain</label>
                     <input
                       type="number"
                       inputMode="decimal"
@@ -858,12 +855,13 @@ const ResourceEditorModal = ({
                         setForm({ ...form, healthGain: Math.max(0, Math.round(val * 100) / 100) });
                       }}
                       className="input-field w-full"
+                      disabled={!form.consumable}
                     />
                     <p className="text-[10px] text-muted-foreground mt-0.5">
                       Health gained when item is consumed
                     </p>
                   </div>
-                )}
+                </div>
 
                 {/* Inflict Damage Section */}
                 <div className="bg-secondary/30 rounded-lg p-3 mt-3">
