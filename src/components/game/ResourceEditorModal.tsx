@@ -679,16 +679,6 @@ const ResourceEditorModal = ({
                     <label htmlFor="consumable" className="text-sm">Consumable</label>
                   </div>
                   
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="canInflictDamage"
-                      checked={form.canInflictDamage || false}
-                      onChange={(e) => setForm({ ...form, canInflictDamage: e.target.checked })}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="canInflictDamage" className="text-sm">Inflict Damage</label>
-                  </div>
 
                   
                   <div className="flex items-center gap-2">
@@ -852,8 +842,8 @@ const ResourceEditorModal = ({
                 </div>
 
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
+                {form.consumable && (
+                  <div className="mt-3">
                     <label className="text-xs text-muted-foreground mb-1 block">
                       Health Gain (on consumption)
                     </label>
@@ -868,13 +858,26 @@ const ResourceEditorModal = ({
                         setForm({ ...form, healthGain: Math.max(0, Math.round(val * 100) / 100) });
                       }}
                       className="input-field w-full"
-                      disabled={!form.consumable}
                     />
                     <p className="text-[10px] text-muted-foreground mt-0.5">
                       Health gained when item is consumed
                     </p>
                   </div>
+                )}
 
+                {/* Inflict Damage Section */}
+                <div className="bg-secondary/30 rounded-lg p-3 mt-3">
+                  <div className="flex items-center gap-2 mb-3">
+                    <input
+                      type="checkbox"
+                      id="canInflictDamage"
+                      checked={form.canInflictDamage || false}
+                      onChange={(e) => setForm({ ...form, canInflictDamage: e.target.checked, damage: e.target.checked ? (form.damage || 1) : 0 })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="canInflictDamage" className="text-sm font-medium">⚔️ Inflict Damage</label>
+                  </div>
+                  
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Damage Amount</label>
                     <input
@@ -891,7 +894,7 @@ const ResourceEditorModal = ({
                       disabled={!form.canInflictDamage}
                     />
                     <p className="text-[10px] text-muted-foreground mt-0.5">
-                      Damage dealt when triggered
+                      Damage dealt when used on destructible items (press E)
                     </p>
                   </div>
                 </div>
