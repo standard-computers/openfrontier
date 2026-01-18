@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Globe, Trash2, Play, LogOut, Users, Crown, Copy, UserPlus, Database, Download, AlertTriangle } from 'lucide-react';
+import { Plus, Globe, Trash2, Play, LogOut, Users, Crown, Copy, UserPlus, Database, Download, AlertTriangle, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
@@ -265,10 +265,33 @@ const WorldsDashboard = () => {
           </button>
         </div>
 
-        {/* Create world form */}
+        {/* Create world modal */}
         {isCreating && (
-          <div className="game-panel p-6 mb-6 space-y-4">
-            <h2 className="font-semibold text-foreground">Create New World</h2>
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            <div className="game-panel w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+                <h2 className="font-semibold text-foreground text-lg">Create New World</h2>
+                <button 
+                  onClick={() => { 
+                    setIsCreating(false); 
+                    setNewWorldName(''); 
+                    setSelectedResources([]); 
+                    setCreateTab('settings');
+                    setEnableMarkets(false);
+                    setEnableNpcs(false);
+                    setNpcCount(4);
+                    setEnableStrangers(false);
+                    setStrangerDensity(0.02);
+                  }}
+                  className="btn btn-ghost p-2"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              {/* Content */}
+              <div className="flex-1 overflow-auto p-6 space-y-4">
             
             {/* Tabs */}
             <div className="flex gap-2 border-b border-border pb-2">
@@ -614,31 +637,34 @@ const WorldsDashboard = () => {
                 )}
               </div>
             )}
-            
-            <div className="flex gap-2">
-              <button 
-                onClick={handleCreateWorld} 
-                disabled={isSubmitting}
-                className="btn btn-primary flex-1"
-              >
-                {isSubmitting ? 'Creating...' : <><Plus className="w-4 h-4" /> Create World</>}
-              </button>
-              <button 
-                onClick={() => { 
-                  setIsCreating(false); 
-                  setNewWorldName(''); 
-                  setSelectedResources([]); 
-                  setCreateTab('settings');
-                  setEnableMarkets(false);
-                  setEnableNpcs(false);
-                  setNpcCount(4);
-                  setEnableStrangers(false);
-                  setStrangerDensity(0.02);
-                }}
-                className="btn"
-              >
-                Cancel
-              </button>
+              </div>
+
+              {/* Footer */}
+              <div className="flex gap-2 px-6 py-4 border-t border-border">
+                <button 
+                  onClick={handleCreateWorld} 
+                  disabled={isSubmitting}
+                  className="btn btn-primary flex-1"
+                >
+                  {isSubmitting ? 'Creating...' : <><Plus className="w-4 h-4" /> Create World</>}
+                </button>
+                <button 
+                  onClick={() => { 
+                    setIsCreating(false); 
+                    setNewWorldName(''); 
+                    setSelectedResources([]); 
+                    setCreateTab('settings');
+                    setEnableMarkets(false);
+                    setEnableNpcs(false);
+                    setNpcCount(4);
+                    setEnableStrangers(false);
+                    setStrangerDensity(0.02);
+                  }}
+                  className="btn"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         )}
