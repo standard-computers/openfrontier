@@ -759,7 +759,7 @@ const ResourceEditorModal = ({
 
                 {/* Limited Lifetime Section */}
                 <div className="bg-secondary/30 rounded-lg p-3 mt-4">
-                  <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
                       id="hasLimitedLifetime"
@@ -770,30 +770,31 @@ const ResourceEditorModal = ({
                     <label htmlFor="hasLimitedLifetime" className="text-sm font-medium">⏳ Limited Lifetime</label>
                   </div>
                   
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Lifetime (game hours)</label>
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      step="0.01"
-                      min="0.01"
-                      value={form.lifetimeHours || 24}
-                      onChange={(e) => {
-                        const val = parseFloat(e.target.value) || 1;
-                        setForm({ ...form, lifetimeHours: Math.max(0.01, Math.round(val * 100) / 100) });
-                      }}
-                      className="input-field w-full"
-                      disabled={!form.hasLimitedLifetime}
-                    />
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      Hours before resource expires
-                    </p>
-                  </div>
+                  {form.hasLimitedLifetime && (
+                    <div className="mt-3">
+                      <label className="text-xs text-muted-foreground mb-1 block">Lifetime (game hours)</label>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        step="0.01"
+                        min="0.01"
+                        value={form.lifetimeHours || 24}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value) || 1;
+                          setForm({ ...form, lifetimeHours: Math.max(0.01, Math.round(val * 100) / 100) });
+                        }}
+                        className="input-field w-full"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Hours before resource expires
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Use Life Section */}
                 <div className="bg-secondary/30 rounded-lg p-3 mt-4">
-                  <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
                       id="useLife"
@@ -803,35 +804,36 @@ const ResourceEditorModal = ({
                     />
                     <label htmlFor="useLife" className="text-sm font-medium">🔋 Use Life</label>
                   </div>
-                  <p className="text-[10px] text-muted-foreground mb-3">
-                    When enabled, using this item decreases its life/durability (press 'E' to use)
-                  </p>
                   
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Life Decrease Per Use</label>
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      step="0.01"
-                      min="0.01"
-                      value={form.lifeDecreasePerUse || 100}
-                      onChange={(e) => {
-                        const val = parseFloat(e.target.value) || 100;
-                        setForm({ ...form, lifeDecreasePerUse: Math.max(0.01, Math.round(val * 100) / 100) });
-                      }}
-                      className="input-field w-full"
-                      disabled={!form.useLife}
-                    />
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      Default 100 = full consumption in one use
-                    </p>
-                  </div>
+                  {form.useLife && (
+                    <div className="mt-3">
+                      <p className="text-[10px] text-muted-foreground mb-3">
+                        Using this item decreases its life/durability (press 'E' to use)
+                      </p>
+                      <label className="text-xs text-muted-foreground mb-1 block">Life Decrease Per Use</label>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        step="0.01"
+                        min="0.01"
+                        value={form.lifeDecreasePerUse || 100}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value) || 100;
+                          setForm({ ...form, lifeDecreasePerUse: Math.max(0.01, Math.round(val * 100) / 100) });
+                        }}
+                        className="input-field w-full"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Default 100 = full consumption in one use
+                      </p>
+                    </div>
+                  )}
                 </div>
 
 
                 {/* Consumable Section */}
                 <div className="bg-secondary/30 rounded-lg p-3 mt-3">
-                  <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
                       id="consumable"
@@ -842,30 +844,31 @@ const ResourceEditorModal = ({
                     <label htmlFor="consumable" className="text-sm font-medium">🍎 Consumable</label>
                   </div>
                   
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Health Gain</label>
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      step="0.01"
-                      min="0"
-                      value={form.healthGain || 0}
-                      onChange={(e) => {
-                        const val = parseFloat(e.target.value) || 0;
-                        setForm({ ...form, healthGain: Math.max(0, Math.round(val * 100) / 100) });
-                      }}
-                      className="input-field w-full"
-                      disabled={!form.consumable}
-                    />
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      Health gained when item is consumed
-                    </p>
-                  </div>
+                  {form.consumable && (
+                    <div className="mt-3">
+                      <label className="text-xs text-muted-foreground mb-1 block">Health Gain</label>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        step="0.01"
+                        min="0"
+                        value={form.healthGain || 0}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value) || 0;
+                          setForm({ ...form, healthGain: Math.max(0, Math.round(val * 100) / 100) });
+                        }}
+                        className="input-field w-full"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Health gained when item is consumed
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Inflict Damage Section */}
                 <div className="bg-secondary/30 rounded-lg p-3 mt-3">
-                  <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
                       id="canInflictDamage"
@@ -876,30 +879,31 @@ const ResourceEditorModal = ({
                     <label htmlFor="canInflictDamage" className="text-sm font-medium">⚔️ Inflict Damage</label>
                   </div>
                   
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Damage Amount</label>
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      step="0.01"
-                      min="0"
-                      value={form.damage || 0}
-                      onChange={(e) => {
-                        const val = parseFloat(e.target.value) || 0;
-                        setForm({ ...form, damage: Math.max(0, Math.round(val * 100) / 100) });
-                      }}
-                      className="input-field w-full"
-                      disabled={!form.canInflictDamage}
-                    />
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      Damage dealt when used on destructible items (press E)
-                    </p>
-                  </div>
+                  {form.canInflictDamage && (
+                    <div className="mt-3">
+                      <label className="text-xs text-muted-foreground mb-1 block">Damage Amount</label>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        step="0.01"
+                        min="0"
+                        value={form.damage || 0}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value) || 0;
+                          setForm({ ...form, damage: Math.max(0, Math.round(val * 100) / 100) });
+                        }}
+                        className="input-field w-full"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Damage dealt when used on destructible items (press E)
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* XP Gain Section */}
                 <div className="bg-secondary/30 rounded-lg p-3 mt-3">
-                  <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
                       id="givesXp"
@@ -910,111 +914,109 @@ const ResourceEditorModal = ({
                     <label htmlFor="givesXp" className="text-sm font-medium">⭐ Gives XP</label>
                   </div>
                   
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">XP Amount</label>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      min="0"
-                      value={form.xpAmount || 0}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value) || 0;
-                        setForm({ ...form, xpAmount: Math.max(0, val) });
-                      }}
-                      className="input-field w-full"
-                      disabled={!form.givesXp}
-                    />
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      XP earned each time the player uses this item
-                    </p>
-                  </div>
+                  {form.givesXp && (
+                    <div className="mt-3">
+                      <label className="text-xs text-muted-foreground mb-1 block">XP Amount</label>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min="0"
+                        value={form.xpAmount || 0}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value) || 0;
+                          setForm({ ...form, xpAmount: Math.max(0, val) });
+                        }}
+                        className="input-field w-full"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        XP earned each time the player uses this item
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Destructible Section */}
               <div className="bg-secondary/30 rounded-lg p-3">
-                <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
-                  💥 Destructible
-                </h4>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="destructible"
-                      checked={form.destructible || false}
-                      onChange={(e) => setForm({ ...form, destructible: e.target.checked })}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="destructible" className="text-sm">Can Be Destroyed</label>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground">
-                    If enabled, this item can be destroyed by damage-inflicting items (press E)
-                  </p>
-                  
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Max Life/Durability</label>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      min="1"
-                      max="10000"
-                      value={form.maxLife || 100}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value) || 100;
-                        setForm({ ...form, maxLife: Math.max(1, Math.min(10000, val)) });
-                      }}
-                      className="input-field w-full"
-                      disabled={!form.destructible}
-                    />
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      Total HP before destruction (1-10000)
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="destructible"
+                    checked={form.destructible || false}
+                    onChange={(e) => setForm({ ...form, destructible: e.target.checked })}
+                    className="w-4 h-4"
+                  />
+                  <label htmlFor="destructible" className="text-sm font-medium">💥 Destructible</label>
+                </div>
+                
+                {form.destructible && (
+                  <div className="space-y-3 mt-3">
+                    <p className="text-[10px] text-muted-foreground">
+                      This item can be destroyed by damage-inflicting items (press E)
                     </p>
-                  </div>
+                    
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">Max Life/Durability</label>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min="1"
+                        max="10000"
+                        value={form.maxLife || 100}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value) || 100;
+                          setForm({ ...form, maxLife: Math.max(1, Math.min(10000, val)) });
+                        }}
+                        className="input-field w-full"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Total HP before destruction (1-10000)
+                      </p>
+                    </div>
 
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Destroyed By (optional)</label>
-                    <p className="text-[10px] text-muted-foreground mb-2">
-                      Select which items can destroy this. Leave empty for any damage item.
-                    </p>
-                    <div className="max-h-32 overflow-y-auto bg-background/50 rounded-md p-2 space-y-1">
-                      {allResources.filter(r => r.canInflictDamage && r.id !== form.id).length === 0 ? (
-                        <p className="text-[10px] text-muted-foreground italic">No damage-inflicting items available</p>
-                      ) : (
-                        allResources.filter(r => r.canInflictDamage && r.id !== form.id).map(r => (
-                          <label key={r.id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-secondary/30 p-1 rounded">
-                            <input
-                              type="checkbox"
-                              checked={form.destroyedBy?.includes(r.id) || false}
-                              onChange={(e) => {
-                                const current = form.destroyedBy || [];
-                                if (e.target.checked) {
-                                  setForm({ ...form, destroyedBy: [...current, r.id] });
-                                } else {
-                                  setForm({ ...form, destroyedBy: current.filter(id => id !== r.id) });
-                                }
-                              }}
-                              className="w-3 h-3"
-                              disabled={!form.destructible}
-                            />
-                            <ResourceIcon icon={r.icon} iconType={r.iconType} size="sm" />
-                            <span>{r.name}</span>
-                            <span className="text-muted-foreground">({r.damage} dmg)</span>
-                          </label>
-                        ))
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">Destroyed By (optional)</label>
+                      <p className="text-[10px] text-muted-foreground mb-2">
+                        Select which items can destroy this. Leave empty for any damage item.
+                      </p>
+                      <div className="max-h-32 overflow-y-auto bg-background/50 rounded-md p-2 space-y-1">
+                        {allResources.filter(r => r.canInflictDamage && r.id !== form.id).length === 0 ? (
+                          <p className="text-[10px] text-muted-foreground italic">No damage-inflicting items available</p>
+                        ) : (
+                          allResources.filter(r => r.canInflictDamage && r.id !== form.id).map(r => (
+                            <label key={r.id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-secondary/30 p-1 rounded">
+                              <input
+                                type="checkbox"
+                                checked={form.destroyedBy?.includes(r.id) || false}
+                                onChange={(e) => {
+                                  const current = form.destroyedBy || [];
+                                  if (e.target.checked) {
+                                    setForm({ ...form, destroyedBy: [...current, r.id] });
+                                  } else {
+                                    setForm({ ...form, destroyedBy: current.filter(id => id !== r.id) });
+                                  }
+                                }}
+                                className="w-3 h-3"
+                              />
+                              <ResourceIcon icon={r.icon} iconType={r.iconType} size="sm" />
+                              <span>{r.name}</span>
+                              <span className="text-muted-foreground">({r.damage} dmg)</span>
+                            </label>
+                          ))
+                        )}
+                      </div>
+                      {form.destroyedBy && form.destroyedBy.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setForm({ ...form, destroyedBy: [] })}
+                          className="text-[10px] text-primary hover:underline mt-1"
+                        >
+                          Clear selection (allow any)
+                        </button>
                       )}
                     </div>
-                    {form.destroyedBy && form.destroyedBy.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setForm({ ...form, destroyedBy: [] })}
-                        className="text-[10px] text-primary hover:underline mt-1"
-                        disabled={!form.destructible}
-                      >
-                        Clear selection (allow any)
-                      </button>
-                    )}
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Container Section */}
