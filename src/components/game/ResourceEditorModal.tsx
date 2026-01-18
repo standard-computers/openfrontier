@@ -726,7 +726,34 @@ const ResourceEditorModal = ({
                     <label htmlFor="hasLimitedLifetime" className="text-sm">Limited Lifetime</label>
                   </div>
                   
-                  <div className="flex items-center gap-2">
+                </div>
+
+                {form.hasLimitedLifetime && (
+                  <div className="mt-4">
+                    <label className="text-xs text-muted-foreground mb-1 block">
+                      Lifetime (game hours)
+                    </label>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      step="0.01"
+                      min="0.01"
+                      value={form.lifetimeHours || 24}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value) || 1;
+                        setForm({ ...form, lifetimeHours: Math.max(0.01, Math.round(val * 100) / 100) });
+                      }}
+                      className="input-field w-full"
+                    />
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      Hours before resource expires
+                    </p>
+                  </div>
+                )}
+
+                {/* Use Life Section */}
+                <div className="bg-secondary/30 rounded-lg p-3 mt-4">
+                  <div className="flex items-center gap-2 mb-3">
                     <input
                       type="checkbox"
                       id="useLife"
@@ -734,55 +761,31 @@ const ResourceEditorModal = ({
                       onChange={(e) => setForm({ ...form, useLife: e.target.checked, lifeDecreasePerUse: e.target.checked ? (form.lifeDecreasePerUse || 100) : undefined })}
                       className="w-4 h-4"
                     />
-                    <label htmlFor="useLife" className="text-sm">Use Life</label>
+                    <label htmlFor="useLife" className="text-sm font-medium">🔋 Use Life</label>
                   </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 mt-4">
-                  {form.hasLimitedLifetime && (
-                    <div>
-                      <label className="text-xs text-muted-foreground mb-1 block">
-                        Lifetime (game hours)
-                      </label>
-                      <input
-                        type="number"
-                        inputMode="decimal"
-                        step="0.01"
-                        min="0.01"
-                        value={form.lifetimeHours || 24}
-                        onChange={(e) => {
-                          const val = parseFloat(e.target.value) || 1;
-                          setForm({ ...form, lifetimeHours: Math.max(0.01, Math.round(val * 100) / 100) });
-                        }}
-                        className="input-field w-full"
-                      />
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                        Hours before resource expires
-                      </p>
-                    </div>
-                  )}
-                  {form.useLife && (
-                    <div>
-                      <label className="text-xs text-muted-foreground mb-1 block">
-                        Life Decrease Per Use
-                      </label>
-                      <input
-                        type="number"
-                        inputMode="decimal"
-                        step="0.01"
-                        min="0.01"
-                        value={form.lifeDecreasePerUse || 100}
-                        onChange={(e) => {
-                          const val = parseFloat(e.target.value) || 100;
-                          setForm({ ...form, lifeDecreasePerUse: Math.max(0.01, Math.round(val * 100) / 100) });
-                        }}
-                        className="input-field w-full"
-                      />
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                        Default 100 = full consumption. Press 'E' to use.
-                      </p>
-                    </div>
-                  )}
+                  <p className="text-[10px] text-muted-foreground mb-3">
+                    When enabled, using this item decreases its life/durability (press 'E' to use)
+                  </p>
+                  
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Life Decrease Per Use</label>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      step="0.01"
+                      min="0.01"
+                      value={form.lifeDecreasePerUse || 100}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value) || 100;
+                        setForm({ ...form, lifeDecreasePerUse: Math.max(0.01, Math.round(val * 100) / 100) });
+                      }}
+                      className="input-field w-full"
+                      disabled={!form.useLife}
+                    />
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      Default 100 = full consumption in one use
+                    </p>
+                  </div>
                 </div>
 
                 {/* Tile Dimensions */}
