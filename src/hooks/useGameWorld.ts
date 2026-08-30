@@ -184,6 +184,14 @@ export const useGameWorld = () => {
           strangerDensity,
           strangers,
         });
+
+        // Persist the spawn territory claim
+        if (claimedSpawn) {
+          await supabase
+            .from('worlds')
+            .update({ map_data: JSON.parse(JSON.stringify(mapData)) as Json })
+            .eq('id', worldId);
+        }
       } catch (error) {
         console.error('Error loading world:', error);
       } finally {
