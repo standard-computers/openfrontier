@@ -25,7 +25,7 @@ interface UseStrangerBehaviorProps {
 
 export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovereignties }: UseStrangerBehaviorProps) => {
   const lastUpdateRef = useRef<number>(0);
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Calculate sovereignty values from map claims
   const calculateSovereigntyValues = useCallback((map: WorldMap, resources: Resource[]): SovereigntyInfo[] => {

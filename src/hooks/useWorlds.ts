@@ -155,7 +155,7 @@ export const useWorlds = (userId: string | undefined) => {
       if (Object.keys(updateData).length > 0) {
         await supabase
           .from('worlds')
-          .update(updateData)
+          .update(updateData as never)
           .eq('id', worldId);
       }
     }
