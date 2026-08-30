@@ -15,7 +15,7 @@ interface UseNPCBehaviorProps {
 
 export const useNPCBehavior = ({ world, setWorld, saveMapData }: UseNPCBehaviorProps) => {
   const lastUpdateRef = useRef<number>(0);
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Find adjacent walkable tiles
   const getAdjacentTiles = useCallback((x: number, y: number, map: WorldMap): { x: number; y: number }[] => {
