@@ -447,17 +447,32 @@ const GameMap = ({
   const updateViewport = useCallback(() => {
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
-      setViewportSize({
-        tilesX: Math.ceil(rect.width / tileSize) + 1,
-        tilesY: Math.ceil(rect.height / tileSize) + 1,
-      });
+      const tilesX = Math.ceil(rect.width / tileSize) + 1;
+      const tilesY = Math.ceil(rect.height / tileSize) + 1;
+      // Only update state when tile counts actually change — avoids re-render
+      // loops from mobile address-bar show/hide firing resize continuously
+      setViewportSize(prev =>
+        prev.tilesX === tilesX && prev.tilesY === tilesY ? prev : { tilesX, tilesY }
+      );
     }
   }, [tileSize]);
 
   useEffect(() => {
     updateViewport();
-    window.addEventListener('resize', updateViewport);
-    return () => window.removeEventListener('resize', updateViewport);
+    let rafId: number | null = null;
+    const handleResize = () => {
+      // Debounce via rAF to absorb rapid resize events on mobile scroll
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        updateViewport();
+      });
+    };
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
   }, [updateViewport]);
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
