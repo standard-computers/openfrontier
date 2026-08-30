@@ -857,7 +857,7 @@ export const useGameWorld = () => {
     return { success: true, health: newHealth };
   }, []);
 
-  const placeItem = useCallback((resourceId: string, direction: 'north' | 'south' | 'east' | 'west'): { success: boolean; message: string } => {
+  const placeItem = useCallback((resourceId: string, direction: 'north' | 'south' | 'east' | 'west', target?: { x: number; y: number }): { success: boolean; message: string } => {
     let result = { success: false, message: '' };
     
     setWorld(prev => {
@@ -879,15 +879,17 @@ export const useGameWorld = () => {
         return prev;
       }
       
-      // Calculate target position based on direction
-      let targetX = prev.playerPosition.x;
-      let targetY = prev.playerPosition.y;
-      
-      switch (direction) {
-        case 'north': targetY -= 1; break;
-        case 'south': targetY += 1; break;
-        case 'east': targetX += 1; break;
-        case 'west': targetX -= 1; break;
+      // Calculate target position: explicit target tile (third-person) or facing direction
+      let targetX = target?.x ?? prev.playerPosition.x;
+      let targetY = target?.y ?? prev.playerPosition.y;
+
+      if (!target) {
+        switch (direction) {
+          case 'north': targetY -= 1; break;
+          case 'south': targetY += 1; break;
+          case 'east': targetX += 1; break;
+          case 'west': targetX -= 1; break;
+        }
       }
       
       // Check bounds
