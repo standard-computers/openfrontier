@@ -147,13 +147,24 @@ export const useGameWorld = () => {
           ? generateStrangers(strangerDensity, mapData)
           : [];
 
+        // Third-person mode: the player's spawn point is their claimed territory.
+        // If the player has no claimed tiles yet, claim the spawn tile for free.
+        const spawnPos = playerData.position || mapData.spawnPoint || { x: 0, y: 0 };
+        const hasClaimedTile = mapData.tiles.some(row => row.some(t => t.claimedBy === user.id));
+        const spawnTile = mapData.tiles[spawnPos.y]?.[spawnPos.x];
+        let claimedSpawn = false;
+        if (!hasClaimedTile && spawnTile && !spawnTile.claimedBy) {
+          spawnTile.claimedBy = user.id;
+          claimedSpawn = true;
+        }
+
         setWorld({
           id: worldId,
           name: worldData.name,
           map: mapData,
           resources: resources,
           inventory: normalizedInventory,
-          playerPosition: playerData.position || mapData.spawnPoint || { x: 0, y: 0 },
+          playerPosition: spawnPos,
           userId: user.id,
           userColor: playerData.userColor || USER_COLORS[0],
           coins: playerData.coins ?? STARTING_COINS,
@@ -173,6 +184,14 @@ export const useGameWorld = () => {
           strangerDensity,
           strangers,
         });
+
+        // Persist the spawn territory claim
+        if (claimedSpawn) {
+          await supabase
+            .from('worlds')
+            .update({ map_data: JSON.parse(JSON.stringify(mapData)) as Json })
+            .eq('id', worldId);
+        }
       } catch (error) {
         console.error('Error loading world:', error);
       } finally {
@@ -838,7 +857,7 @@ export const useGameWorld = () => {
     return { success: true, health: newHealth };
   }, []);
 
-  const placeItem = useCallback((resourceId: string, direction: 'north' | 'south' | 'east' | 'west'): { success: boolean; message: string } => {
+  const placeItem = useCallback((resourceId: string, direction: 'north' | 'south' | 'east' | 'west', target?: { x: number; y: number }): { success: boolean; message: string } => {
     let result = { success: false, message: '' };
     
     setWorld(prev => {
@@ -860,15 +879,17 @@ export const useGameWorld = () => {
         return prev;
       }
       
-      // Calculate target position based on direction
-      let targetX = prev.playerPosition.x;
-      let targetY = prev.playerPosition.y;
-      
-      switch (direction) {
-        case 'north': targetY -= 1; break;
-        case 'south': targetY += 1; break;
-        case 'east': targetX += 1; break;
-        case 'west': targetX -= 1; break;
+      // Calculate target position: explicit target tile (third-person) or facing direction
+      let targetX = target?.x ?? prev.playerPosition.x;
+      let targetY = target?.y ?? prev.playerPosition.y;
+
+      if (!target) {
+        switch (direction) {
+          case 'north': targetY -= 1; break;
+          case 'south': targetY += 1; break;
+          case 'east': targetX += 1; break;
+          case 'west': targetX -= 1; break;
+        }
       }
       
       // Check bounds
