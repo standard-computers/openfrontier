@@ -254,18 +254,21 @@ const Index = () => {
     setTileSize(prev => Math.max(MIN_TILE_SIZE, Math.min(MAX_TILE_SIZE, prev + delta)));
   }, []);
 
+  // Third-person: movement pans the camera freely across the world
   const handleMove = useCallback((dx: number, dy: number) => {
     if (dy < 0) setFacingDirection('north');
     else if (dy > 0) setFacingDirection('south');
     else if (dx < 0) setFacingDirection('west');
     else if (dx > 0) setFacingDirection('east');
-    
-    setIsMoving(true);
-    movePlayer(dx, dy);
-    setCameraPosition(null);
-    
-    setTimeout(() => setIsMoving(false), 200);
-  }, [movePlayer]);
+
+    setCameraPosition(prev => {
+      const base = prev ?? world.playerPosition;
+      return {
+        x: Math.max(0, Math.min(world.map.width - 1, base.x + dx)),
+        y: Math.max(0, Math.min(world.map.height - 1, base.y + dy)),
+      };
+    });
+  }, [world.playerPosition, world.map.width, world.map.height]);
 
   const handleNavigateToPosition = useCallback((position: Position) => {
     setCameraPosition(position);
