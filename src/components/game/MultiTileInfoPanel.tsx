@@ -53,7 +53,7 @@ const MultiTileInfoPanel = ({
         Math.abs(position.x - playerPosition.x),
         Math.abs(position.y - playerPosition.y)
       );
-      const isWithinRange = distance <= CLAIM_RADIUS;
+      const isWithinRange = true; // third-person: no proximity limit
       
       if (tile.claimedBy === userId) {
         ownClaimedTiles.push({ tile, position });
@@ -241,7 +241,7 @@ const MultiTileInfoPanel = ({
               Math.abs(position.x - playerPosition.x),
               Math.abs(position.y - playerPosition.y)
             );
-            const isWithinRange = distance <= CLAIM_RADIUS;
+            const isWithinRange = true;
 
             return (
               <AccordionItem key={`${position.x}-${position.y}`} value={`tile-${index}`}>
