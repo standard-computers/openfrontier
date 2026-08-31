@@ -382,7 +382,11 @@ const Index = () => {
       toast.error('Sign up to use items!');
       return;
     }
-    const result = useItemOnFacingTile(selectedSlot, facingDirection);
+    if (!selectedTile) {
+      toast.error('Select a tile first');
+      return;
+    }
+    const result = useItemOnFacingTile(selectedSlot, facingDirection, selectedTile);
     if (result.message) {
       if (result.success) {
         toast.success(result.message);
