@@ -958,7 +958,8 @@ export const useGameWorld = () => {
   // Use damage-inflicting item on facing tile to destroy destructible resources
   const useItemOnFacingTile = useCallback((
     selectedSlot: number, 
-    facingDirection: 'north' | 'south' | 'east' | 'west'
+    facingDirection: 'north' | 'south' | 'east' | 'west',
+    target?: { x: number; y: number }
   ): { success: boolean; message: string } => {
     let result = { success: false, message: '' };
     
