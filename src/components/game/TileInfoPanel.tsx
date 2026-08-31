@@ -52,7 +52,7 @@ const TileInfoPanel = ({
     Math.abs(position.x - playerPosition.x),
     Math.abs(position.y - playerPosition.y)
   );
-  const isWithinClaimRange = distance <= CLAIM_RADIUS;
+  const isWithinClaimRange = true; // third-person: no proximity limit
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [tileName, setTileName] = useState(tile.name || '');

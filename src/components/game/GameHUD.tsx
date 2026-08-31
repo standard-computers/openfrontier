@@ -89,7 +89,7 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
               <Clock className="w-3 h-3" />
               Day {worldTime.days}, {worldTime.hours}:00
             </span>
-            <span>Pos: {world.playerPosition.x}, {world.playerPosition.y}</span>
+            <span>Home: {world.playerPosition.x}, {world.playerPosition.y}</span>
           </div>
 
           {/* Player ranking button */}

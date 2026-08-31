@@ -958,7 +958,8 @@ export const useGameWorld = () => {
   // Use damage-inflicting item on facing tile to destroy destructible resources
   const useItemOnFacingTile = useCallback((
     selectedSlot: number, 
-    facingDirection: 'north' | 'south' | 'east' | 'west'
+    facingDirection: 'north' | 'south' | 'east' | 'west',
+    target?: { x: number; y: number }
   ): { success: boolean; message: string } => {
     let result = { success: false, message: '' };
     
@@ -985,16 +986,19 @@ export const useGameWorld = () => {
         return prev;
       }
       
-      // Calculate target tile based on facing direction
-      let targetX = prev.playerPosition.x;
-      let targetY = prev.playerPosition.y;
+      // Target tile: explicit selection (third-person) or facing direction
+      let targetX = target ? target.x : prev.playerPosition.x;
+      let targetY = target ? target.y : prev.playerPosition.y;
       
-      switch (facingDirection) {
-        case 'north': targetY -= 1; break;
-        case 'south': targetY += 1; break;
-        case 'east': targetX += 1; break;
-        case 'west': targetX -= 1; break;
+      if (!target) {
+        switch (facingDirection) {
+          case 'north': targetY -= 1; break;
+          case 'south': targetY += 1; break;
+          case 'east': targetX += 1; break;
+          case 'west': targetX -= 1; break;
+        }
       }
+      
       
       // Check bounds
       if (targetX < 0 || targetX >= prev.map.width || targetY < 0 || targetY >= prev.map.height) {

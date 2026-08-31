@@ -222,27 +222,8 @@ const TileOverlay = memo(({
           </div>
         </div>
       )}
-      {/* Player character */}
-      {isPlayerHere && (
-        <div 
-          className="absolute z-20 flex items-end justify-center pointer-events-none"
-          style={{
-            left: 0,
-            right: 0,
-            bottom: 0,
-            height: tileSize * 2,
-          }}
-        >
-          <PixelCharacter 
-            direction={facingDirection} 
-            isMoving={isMoving} 
-            size={tileSize} 
-            userColor={userColor}
-          />
-        </div>
-      )}
       {/* NPC character */}
-      {npcOnTile && !isPlayerHere && (
+      {npcOnTile && (
         <div 
           className="absolute z-15 flex items-end justify-center pointer-events-none"
           style={{
@@ -261,7 +242,7 @@ const TileOverlay = memo(({
         </div>
       )}
       {/* Stranger on tile */}
-      {strangerOnTile && !isPlayerHere && !npcOnTile && (
+      {strangerOnTile && !npcOnTile && (
         <div 
           className="absolute z-14 flex items-end justify-center cursor-pointer group"
           style={{
@@ -306,7 +287,7 @@ const TileOverlay = memo(({
         </div>
       )}
       {/* Claim indicator */}
-      {isClaimed && !isPlayerHere && !npcOnTile && (
+      {isClaimed && !npcOnTile && (
         <div 
           className="absolute top-0.5 right-0.5 rounded-full"
           style={{ 

@@ -254,18 +254,21 @@ const Index = () => {
     setTileSize(prev => Math.max(MIN_TILE_SIZE, Math.min(MAX_TILE_SIZE, prev + delta)));
   }, []);
 
+  // Third-person: movement pans the camera freely across the world
   const handleMove = useCallback((dx: number, dy: number) => {
     if (dy < 0) setFacingDirection('north');
     else if (dy > 0) setFacingDirection('south');
     else if (dx < 0) setFacingDirection('west');
     else if (dx > 0) setFacingDirection('east');
-    
-    setIsMoving(true);
-    movePlayer(dx, dy);
-    setCameraPosition(null);
-    
-    setTimeout(() => setIsMoving(false), 200);
-  }, [movePlayer]);
+
+    setCameraPosition(prev => {
+      const base = prev ?? world.playerPosition;
+      return {
+        x: Math.max(0, Math.min(world.map.width - 1, base.x + dx)),
+        y: Math.max(0, Math.min(world.map.height - 1, base.y + dy)),
+      };
+    });
+  }, [world.playerPosition, world.map.width, world.map.height]);
 
   const handleNavigateToPosition = useCallback((position: Position) => {
     setCameraPosition(position);
@@ -292,37 +295,31 @@ const Index = () => {
       toast.error('No item selected');
       return;
     }
+    if (!selectedTile) {
+      toast.error('Select a tile first');
+      return;
+    }
     
-    const result = placeItem(slot.resourceId, facingDirection);
+    const result = placeItem(slot.resourceId, facingDirection, selectedTile);
     if (result.success) {
       toast.success(result.message);
     } else {
       toast.error(result.message);
     }
-  }, [world.inventory, selectedSlot, facingDirection, placeItem, isDemoMode]);
+  }, [world.inventory, selectedSlot, facingDirection, selectedTile, placeItem, isDemoMode]);
 
+  // Market on the currently selected tile
   const getAdjacentMarket = useCallback((): Market | null => {
-    if (!world.enableMarkets || !world.markets?.length) return null;
-    
-    const { x, y } = world.playerPosition;
-    let targetX = x;
-    let targetY = y;
-    
-    switch (facingDirection) {
-      case 'north': targetY -= 1; break;
-      case 'south': targetY += 1; break;
-      case 'east': targetX += 1; break;
-      case 'west': targetX -= 1; break;
-    }
+    if (!world.enableMarkets || !world.markets?.length || !selectedTile) return null;
     
     for (const market of world.markets) {
-      if (targetX === market.position.x && targetY === market.position.y) {
+      if (selectedTile.x === market.position.x && selectedTile.y === market.position.y) {
         return market;
       }
     }
     
     return null;
-  }, [world.playerPosition, world.enableMarkets, world.markets, facingDirection]);
+  }, [world.enableMarkets, world.markets, selectedTile]);
 
   const handleOpenMarketplace = useCallback(() => {
     if (isDemoMode) {
@@ -385,7 +382,11 @@ const Index = () => {
       toast.error('Sign up to use items!');
       return;
     }
-    const result = useItemOnFacingTile(selectedSlot, facingDirection);
+    if (!selectedTile) {
+      toast.error('Select a tile first');
+      return;
+    }
+    const result = useItemOnFacingTile(selectedSlot, facingDirection, selectedTile);
     if (result.message) {
       if (result.success) {
         toast.success(result.message);
@@ -393,7 +394,7 @@ const Index = () => {
         toast.error(result.message);
       }
     }
-  }, [useItemOnFacingTile, selectedSlot, facingDirection, isDemoMode]);
+  }, [useItemOnFacingTile, selectedSlot, facingDirection, selectedTile, isDemoMode]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
