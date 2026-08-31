@@ -295,37 +295,31 @@ const Index = () => {
       toast.error('No item selected');
       return;
     }
+    if (!selectedTile) {
+      toast.error('Select a tile first');
+      return;
+    }
     
-    const result = placeItem(slot.resourceId, facingDirection);
+    const result = placeItem(slot.resourceId, facingDirection, selectedTile);
     if (result.success) {
       toast.success(result.message);
     } else {
       toast.error(result.message);
     }
-  }, [world.inventory, selectedSlot, facingDirection, placeItem, isDemoMode]);
+  }, [world.inventory, selectedSlot, facingDirection, selectedTile, placeItem, isDemoMode]);
 
+  // Market on the currently selected tile
   const getAdjacentMarket = useCallback((): Market | null => {
-    if (!world.enableMarkets || !world.markets?.length) return null;
-    
-    const { x, y } = world.playerPosition;
-    let targetX = x;
-    let targetY = y;
-    
-    switch (facingDirection) {
-      case 'north': targetY -= 1; break;
-      case 'south': targetY += 1; break;
-      case 'east': targetX += 1; break;
-      case 'west': targetX -= 1; break;
-    }
+    if (!world.enableMarkets || !world.markets?.length || !selectedTile) return null;
     
     for (const market of world.markets) {
-      if (targetX === market.position.x && targetY === market.position.y) {
+      if (selectedTile.x === market.position.x && selectedTile.y === market.position.y) {
         return market;
       }
     }
     
     return null;
-  }, [world.playerPosition, world.enableMarkets, world.markets, facingDirection]);
+  }, [world.enableMarkets, world.markets, selectedTile]);
 
   const handleOpenMarketplace = useCallback(() => {
     if (isDemoMode) {
