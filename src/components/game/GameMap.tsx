@@ -242,7 +242,7 @@ const TileOverlay = memo(({
         </div>
       )}
       {/* Stranger on tile */}
-      {strangerOnTile && !isPlayerHere && !npcOnTile && (
+      {strangerOnTile && !npcOnTile && (
         <div 
           className="absolute z-14 flex items-end justify-center cursor-pointer group"
           style={{
@@ -287,7 +287,7 @@ const TileOverlay = memo(({
         </div>
       )}
       {/* Claim indicator */}
-      {isClaimed && !isPlayerHere && !npcOnTile && (
+      {isClaimed && !npcOnTile && (
         <div 
           className="absolute top-0.5 right-0.5 rounded-full"
           style={{ 
