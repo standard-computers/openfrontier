@@ -394,7 +394,7 @@ const Index = () => {
         toast.error(result.message);
       }
     }
-  }, [useItemOnFacingTile, selectedSlot, facingDirection, isDemoMode]);
+  }, [useItemOnFacingTile, selectedSlot, facingDirection, selectedTile, isDemoMode]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
