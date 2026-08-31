@@ -222,27 +222,8 @@ const TileOverlay = memo(({
           </div>
         </div>
       )}
-      {/* Player character */}
-      {isPlayerHere && (
-        <div 
-          className="absolute z-20 flex items-end justify-center pointer-events-none"
-          style={{
-            left: 0,
-            right: 0,
-            bottom: 0,
-            height: tileSize * 2,
-          }}
-        >
-          <PixelCharacter 
-            direction={facingDirection} 
-            isMoving={isMoving} 
-            size={tileSize} 
-            userColor={userColor}
-          />
-        </div>
-      )}
       {/* NPC character */}
-      {npcOnTile && !isPlayerHere && (
+      {npcOnTile && (
         <div 
           className="absolute z-15 flex items-end justify-center pointer-events-none"
           style={{
