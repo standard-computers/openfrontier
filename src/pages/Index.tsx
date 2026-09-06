@@ -399,11 +399,16 @@ const Index = () => {
       toast.error('Sign up to use items!');
       return;
     }
-    if (!selectedTile) {
+    if (!selectedTile && selectedTiles.length === 0) {
       toast.error('Select a tile first');
       return;
     }
-    const result = useItemOnFacingTile(selectedSlot, facingDirection, selectedTile);
+    const result = useItemOnFacingTile(
+      selectedSlot,
+      facingDirection,
+      selectedTile ?? selectedTiles[0],
+      selectedTiles.length > 0 ? selectedTiles : undefined
+    );
     if (result.message) {
       if (result.success) {
         toast.success(result.message);
@@ -411,7 +416,7 @@ const Index = () => {
         toast.error(result.message);
       }
     }
-  }, [useItemOnFacingTile, selectedSlot, facingDirection, selectedTile, isDemoMode]);
+  }, [useItemOnFacingTile, selectedSlot, facingDirection, selectedTile, selectedTiles, isDemoMode]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
