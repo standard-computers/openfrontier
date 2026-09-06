@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { GameWorld, Resource, Sovereignty, Market, NPC, Area, Position, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap, TILE_TYPES, generateNPCs, generateStrangers, Stranger, canAddResourceToTile, isLargeResource } from '@/types/game';
+import { GameWorld, Resource, Sovereignty, Market, NPC, Area, Position, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap, TILE_TYPES, generateNPCs, generateStrangers, calculateStrangerCount, Stranger, canAddResourceToTile, isLargeResource } from '@/types/game';
 import type { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import { fetchWorldResources, addResourceToRepository, updateResourceInRepository, deleteResourceFromRepository } from '@/utils/resourceConverter';
@@ -134,18 +134,17 @@ export const useGameWorld = () => {
 
         const enableNpcs = (worldData as any).enable_npcs ?? false;
         const npcCount = (worldData as any).npc_count ?? 0;
-        const enableStrangers = (worldData as any).enable_strangers ?? false;
-        const strangerDensity = parseFloat((worldData as any).stranger_density) ?? 0.02;
+        // Strangers are always on; population is auto-calculated from world size
+        const enableStrangers = true;
+        const strangerDensity = calculateStrangerCount(mapData.width, mapData.height);
         
         // Generate NPCs if enabled
         const npcs = enableNpcs && npcCount > 0 
           ? generateNPCs(npcCount, mapData)
           : [];
 
-        // Generate Strangers if enabled
-        const strangers = enableStrangers 
-          ? generateStrangers(strangerDensity, mapData)
-          : [];
+        // Generate Strangers (always enabled)
+        const strangers = generateStrangers(strangerDensity, mapData);
 
         // Third-person mode: the player's spawn point is their claimed territory.
         // If the player has no claimed tiles yet, claim the spawn tile for free.
@@ -1399,50 +1398,13 @@ export const useGameWorld = () => {
       .eq('id', dbWorldId);
   }, [isOwner, dbWorldId]);
 
-  const toggleEnableStrangers = useCallback(async (enabled: boolean, density: number = 0.02) => {
-    if (!isOwner || !dbWorldId) return;
-    
-    const strangerDensity = enabled ? Math.min(Math.max(density, 0.001), 1) : 0.02;
-    
-    setWorld(prev => {
-      const strangers = enabled 
-        ? generateStrangers(strangerDensity, prev.map, prev.strangers)
-        : [];
-      return { ...prev, enableStrangers: enabled, strangerDensity, strangers };
-    });
-    
-    await supabase
-      .from('worlds')
-      .update({ 
-        enable_strangers: enabled,
-        stranger_density: strangerDensity
-      })
-      .eq('id', dbWorldId);
-  }, [isOwner, dbWorldId]);
+  const toggleEnableStrangers = useCallback(async () => {
+    // Strangers are always enabled and auto-sized to the world; nothing to toggle.
+  }, []);
 
-  const updateStrangerDensity = useCallback(async (populationCount: number) => {
-    if (!isOwner || !dbWorldId) return;
-    
-    const strangerDensity = Math.min(Math.max(Math.round(populationCount), 1), 10000);
-    
-    setWorld(prev => {
-      const strangers = generateStrangers(strangerDensity, prev.map);
-      return { 
-        ...prev, 
-        strangerDensity,
-        enableStrangers: true,
-        strangers,
-      };
-    });
-    
-    await supabase
-      .from('worlds')
-      .update({ 
-        enable_strangers: true,
-        stranger_density: strangerDensity
-      })
-      .eq('id', dbWorldId);
-  }, [isOwner, dbWorldId]);
+  const updateStrangerDensity = useCallback(async () => {
+    // Population is auto-calculated from world size; nothing to update.
+  }, []);
 
   return {
     world,
