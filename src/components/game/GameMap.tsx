@@ -510,26 +510,18 @@ const GameMap = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onMove]);
 
-  // Compute visible tiles data with all derived properties
+  // Only tiles that actually need a DOM overlay (market / resource / character).
+  // Claims, areas and selection highlights are painted on canvas instead.
   const visibleTilesData = useMemo(() => {
     const endX = Math.min(viewportOffset.x + viewportSize.tilesX, map.width);
     const endY = Math.min(viewportOffset.y + viewportSize.tilesY, map.height);
-    
+
     const result: Array<{
       x: number;
       y: number;
       screenX: number;
       screenY: number;
-      tile: typeof map.tiles[0][0];
-      isPlayerHere: boolean;
-      isSelected: boolean;
-      isWalkable: boolean;
-      isClaimed: boolean;
-      isOwnClaim: boolean;
-      claimColor: string;
-      borderStyles: React.CSSProperties;
       marketOnTile: Market | null;
-      tileArea: Area | undefined;
       displayableResource: Resource | undefined;
       resourceWidth: number;
       resourceHeight: number;
@@ -540,99 +532,67 @@ const GameMap = ({
       npcOnTile: NPC | undefined;
       strangerOnTile: Stranger | undefined;
     }> = [];
-    
+
+    if (!showDetails) return result;
+
+    const hasMarkets = marketPositionMap.size > 0;
+    const hasNpcs = npcPositionMap.size > 0;
+    const hasStrangers = strangerPositionMap.size > 0;
+
     for (let y = viewportOffset.y; y < endY; y++) {
+      const row = map.tiles[y];
+      if (!row) continue;
       for (let x = viewportOffset.x; x < endX; x++) {
-        const tile = map.tiles[y]?.[x];
+        const tile = row[x];
         if (!tile) continue;
-        
-        const screenX = x - viewportOffset.x;
-        const screenY = y - viewportOffset.y;
+
+        const hasResources = tile.resources.length > 0;
+        if (!hasResources && !hasMarkets && !hasNpcs && !hasStrangers) continue;
+
         const posKey = `${x}-${y}`;
-        
-        const isPlayerHere = x === playerPosition.x && y === playerPosition.y;
-        const isSelected = selectedTile?.x === x && selectedTile?.y === y;
-        const tileTypeInfo = TILE_TYPES.find(t => t.type === tile.type);
-        const isWalkable = tileTypeInfo?.walkable ?? tile.walkable;
-        const isClaimed = !!tile.claimedBy;
-        const isOwnClaim = tile.claimedBy === userId;
-        
-        // Get NPC claim owner
-        const npcClaimOwner = tile.claimedBy?.startsWith('npc-') 
-          ? npcs.find(npc => npc.id === tile.claimedBy)
-          : null;
-        
-        const claimColor = isOwnClaim 
-          ? userColor 
-          : npcClaimOwner 
-            ? npcClaimOwner.color 
-            : '#888';
-        
-        // Calculate border styles
-        let borderStyles: React.CSSProperties = {};
-        if (isClaimed && !isSelected && !selectedTilesSet.has(posKey)) {
-          const borderWidth = 2;
-          const topTile = map.tiles[y - 1]?.[x];
-          const bottomTile = map.tiles[y + 1]?.[x];
-          const leftTile = map.tiles[y]?.[x - 1];
-          const rightTile = map.tiles[y]?.[x + 1];
-          
-          borderStyles = {
-            borderTop: topTile?.claimedBy !== tile.claimedBy ? `${borderWidth}px solid ${claimColor}` : 'none',
-            borderBottom: bottomTile?.claimedBy !== tile.claimedBy ? `${borderWidth}px solid ${claimColor}` : 'none',
-            borderLeft: leftTile?.claimedBy !== tile.claimedBy ? `${borderWidth}px solid ${claimColor}` : 'none',
-            borderRight: rightTile?.claimedBy !== tile.claimedBy ? `${borderWidth}px solid ${claimColor}` : 'none',
-          };
+        const marketOnTile = hasMarkets ? marketPositionMap.get(posKey) || null : null;
+        const npcOnTile = hasNpcs ? npcPositionMap.get(posKey) : undefined;
+        const strangerOnTile = hasStrangers ? strangerPositionMap.get(posKey) : undefined;
+
+        let displayableResource: Resource | undefined;
+        let hasLightEmitter = false;
+        if (hasResources) {
+          let bestSize = -1;
+          for (const resId of tile.resources) {
+            const r = resourceMap.get(resId);
+            if (!r || !(r.isFloating || r.display)) continue;
+            if (isNighttime && r.emitsLight) hasLightEmitter = true;
+            const size = (r.tileWidth ?? 1) * (r.tileHeight ?? 1);
+            if (size > bestSize) {
+              bestSize = size;
+              displayableResource = r;
+            }
+          }
         }
-        
-        const marketOnTile = marketPositionMap.get(posKey) || null;
-        const tileArea = getAreaForTile(x, y);
-        const npcOnTile = npcPositionMap.get(posKey);
-        const strangerOnTile = strangerPositionMap.get(posKey);
-        
-        // Get displayable resources
-        const displayableResources = tile.resources
-          .map(resId => resourceMap.get(resId))
-          .filter((r): r is Resource => !!(r?.isFloating || r?.display))
-          .sort((a, b) => {
-            const aSize = (a.tileWidth ?? 1) * (a.tileHeight ?? 1);
-            const bSize = (b.tileWidth ?? 1) * (b.tileHeight ?? 1);
-            return bSize - aSize;
-          });
-        
-        const displayableResource = displayableResources[0];
+
+        if (!displayableResource && !marketOnTile && !npcOnTile && !strangerOnTile) continue;
+
         const resourceWidth = displayableResource?.tileWidth ?? 1;
         const resourceHeight = displayableResource?.tileHeight ?? 1;
-        
+
         const playerBehindResource = !!(displayableResource && (
-          playerPosition.x >= x && 
+          playerPosition.x >= x &&
           playerPosition.x < x + resourceWidth &&
-          playerPosition.y <= y && 
+          playerPosition.y <= y &&
           playerPosition.y > y - resourceHeight
         ));
-        
+
         const resourceLife = displayableResource ? tile.resourceLife?.[displayableResource.id] : undefined;
         const maxLife = displayableResource?.maxLife ?? 100;
         const isDamaged = !!(displayableResource?.destructible && resourceLife !== undefined && resourceLife < maxLife);
         const lifePercent = isDamaged ? (resourceLife! / maxLife) * 100 : 100;
-        
-        const hasLightEmitter = isNighttime && displayableResources.some(r => r.emitsLight);
-        
+
         result.push({
           x,
           y,
-          screenX,
-          screenY,
-          tile,
-          isPlayerHere,
-          isSelected,
-          isWalkable,
-          isClaimed,
-          isOwnClaim,
-          claimColor,
-          borderStyles,
+          screenX: x - viewportOffset.x,
+          screenY: y - viewportOffset.y,
           marketOnTile,
-          tileArea,
           displayableResource,
           resourceWidth,
           resourceHeight,
@@ -648,11 +608,12 @@ const GameMap = ({
     return result;
   }, [
     map.tiles, map.width, map.height,
-    viewportOffset, viewportSize,
-    playerPosition, selectedTile, userId, userColor,
-    resourceMap, npcPositionMap, strangerPositionMap, marketPositionMap, selectedTilesSet,
-    npcs, isNighttime, getAreaForTile
+    viewportOffset, viewportSize, showDetails,
+    playerPosition,
+    resourceMap, npcPositionMap, strangerPositionMap, marketPositionMap,
+    isNighttime
   ]);
+
 
   const handleStrangerHover = useCallback((stranger: Stranger) => {
     setHoveredStranger(stranger);
