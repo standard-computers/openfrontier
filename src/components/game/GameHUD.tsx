@@ -136,7 +136,7 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
               "p-2 rounded transition-colors",
               panMode ? "bg-primary text-primary-foreground" : "hover:bg-muted/60"
             )}
-            title={panMode ? "Pan tool ON (drag the map)" : "Pan tool (drag the map around)"}
+            title={panMode ? "Pan tool ON [H]" : "Pan tool [H] (drag the map around)"}
           >
             <Hand className="w-5 h-5" />
           </button>
@@ -147,7 +147,7 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
               "p-2 rounded transition-colors",
               multiSelectMode ? "bg-primary text-primary-foreground" : "hover:bg-muted/60"
             )}
-            title={multiSelectMode ? "Multi-select ON (click to disable)" : "Multi-select (click and drag to select tiles)"}
+            title={multiSelectMode ? "Multi-select ON [S]" : "Multi-select [S] (click and drag to select tiles)"}
           >
             <BoxSelect className="w-5 h-5" />
           </button>

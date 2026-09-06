@@ -447,12 +447,43 @@ const Index = () => {
     }
   }, [useItemOnFacingTile, selectedSlot, facingDirection, selectedTile, selectedTiles, isDemoMode]);
 
+  const handleToggleMultiSelect = useCallback(() => {
+    setMultiSelectMode(prev => {
+      if (!prev) {
+        setPanMode(false);
+        setSelectedTiles([]);
+      }
+      return !prev;
+    });
+  }, []);
+
+  const handleTogglePanMode = useCallback(() => {
+    setPanMode(prev => {
+      if (!prev) {
+        setMultiSelectMode(false);
+        setSelectedTiles([]);
+      }
+      return !prev;
+    });
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
         return;
       }
+
+      if (e.key.toLowerCase() === 'h') {
+        e.preventDefault();
+        handleTogglePanMode();
+      }
+
+      if (e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        handleToggleMultiSelect();
+      }
+
       
       const slotKeys: Record<string, number> = {
         '1': 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5,
@@ -482,7 +513,7 @@ const Index = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleOpenMarketplace, handleGatherAll, handleUseItem]);
+  }, [handleOpenMarketplace, handleGatherAll, handleUseItem, handleTogglePanMode, handleToggleMultiSelect]);
 
   const zoomPercent = Math.round((tileSize / DEFAULT_TILE_SIZE) * 100);
 
@@ -563,24 +594,8 @@ const Index = () => {
             onOpenMarketplace={() => setMarketplaceOpen(true)}
             onZoom={handleZoom}
             onConsumeResource={consumeResource}
-            onToggleMultiSelect={() => {
-              setMultiSelectMode(prev => {
-                if (!prev) {
-                  setPanMode(false);
-                  setSelectedTiles([]);
-                }
-                return !prev;
-              });
-            }}
-            onTogglePanMode={() => {
-              setPanMode(prev => {
-                if (!prev) {
-                  setMultiSelectMode(false);
-                  setSelectedTiles([]);
-                }
-                return !prev;
-              });
-            }}
+            onToggleMultiSelect={handleToggleMultiSelect}
+            onTogglePanMode={handleTogglePanMode}
 
             onReturnToPlayer={handleReturnToPlayer}
           />
