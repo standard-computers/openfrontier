@@ -315,6 +315,10 @@ const GameMap = ({
   selectedTile,
   selectedTiles,
   multiSelectMode,
+  panMode = false,
+  showDetails = true,
+  onPan,
+
   userColor,
   userId,
   tileSize,
