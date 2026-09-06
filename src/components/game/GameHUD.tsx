@@ -66,28 +66,28 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
 
   return (
     <>
-      {/* Top bar */}
-      <div className="absolute top-4 left-4 right-4 flex items-start justify-between pointer-events-none z-50">
-        <div className="flex items-center gap-2 pointer-events-auto">
+      {/* Unified top bar */}
+      <div className="absolute top-3 left-3 right-3 pointer-events-none z-50">
+        <div className="game-panel px-2 py-1.5 flex items-center gap-1.5 flex-wrap pointer-events-auto">
           {/* World button */}
-          <button 
+          <button
             onClick={onOpenStats}
-            className="game-panel px-3 py-2 hover:bg-muted/50 transition-colors flex items-center gap-2"
+            className="px-2 py-1 rounded hover:bg-muted/60 transition-colors flex items-center gap-1.5"
           >
-            <h1 className="font-semibold text-foreground">{world.name}</h1>
+            <h1 className="font-semibold text-foreground text-sm">{world.name}</h1>
             <ChevronRight className="w-4 h-4 text-muted-foreground" />
           </button>
 
           {/* Population indicator */}
           {world.enableStrangers && world.strangers && world.strangers.length > 0 && (
-            <div className="game-panel px-3 py-2 flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="text-lg">👤</span>
+            <div className="px-2 py-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="text-base">👤</span>
               <span className="font-medium text-foreground">{world.strangers.length.toLocaleString()}</span>
             </div>
           )}
 
-          {/* Clock and position tile */}
-          <div className="game-panel px-3 py-2 flex items-center gap-3 text-xs text-muted-foreground">
+          {/* Clock and position */}
+          <div className="px-2 py-1 flex items-center gap-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <Clock className="w-3 h-3" />
               Day {worldTime.days}, {worldTime.hours}:00
@@ -96,15 +96,15 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
           </div>
 
           {/* Player ranking button */}
-          <button 
+          <button
             onClick={onOpenRanking}
-            className="game-panel px-3 py-2 hover:bg-muted/50 transition-colors flex items-center gap-2"
+            className="px-2 py-1 rounded hover:bg-muted/60 transition-colors flex items-center gap-2"
             title="Leaderboard"
           >
             <Trophy className="w-4 h-4 text-amber-400" />
             {topPlayer && (
               <div className="flex items-center gap-2">
-                <div 
+                <div
                   className="w-3 h-3 rounded-full"
                   style={{ backgroundColor: topPlayer.color }}
                 />
@@ -114,97 +114,111 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
             )}
           </button>
 
-          {/* Market button - shown when openMarkets is enabled */}
+          {/* Market button */}
           {(world.openMarkets !== false) && world.enableMarkets && (
-            <button 
+            <button
               onClick={onOpenMarketplace}
-              className="game-panel px-3 py-2 hover:bg-muted/50 transition-colors flex items-center gap-2"
+              className="px-2 py-1 rounded hover:bg-muted/60 transition-colors flex items-center gap-1.5"
               title="Open Marketplace"
             >
               <Store className="w-4 h-4 text-emerald-400" />
               <span className="text-sm font-medium">Market</span>
             </button>
           )}
-        </div>
 
-        <div className="flex flex-col items-end gap-2 pointer-events-auto">
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={onToggleMultiSelect}
-              className={cn(
-                "game-panel p-2 transition-colors",
-                multiSelectMode ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-              )}
-              title={multiSelectMode ? "Multi-select ON (click to disable)" : "Multi-select (click and drag to select tiles)"}
-            >
-              <BoxSelect className="w-5 h-5" />
-            </button>
+          {/* Spacer pushes tools to the right */}
+          <div className="flex-1 min-w-[8px]" />
 
-            <button 
-              onClick={onOpenCrafting}
-              className="game-panel p-2 hover:bg-muted transition-colors"
-              title="Crafting"
-            >
-              <Hammer className="w-5 h-5" />
-            </button>
+          {/* Tools */}
+          <button
+            onClick={onTogglePanMode}
+            className={cn(
+              "p-2 rounded transition-colors",
+              panMode ? "bg-primary text-primary-foreground" : "hover:bg-muted/60"
+            )}
+            title={panMode ? "Pan tool ON (drag the map)" : "Pan tool (drag the map around)"}
+          >
+            <Hand className="w-5 h-5" />
+          </button>
 
-            <button 
-              onClick={onOpenAccount} 
-              className="game-panel p-2 hover:bg-muted transition-colors flex items-center gap-2"
-              title="Account"
-            >
-              <div 
-                className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: world.userColor }}
-              />
-              <User className="w-5 h-5" />
-            </button>
+          <button
+            onClick={onToggleMultiSelect}
+            className={cn(
+              "p-2 rounded transition-colors",
+              multiSelectMode ? "bg-primary text-primary-foreground" : "hover:bg-muted/60"
+            )}
+            title={multiSelectMode ? "Multi-select ON (click to disable)" : "Multi-select (click and drag to select tiles)"}
+          >
+            <BoxSelect className="w-5 h-5" />
+          </button>
 
-            <button 
-              onClick={onOpenSovereignty} 
-              className="game-panel p-2 hover:bg-muted transition-colors flex items-center gap-2"
-              title={world.sovereignty ? world.sovereignty.name : 'Sovereignty'}
-            >
-              {world.sovereignty ? (
-                <>
-                  <span className="text-lg">{world.sovereignty.flag}</span>
-                  <span className="text-sm font-medium max-w-[100px] truncate">{world.sovereignty.name}</span>
-                </>
-              ) : (
-                <>
-                  <Crown className="w-5 h-5 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground max-w-[80px] truncate">{username || 'Player'}</span>
-                </>
-              )}
-            </button>
+          <button
+            onClick={onOpenCrafting}
+            className="p-2 rounded hover:bg-muted/60 transition-colors"
+            title="Crafting"
+          >
+            <Hammer className="w-5 h-5" />
+          </button>
 
-            <button onClick={onOpenConfig} className="game-panel p-2 hover:bg-muted transition-colors" title="Settings">
-              <Settings className="w-5 h-5" />
-            </button>
-          </div>
+          <button
+            onClick={onOpenAccount}
+            className="p-2 rounded hover:bg-muted/60 transition-colors flex items-center gap-2"
+            title="Account"
+          >
+            <div
+              className="w-4 h-4 rounded-full"
+              style={{ backgroundColor: world.userColor }}
+            />
+            <User className="w-5 h-5" />
+          </button>
 
-          {/* Zoom controls - vertical */}
-          <div className="flex flex-col items-center gap-1">
-            <button
-              onClick={() => onZoom(4)}
-              className="game-panel p-1.5 hover:bg-muted transition-colors"
-              title="Zoom in"
-            >
-              <ZoomIn className="w-4 h-4" />
-            </button>
-            <div className="game-panel px-2 py-1 text-xs text-muted-foreground min-w-[48px] text-center">
-              {zoomPercent}%
-            </div>
+          <button
+            onClick={onOpenSovereignty}
+            className="p-2 rounded hover:bg-muted/60 transition-colors flex items-center gap-2"
+            title={world.sovereignty ? world.sovereignty.name : 'Sovereignty'}
+          >
+            {world.sovereignty ? (
+              <>
+                <span className="text-lg">{world.sovereignty.flag}</span>
+                <span className="text-sm font-medium max-w-[100px] truncate">{world.sovereignty.name}</span>
+              </>
+            ) : (
+              <>
+                <Crown className="w-5 h-5 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground max-w-[80px] truncate">{username || 'Player'}</span>
+              </>
+            )}
+          </button>
+
+          <button onClick={onOpenConfig} className="p-2 rounded hover:bg-muted/60 transition-colors" title="Settings">
+            <Settings className="w-5 h-5" />
+          </button>
+
+          <div className="w-px h-6 bg-border mx-1" />
+
+          {/* Zoom controls */}
+          <div className="flex items-center gap-1">
             <button
               onClick={() => onZoom(-4)}
-              className="game-panel p-1.5 hover:bg-muted transition-colors"
+              className="p-1.5 rounded hover:bg-muted/60 transition-colors"
               title="Zoom out"
             >
               <ZoomOut className="w-4 h-4" />
             </button>
+            <div className="px-1 text-xs text-muted-foreground min-w-[44px] text-center">
+              {zoomPercent}%
+            </div>
+            <button
+              onClick={() => onZoom(4)}
+              className="p-1.5 rounded hover:bg-muted/60 transition-colors"
+              title="Zoom in"
+            >
+              <ZoomIn className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>
+
 
       {/* Return to player button - shown when camera is offset */}
       {cameraOffset && (
