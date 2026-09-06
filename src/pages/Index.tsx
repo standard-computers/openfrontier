@@ -55,6 +55,8 @@ const Index = () => {
   const [facingDirection, setFacingDirection] = useState<FacingDirection>('south');
   const [isMoving, setIsMoving] = useState(false);
   const [multiSelectMode, setMultiSelectMode] = useState(false);
+  const [panMode, setPanMode] = useState(false);
+
   const [selectedTiles, setSelectedTiles] = useState<Position[]>([]);
   const [cameraPosition, setCameraPosition] = useState<Position | null>(null);
   const [selectedStranger, setSelectedStranger] = useState<Stranger | null>(null);
