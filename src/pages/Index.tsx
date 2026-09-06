@@ -98,6 +98,7 @@ const Index = () => {
     deleteArea,
     updateArea,
     renameTile,
+    convertTiles,
     placeItem,
     useItemOnFacingTile,
     toggleEnableMarkets,
