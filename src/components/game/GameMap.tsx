@@ -738,13 +738,55 @@ const GameMap = ({
     onStrangerClick?.(stranger);
   }, [onStrangerClick]);
 
+  // --- Pan tool: drag the map around ---
+  const panOrigin = useRef<{ x: number; y: number } | null>(null);
+  const [isPanning, setIsPanning] = useState(false);
+
+  const handlePanStart = useCallback((e: React.MouseEvent) => {
+    if (!panMode) return;
+    e.preventDefault();
+    panOrigin.current = { x: e.clientX, y: e.clientY };
+    setIsPanning(true);
+  }, [panMode]);
+
+  useEffect(() => {
+    if (!isPanning) return;
+    const handleMove = (e: MouseEvent) => {
+      const origin = panOrigin.current;
+      if (!origin) return;
+      const dx = Math.trunc((origin.x - e.clientX) / tileSize);
+      const dy = Math.trunc((origin.y - e.clientY) / tileSize);
+      if (dx === 0 && dy === 0) return;
+      panOrigin.current = {
+        x: origin.x - dx * tileSize,
+        y: origin.y - dy * tileSize,
+      };
+      onPan?.(dx, dy);
+    };
+    const stop = () => {
+      panOrigin.current = null;
+      setIsPanning(false);
+    };
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', stop);
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', stop);
+    };
+  }, [isPanning, tileSize, onPan]);
+
   return (
     <div
       ref={containerRef}
-      className="w-full h-full overflow-hidden relative"
+      className={cn(
+        "w-full h-full overflow-hidden relative",
+        panMode && (isPanning ? "cursor-grabbing" : "cursor-grab")
+      )}
       tabIndex={0}
       onWheel={handleWheel}
+      onMouseDown={handlePanStart}
     >
+
       <CanvasTileRenderer
         map={map}
         viewportOffset={viewportOffset}
