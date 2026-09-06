@@ -988,7 +988,8 @@ export const useGameWorld = () => {
   const useItemOnFacingTile = useCallback((
     selectedSlot: number, 
     facingDirection: 'north' | 'south' | 'east' | 'west',
-    target?: { x: number; y: number }
+    target?: { x: number; y: number },
+    targets?: { x: number; y: number }[]
   ): { success: boolean; message: string } => {
     let result = { success: false, message: '' };
     
