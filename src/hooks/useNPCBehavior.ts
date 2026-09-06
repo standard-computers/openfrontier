@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useRef } from 'react';
-import { GameWorld, NPC, WorldMap, Resource, InventorySlot, calculateTileValue, TILE_TYPES, MAX_HEALTH } from '@/types/game';
+import { GameWorld, NPC, WorldMap, Resource, InventorySlot, calculateTileValue, TILE_TYPES, MAX_HEALTH, isAdjacentToOwnedLand, ownsAnyTile } from '@/types/game';
 
 const NPC_ACTION_INTERVAL = 2000; // NPCs act every 2 seconds
 const NPC_CLAIM_CHANCE = 0.3; // 30% chance to claim a tile when possible
@@ -51,7 +51,8 @@ export const useNPCBehavior = ({ world, setWorld, saveMapData }: UseNPCBehaviorP
         const tileInfo = TILE_TYPES.find(t => t.type === tile.type);
         const isWalkable = tileInfo?.walkable ?? tile.walkable;
         
-        if (isWalkable && !tile.claimedBy) {
+        const adjacencyOk = !ownsAnyTile(map.tiles, npc.id) || isAdjacentToOwnedLand(map.tiles, nx, ny, npc.id);
+        if (isWalkable && !tile.claimedBy && adjacencyOk) {
           tiles.push({ x, y });
         }
       }
@@ -68,6 +69,8 @@ export const useNPCBehavior = ({ world, setWorld, saveMapData }: UseNPCBehaviorP
   } | null => {
     const tile = map.tiles[y]?.[x];
     if (!tile || tile.claimedBy) return null;
+    // Claims must touch land the NPC already owns (unless it owns none yet)
+    if (ownsAnyTile(map.tiles, npc.id) && !isAdjacentToOwnedLand(map.tiles, x, y, npc.id)) return null;
     
     const tileValue = calculateTileValue(tile, resources);
     if (npc.coins < tileValue) return null;
