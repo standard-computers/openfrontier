@@ -202,8 +202,25 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
 
   // Stranger moves to an adjacent tile (wanders around)
   const strangerMove = useCallback((stranger: Stranger, map: WorldMap): Stranger => {
-    const adjacentTiles = getAdjacentTiles(stranger.position.x, stranger.position.y, map);
+    let adjacentTiles = getAdjacentTiles(stranger.position.x, stranger.position.y, map);
     if (adjacentTiles.length === 0) return stranger;
+    
+    // Pledged strangers cannot leave their sovereignty's claimed area
+    if (stranger.allegiance) {
+      const currentTile = map.tiles[stranger.position.y]?.[stranger.position.x];
+      const insideTerritory = currentTile?.claimedBy === stranger.allegiance.userId;
+      if (insideTerritory) {
+        const territoryTiles = adjacentTiles.filter(
+          pos => map.tiles[pos.y][pos.x].claimedBy === stranger.allegiance!.userId
+        );
+        if (territoryTiles.length > 0) {
+          adjacentTiles = territoryTiles;
+        } else {
+          // Fully surrounded by unclaimed tiles: stay put rather than leave
+          return stranger;
+        }
+      }
+    }
     
     // Strangers prefer tiles with resources since they gather
     const preferredTiles = adjacentTiles.filter(pos => {
