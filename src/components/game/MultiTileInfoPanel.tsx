@@ -37,8 +37,10 @@ const MultiTileInfoPanel = ({
   onClaimAll,
   onGather,
   onCreateArea,
+  onConvert,
 }: MultiTileInfoPanelProps) => {
   const [showAreaForm, setShowAreaForm] = useState(false);
+  const [showConvert, setShowConvert] = useState(false);
   const [areaName, setAreaName] = useState('');
   const [areaColor, setAreaColor] = useState(AREA_COLORS[0]);
   // Calculate totals and check for issues
