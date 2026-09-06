@@ -77,7 +77,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     
     // Find the most valuable sovereignty that meets threshold
     const topSovereignty = sovereignties[0];
-    if (topSovereignty.totalValue < ALLEGIANCE_VALUE_THRESHOLD) {
+    if (topSovereignty.totalValue < ALLEGIANCE_VALUE_THRESHOLD || topSovereignty.tileCount < ALLEGIANCE_MIN_TILES) {
       // No sovereignty is valuable enough, possibly remove allegiance
       if (stranger.allegiance && Math.random() < 0.1) {
         return { ...stranger, allegiance: undefined };
