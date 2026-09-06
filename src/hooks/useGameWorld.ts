@@ -1037,7 +1037,7 @@ export const useGameWorld = () => {
       const targetTile = prev.map.tiles[targetY][targetX];
       
       // Players may only modify tiles they own
-      if (targetTile.ownerId !== prev.playerId) {
+      if (targetTile.claimedBy !== prev.userId) {
         result = { success: false, message: 'You must own this tile to use tools on it' };
         return prev;
       }
