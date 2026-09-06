@@ -174,6 +174,48 @@ const MultiTileInfoPanel = ({
           </button>
         )}
 
+        {/* Convert tiles - show when user owns tiles in selection */}
+        {analysis.ownClaimedTiles.length > 0 && onConvert && (
+          <div>
+            <button
+              onClick={() => setShowConvert(prev => !prev)}
+              className="btn btn-secondary w-full flex items-center justify-center gap-2"
+            >
+              <Paintbrush className="w-4 h-4" />
+              Convert {analysis.ownClaimedTiles.length} Owned {analysis.ownClaimedTiles.length === 1 ? 'Tile' : 'Tiles'}
+              {showConvert ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+            {showConvert && (
+              <div className="mt-2 grid grid-cols-2 gap-1">
+                {TILE_TYPES.map((t) => {
+                  const cost = t.baseValue * analysis.ownClaimedTiles.length;
+                  const affordable = userCoins >= cost;
+                  return (
+                    <button
+                      key={t.type}
+                      onClick={() => {
+                        onConvert(t.type);
+                        setShowConvert(false);
+                      }}
+                      disabled={!affordable}
+                      className={cn(
+                        "flex items-center gap-1.5 p-1.5 rounded bg-secondary/50 text-xs hover:bg-secondary transition-colors",
+                        !affordable && "opacity-50 cursor-not-allowed"
+                      )}
+                    >
+                      <div className={cn('w-3 h-3 rounded flex-shrink-0', t.color)} />
+                      <span className="flex-1 text-left truncate">{t.label}</span>
+                      <span className="flex items-center gap-0.5 text-amber-400">
+                        <Coins className="w-3 h-3" />{cost}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Create Area button - show when all tiles are owned by user */}
         {analysis.allOwnedByUser && onCreateArea && (
           <>
