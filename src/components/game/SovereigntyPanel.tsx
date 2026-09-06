@@ -12,6 +12,7 @@ interface SovereigntyPanelProps {
   userColor: string;
   coins: number;
   claimedTiles: number;
+  population?: number;
   username: string | null;
   sovereignty?: Sovereignty;
   areas?: Area[];
@@ -28,6 +29,7 @@ const SovereigntyPanel = ({
   userColor,
   coins,
   claimedTiles,
+  population = 0,
   username,
   sovereignty,
   areas = [],
@@ -257,6 +259,10 @@ const SovereigntyPanel = ({
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Ruler</span>
                   <span>{username || 'Unknown'}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Population</span>
+                  <span>{population.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Areas</span>
