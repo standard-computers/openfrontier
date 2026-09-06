@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { MapTile, Resource, RARITY_COLORS, TILE_TYPES, calculateTileValue } from '@/types/game';
-import { X, Flag, Package, Coins, Pencil, Check } from 'lucide-react';
+import { MapTile, Resource, RARITY_COLORS, TILE_TYPES, TileType, calculateTileValue } from '@/types/game';
+import { X, Flag, Package, Coins, Pencil, Check, Paintbrush, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ResourceIcon from './ResourceIcon';
 import { WorldMember } from '@/hooks/useGameWorld';
@@ -19,6 +19,7 @@ interface TileInfoPanelProps {
   onGather: (resourceId: string) => void;
   onRename: (name: string) => void;
   onViewUser: (member: WorldMember) => void;
+  onConvert?: (newType: TileType) => void;
 }
 
 const CLAIM_RADIUS = 6;
