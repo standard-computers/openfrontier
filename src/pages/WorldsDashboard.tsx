@@ -32,8 +32,6 @@ const WorldsDashboard = () => {
   const [enableMarkets, setEnableMarkets] = useState(false);
   const [enableNpcs, setEnableNpcs] = useState(false);
   const [npcCount, setNpcCount] = useState(4);
-  const [enableStrangers, setEnableStrangers] = useState(false);
-  const [strangerDensity, setStrangerDensity] = useState(0.02);
   
   // Tile probabilities
   const [tileProbabilities, setTileProbabilities] = useState<TileProbabilities>({ ...DEFAULT_TILE_PROBABILITIES });
@@ -73,8 +71,6 @@ const WorldsDashboard = () => {
         enableMarkets,
         enableNpcs,
         npcCount: enableNpcs ? npcCount : 0,
-        enableStrangers,
-        strangerDensity: enableStrangers ? strangerDensity : 0.02,
         tileProbabilities: totalAllocation === 100 ? tileProbabilities : undefined,
       });
       localStorage.setItem('currentWorldId', worldId);
@@ -282,8 +278,6 @@ const WorldsDashboard = () => {
                     setEnableMarkets(false);
                     setEnableNpcs(false);
                     setNpcCount(4);
-                    setEnableStrangers(false);
-                    setStrangerDensity(0.02);
                   }}
                   className="btn btn-ghost p-2"
                 >
@@ -470,65 +464,6 @@ const WorldsDashboard = () => {
                     )}
                   </div>
 
-                  {/* Strangers Settings */}
-                  <div className="p-3 bg-secondary/30 rounded-lg space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl">👤</span>
-                        <div>
-                          <div className="font-medium text-sm">Enable Strangers</div>
-                          <div className="text-xs text-muted-foreground">Add wandering NPCs that don't claim territory</div>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => setEnableStrangers(!enableStrangers)}
-                        className={cn(
-                          'w-12 h-6 rounded-full transition-colors relative',
-                          enableStrangers ? 'bg-primary' : 'bg-muted'
-                        )}
-                      >
-                        <div
-                          className={cn(
-                            'w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform',
-                            enableStrangers ? 'translate-x-6' : 'translate-x-0.5'
-                          )}
-                        />
-                      </button>
-                    </div>
-                    
-                    {enableStrangers && (
-                      <div className="space-y-3 pt-2 border-t border-border/50">
-                        <div className="flex items-center gap-3">
-                          <label className="text-sm text-muted-foreground">Population Density:</label>
-                          <input
-                            type="number"
-                            min={0.001}
-                            max={1}
-                            step={0.01}
-                            value={strangerDensity}
-                            onChange={(e) => {
-                              const value = Math.min(Math.max(parseFloat(e.target.value) || 0.02, 0.001), 1);
-                              setStrangerDensity(value);
-                            }}
-                            className="input-field w-24 text-center"
-                          />
-                        </div>
-                        
-                        <div className="text-sm text-muted-foreground">
-                          Computed strangers: <span className="font-medium text-foreground">
-                            {Math.floor((parseInt(newWorldWidth) || 500) * (parseInt(newWorldHeight) || 500) * strangerDensity)}
-                          </span>
-                        </div>
-                        
-                        {strangerDensity > 0.5 && (
-                          <div className="flex items-center gap-2 p-2 bg-destructive/20 rounded text-sm text-destructive">
-                            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                            <span>High density may cause performance issues!</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
                 </div>
               </>
             )}
@@ -668,8 +603,6 @@ const WorldsDashboard = () => {
                     setEnableMarkets(false);
                     setEnableNpcs(false);
                     setNpcCount(4);
-                    setEnableStrangers(false);
-                    setStrangerDensity(0.02);
                   }}
                   className="btn"
                 >
