@@ -15,6 +15,10 @@ interface GameMapProps {
   selectedTile: Position | null;
   selectedTiles: Position[];
   multiSelectMode: boolean;
+  panMode?: boolean;
+  showDetails?: boolean;
+  onPan?: (dx: number, dy: number) => void;
+
   userColor: string;
   userId: string;
   tileSize: number;
@@ -65,6 +69,7 @@ const TileOverlay = memo(({
   facingDirection,
   isMoving,
   userColor,
+  showDetails,
   onMouseDown,
   onMouseEnter,
   onClick,
@@ -102,6 +107,7 @@ const TileOverlay = memo(({
   facingDirection: FacingDirection;
   isMoving: boolean;
   userColor: string;
+  showDetails: boolean;
   onMouseDown: () => void;
   onMouseEnter: () => void;
   onClick: () => void;
@@ -151,7 +157,7 @@ const TileOverlay = memo(({
         />
       )}
       {/* Show market icon */}
-      {marketOnTile && (
+      {showDetails && marketOnTile && (
         <span 
           className="absolute inset-0 flex items-center justify-center drop-shadow-lg z-20"
           style={{ fontSize: Math.max(16, tileSize * 0.8) }}
@@ -160,7 +166,7 @@ const TileOverlay = memo(({
         </span>
       )}
       {/* Show displayable resources */}
-      {displayableResource && (
+      {showDetails && displayableResource && (
         <div 
           className="absolute flex flex-col items-center drop-shadow-md pointer-events-none"
           style={{ 
@@ -223,7 +229,7 @@ const TileOverlay = memo(({
         </div>
       )}
       {/* NPC character */}
-      {npcOnTile && (
+      {showDetails && npcOnTile && (
         <div 
           className="absolute z-15 flex items-end justify-center pointer-events-none"
           style={{
@@ -242,7 +248,7 @@ const TileOverlay = memo(({
         </div>
       )}
       {/* Stranger on tile */}
-      {strangerOnTile && !npcOnTile && (
+      {showDetails && strangerOnTile && !npcOnTile && (
         <div 
           className="absolute z-14 flex items-end justify-center cursor-pointer group"
           style={{
@@ -311,6 +317,10 @@ const GameMap = ({
   selectedTile,
   selectedTiles,
   multiSelectMode,
+  panMode = false,
+  showDetails = true,
+  onPan,
+
   userColor,
   userId,
   tileSize,
@@ -730,13 +740,55 @@ const GameMap = ({
     onStrangerClick?.(stranger);
   }, [onStrangerClick]);
 
+  // --- Pan tool: drag the map around ---
+  const panOrigin = useRef<{ x: number; y: number } | null>(null);
+  const [isPanning, setIsPanning] = useState(false);
+
+  const handlePanStart = useCallback((e: React.MouseEvent) => {
+    if (!panMode) return;
+    e.preventDefault();
+    panOrigin.current = { x: e.clientX, y: e.clientY };
+    setIsPanning(true);
+  }, [panMode]);
+
+  useEffect(() => {
+    if (!isPanning) return;
+    const handleMove = (e: MouseEvent) => {
+      const origin = panOrigin.current;
+      if (!origin) return;
+      const dx = Math.trunc((origin.x - e.clientX) / tileSize);
+      const dy = Math.trunc((origin.y - e.clientY) / tileSize);
+      if (dx === 0 && dy === 0) return;
+      panOrigin.current = {
+        x: origin.x - dx * tileSize,
+        y: origin.y - dy * tileSize,
+      };
+      onPan?.(dx, dy);
+    };
+    const stop = () => {
+      panOrigin.current = null;
+      setIsPanning(false);
+    };
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', stop);
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', stop);
+    };
+  }, [isPanning, tileSize, onPan]);
+
   return (
     <div
       ref={containerRef}
-      className="w-full h-full overflow-hidden relative"
+      className={cn(
+        "w-full h-full overflow-hidden relative",
+        panMode && (isPanning ? "cursor-grabbing" : "cursor-grab")
+      )}
       tabIndex={0}
       onWheel={handleWheel}
+      onMouseDown={handlePanStart}
     >
+
       <CanvasTileRenderer
         map={map}
         viewportOffset={viewportOffset}
@@ -788,10 +840,11 @@ const GameMap = ({
               facingDirection={facingDirection}
               isMoving={isMoving}
               userColor={userColor}
+              showDetails={showDetails}
               onMouseDown={() => handleTileMouseDown(data.x, data.y)}
               onMouseEnter={() => handleTileMouseEnter(data.x, data.y)}
               onClick={() => {
-                if (!multiSelectMode && !data.marketOnTile) {
+                if (!panMode && !multiSelectMode && !data.marketOnTile) {
                   onTileSelect(data.x, data.y);
                 }
               }}

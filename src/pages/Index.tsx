@@ -26,9 +26,12 @@ import { useDemoWorld } from '@/hooks/useDemoWorld';
 import { Market, Position, calculateTileValue, Sovereignty, Stranger, TILE_TYPES } from '@/types/game';
 import { toast } from 'sonner';
 
-const MIN_TILE_SIZE = 12;
+const MIN_TILE_SIZE = 4;
 const MAX_TILE_SIZE = 64;
 const DEFAULT_TILE_SIZE = 39;
+// Below this zoom level, resource/character overlays are hidden for performance
+const DETAIL_ZOOM_THRESHOLD = 50;
+
 
 type FacingDirection = 'north' | 'south' | 'east' | 'west';
 
@@ -52,6 +55,8 @@ const Index = () => {
   const [facingDirection, setFacingDirection] = useState<FacingDirection>('south');
   const [isMoving, setIsMoving] = useState(false);
   const [multiSelectMode, setMultiSelectMode] = useState(false);
+  const [panMode, setPanMode] = useState(false);
+
   const [selectedTiles, setSelectedTiles] = useState<Position[]>([]);
   const [cameraPosition, setCameraPosition] = useState<Position | null>(null);
   const [selectedStranger, setSelectedStranger] = useState<Stranger | null>(null);
@@ -274,6 +279,18 @@ const Index = () => {
     setCameraPosition(position);
   }, []);
 
+  // Drag-pan the camera by a tile delta
+  const handlePan = useCallback((dx: number, dy: number) => {
+    setCameraPosition(prev => {
+      const base = prev ?? world.playerPosition;
+      return {
+        x: Math.max(0, Math.min(world.map.width - 1, base.x + dx)),
+        y: Math.max(0, Math.min(world.map.height - 1, base.y + dy)),
+      };
+    });
+  }, [world.playerPosition, world.map.width, world.map.height]);
+
+
   const handleReturnToPlayer = useCallback(() => {
     setCameraPosition(null);
   }, []);
@@ -466,6 +483,10 @@ const Index = () => {
           selectedTile={selectedTile}
           selectedTiles={selectedTiles}
           multiSelectMode={multiSelectMode}
+          panMode={panMode}
+          showDetails={zoomPercent >= DETAIL_ZOOM_THRESHOLD}
+          onPan={handlePan}
+
           userColor={world.userColor}
           userId={world.userId}
           tileSize={tileSize}
@@ -493,6 +514,8 @@ const Index = () => {
             username={username}
             selectedSlot={selectedSlot}
             multiSelectMode={multiSelectMode}
+            panMode={panMode}
+
             members={members}
             cameraOffset={cameraPosition !== null}
             onSelectSlot={setSelectedSlot}
@@ -510,6 +533,16 @@ const Index = () => {
               setMultiSelectMode(prev => !prev);
               setSelectedTiles([]);
             }}
+            onTogglePanMode={() => {
+              setPanMode(prev => {
+                if (!prev) {
+                  setMultiSelectMode(false);
+                  setSelectedTiles([]);
+                }
+                return !prev;
+              });
+            }}
+
             onReturnToPlayer={handleReturnToPlayer}
           />
         )}
