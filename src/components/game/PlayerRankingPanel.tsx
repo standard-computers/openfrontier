@@ -24,6 +24,7 @@ export interface RankedPlayer {
   landValue: number;
   netWorth: number;
   claimedTiles: number;
+  population: number;
   member?: WorldMember;
 }
 
@@ -74,6 +75,13 @@ const PlayerRankingPanel = ({ isOpen, onClose, world, resources, members, onView
   const rankedPlayers = useMemo(() => {
     const players: RankedPlayer[] = [];
 
+    // Count strangers pledged to each sovereignty
+    const populations = new Map<string, number>();
+    (world.strangers || []).forEach(stranger => {
+      const owner = stranger.allegiance?.userId;
+      if (owner) populations.set(owner, (populations.get(owner) || 0) + 1);
+    });
+
     // Add human players
     members.forEach(member => {
       // We need to get player data from world_members - for now use current player's data if it matches
@@ -98,6 +106,7 @@ const PlayerRankingPanel = ({ isOpen, onClose, world, resources, members, onView
           landValue: stats.landValue,
           netWorth: stats.netWorth,
           claimedTiles: stats.claimedTiles,
+          population: populations.get(member.userId) || 0,
           member,
         });
       } else {
@@ -127,6 +136,7 @@ const PlayerRankingPanel = ({ isOpen, onClose, world, resources, members, onView
           landValue,
           netWorth: landValue,
           claimedTiles,
+          population: populations.get(member.userId) || 0,
           member,
         });
       }
@@ -152,6 +162,7 @@ const PlayerRankingPanel = ({ isOpen, onClose, world, resources, members, onView
         landValue: stats.landValue,
         netWorth: stats.netWorth,
         claimedTiles: stats.claimedTiles,
+        population: populations.get(npc.id) || 0,
       });
     });
 
@@ -226,6 +237,11 @@ const PlayerRankingPanel = ({ isOpen, onClose, world, resources, members, onView
                   </div>
                   <div className="text-xs text-muted-foreground flex items-center gap-2">
                     <span>{player.claimedTiles} tiles</span>
+                    <span className="text-muted-foreground/50">•</span>
+                    <span className="flex items-center gap-0.5">
+                      <Users className="w-3 h-3" />
+                      {player.population.toLocaleString()}
+                    </span>
                     <span className="text-muted-foreground/50">•</span>
                     <span className="flex items-center gap-0.5">
                       <Coins className="w-3 h-3 text-amber-400" />
@@ -303,6 +319,11 @@ export const getTopPlayer = (
   members: WorldMember[]
 ): RankedPlayer | null => {
   const players: RankedPlayer[] = [];
+  const populations = new Map<string, number>();
+  (world.strangers || []).forEach(stranger => {
+    const owner = stranger.allegiance?.userId;
+    if (owner) populations.set(owner, (populations.get(owner) || 0) + 1);
+  });
 
   // Add current player
   const currentMember = members.find(m => m.userId === world.userId);
@@ -325,6 +346,7 @@ export const getTopPlayer = (
       landValue: stats.landValue,
       netWorth: stats.netWorth,
       claimedTiles: stats.claimedTiles,
+      population: populations.get(world.userId) || 0,
       member: currentMember,
     });
   }
@@ -358,6 +380,7 @@ export const getTopPlayer = (
       landValue,
       netWorth: landValue,
       claimedTiles,
+      population: populations.get(member.userId) || 0,
       member,
     });
   });
@@ -382,6 +405,7 @@ export const getTopPlayer = (
       landValue: stats.landValue,
       netWorth: stats.netWorth,
       claimedTiles: stats.claimedTiles,
+      population: populations.get(npc.id) || 0,
     });
   });
 
