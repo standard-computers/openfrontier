@@ -272,7 +272,7 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
           
           {/* Inventory slots */}
           <div className="flex gap-1 overflow-visible">
-            {world.inventory.slice(0, 12).map((slot, i) => {
+            {world.inventory.slice(0, 10).map((slot, i) => {
               const resource = getResource(slot.resourceId);
               const isSelected = selectedSlot === i;
               return (
@@ -306,7 +306,7 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
                   )}
                   {/* Slot number indicator */}
                   <span className="absolute top-0 left-0.5 text-[8px] text-muted-foreground font-medium">
-                    {i < 9 ? i + 1 : i === 9 ? '0' : i === 10 ? '-' : '='}
+                    {i < 9 ? i + 1 : '0'}
                   </span>
                   {resource && (
                     <>
