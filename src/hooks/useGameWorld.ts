@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { GameWorld, Resource, Sovereignty, Market, NPC, Area, Position, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap, TILE_TYPES, generateNPCs, generateStrangers, calculateStrangerCount, Stranger, canAddResourceToTile, isLargeResource } from '@/types/game';
+import { GameWorld, Resource, Sovereignty, Market, NPC, Area, Position, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap, TILE_TYPES, generateNPCs, generateStrangers, calculateStrangerCount, Stranger, canAddResourceToTile, isLargeResource, isAdjacentToOwnedLand, ownsAnyTile } from '@/types/game';
 import type { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import { fetchWorldResources, addResourceToRepository, updateResourceInRepository, deleteResourceFromRepository } from '@/utils/resourceConverter';
@@ -372,6 +372,11 @@ export const useGameWorld = () => {
       return { success: false, message: 'Tile already claimed' };
     }
     
+    if (ownsAnyTile(currentWorld.map.tiles, currentWorld.userId) &&
+        !isAdjacentToOwnedLand(currentWorld.map.tiles, x, y, currentWorld.userId)) {
+      return { success: false, message: 'Land must border land you already own' };
+    }
+    
     const tileValue = calculateTileValue(tile, currentWorld.resources);
     
     if (currentWorld.coins < tileValue) {
@@ -423,17 +428,41 @@ export const useGameWorld = () => {
     let totalCost = 0;
     const validPositions: { x: number; y: number; tileValue: number; resources: string[] }[] = [];
     
-    for (const pos of positions) {
+    const hasLand = ownsAnyTile(world.map.tiles, world.userId);
+    const pending = positions.filter(pos => {
       const tile = world.map.tiles[pos.y]?.[pos.x];
-      if (!tile || tile.claimedBy) continue; // Skip claimed or invalid tiles
-      
+      return !!tile && !tile.claimedBy;
+    });
+
+    // Grow outward from existing owned land so every claim touches owned land
+    const accepted: { x: number; y: number }[] = [];
+    let remaining = [...pending];
+    let progress = true;
+    while (progress && remaining.length > 0) {
+      progress = false;
+      const next: { x: number; y: number }[] = [];
+      for (const pos of remaining) {
+        const ok = (!hasLand && accepted.length === 0) ||
+          isAdjacentToOwnedLand(world.map.tiles, pos.x, pos.y, world.userId, accepted);
+        if (ok) {
+          accepted.push(pos);
+          progress = true;
+        } else {
+          next.push(pos);
+        }
+      }
+      remaining = next;
+    }
+
+    for (const pos of accepted) {
+      const tile = world.map.tiles[pos.y][pos.x];
       const tileValue = calculateTileValue(tile, world.resources);
       totalCost += tileValue;
       validPositions.push({ x: pos.x, y: pos.y, tileValue, resources: [...tile.resources] });
     }
     
     if (validPositions.length === 0) {
-      return { success: false, message: 'No claimable tiles in selection', claimedCount: 0, totalCost: 0 };
+      return { success: false, message: 'Land must border land you already own', claimedCount: 0, totalCost: 0 };
     }
     
     if (world.coins < totalCost) {

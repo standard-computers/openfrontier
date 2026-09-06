@@ -51,7 +51,7 @@ export const useNPCBehavior = ({ world, setWorld, saveMapData }: UseNPCBehaviorP
         const tileInfo = TILE_TYPES.find(t => t.type === tile.type);
         const isWalkable = tileInfo?.walkable ?? tile.walkable;
         
-        const adjacencyOk = !ownsAnyTile(map.tiles, npc.id) || isAdjacentToOwnedLand(map.tiles, nx, ny, npc.id);
+        const adjacencyOk = !ownsAnyTile(map.tiles, npc.id) || isAdjacentToOwnedLand(map.tiles, x, y, npc.id);
         if (isWalkable && !tile.claimedBy && adjacencyOk) {
           tiles.push({ x, y });
         }
