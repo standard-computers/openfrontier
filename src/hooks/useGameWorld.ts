@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { GameWorld, Resource, Sovereignty, Market, NPC, Area, Position, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap, TILE_TYPES, generateNPCs, generateStrangers, calculateStrangerCount, Stranger, canAddResourceToTile, isLargeResource, isAdjacentToOwnedLand, ownsAnyTile } from '@/types/game';
+import { GameWorld, Resource, Sovereignty, Market, NPC, Area, Position, TileType, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap, TILE_TYPES, generateNPCs, generateStrangers, calculateStrangerCount, Stranger, canAddResourceToTile, isLargeResource, isAdjacentToOwnedLand, ownsAnyTile } from '@/types/game';
 import type { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import { fetchWorldResources, addResourceToRepository, updateResourceInRepository, deleteResourceFromRepository } from '@/utils/resourceConverter';
