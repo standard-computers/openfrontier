@@ -1038,29 +1038,53 @@ export const useGameWorld = () => {
       
       const targetTile = prev.map.tiles[targetY][targetX];
       
-      // Players may only modify tiles they own
-      if (targetTile.claimedBy !== prev.userId) {
+      // Players may only modify tiles they own (checked per-tile for multi-select below)
+      if (!targets?.length && targetTile.claimedBy !== prev.userId) {
         result = { success: false, message: 'You must own this tile to use tools on it' };
         return prev;
       }
 
       
       // Check for produce tile functionality first (on empty tiles without resources)
-      if (canProduceTile && targetTile.resources.length === 0) {
+      if (canProduceTile) {
         const newTileType = heldResource.produceTileType!;
+        const candidatePositions = targets && targets.length > 0 ? targets : [{ x: targetX, y: targetY }];
         
-        // Transform the tile
+        // Transform applies to every selected tile the player owns that is empty
+        const transformSet = new Set<string>();
+        for (const p of candidatePositions) {
+          if (p.x < 0 || p.x >= prev.map.width || p.y < 0 || p.y >= prev.map.height) continue;
+          const t = prev.map.tiles[p.y][p.x];
+          if (t.claimedBy !== prev.userId) continue;
+          if (t.resources.length > 0) continue;
+          transformSet.add(`${p.x}-${p.y}`);
+        }
+        
+        if (transformSet.size === 0) {
+          result = {
+            success: false,
+            message: targets && targets.length > 1
+              ? 'No owned empty tiles in selection'
+              : (targetTile.resources.length > 0 ? 'Tile must be empty to transform' : 'You must own this tile to use tools on it')
+          };
+          return prev;
+        }
+        
+        // Copy only affected rows
+        const affectedRows = new Set<number>();
+        transformSet.forEach(k => affectedRows.add(Number(k.split('-')[1])));
         let newTiles = prev.map.tiles.map((row, ry) =>
-          row.map((t, rx) => {
-            if (rx === targetX && ry === targetY) {
-              return { 
-                ...t, 
-                type: newTileType,
-                walkable: !['water', 'lava', 'stone'].includes(newTileType)
-              };
-            }
-            return t;
-          })
+          affectedRows.has(ry)
+            ? row.map((t, rx) =>
+                transformSet.has(`${rx}-${ry}`)
+                  ? { 
+                      ...t, 
+                      type: newTileType,
+                      walkable: !['water', 'lava', 'stone'].includes(newTileType)
+                    }
+                  : t
+              )
+            : row
         );
         
         let newInventory = [...prev.inventory];
