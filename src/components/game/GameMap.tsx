@@ -37,24 +37,13 @@ interface GameMapProps {
   onStrangerClick?: (stranger: Stranger) => void;
 }
 
-// Memoized tile component to prevent unnecessary re-renders
+// Memoized overlay rendered only for tiles that actually have something on them
+// (market, resource, NPC, stranger). Claims/areas/selection are drawn on canvas.
 const TileOverlay = memo(({
-  x,
-  y,
   screenX,
   screenY,
   tileSize,
-  isPlayerHere,
-  isSelected,
-  isMultiSelected,
-  isInDragSelection,
-  isWalkable,
-  isClaimed,
-  isOwnClaim,
-  claimColor,
-  borderStyles,
   marketOnTile,
-  tileArea,
   displayableResource,
   resourceWidth,
   resourceHeight,
@@ -66,33 +55,14 @@ const TileOverlay = memo(({
   npcOnTile,
   strangerOnTile,
   hoveredStrangerId,
-  facingDirection,
-  isMoving,
-  userColor,
-  showDetails,
-  onMouseDown,
-  onMouseEnter,
-  onClick,
   onStrangerHover,
   onStrangerLeave,
   onStrangerClick,
 }: {
-  x: number;
-  y: number;
   screenX: number;
   screenY: number;
   tileSize: number;
-  isPlayerHere: boolean;
-  isSelected: boolean;
-  isMultiSelected: boolean;
-  isInDragSelection: boolean;
-  isWalkable: boolean;
-  isClaimed: boolean;
-  isOwnClaim: boolean;
-  claimColor: string;
-  borderStyles: React.CSSProperties;
   marketOnTile: Market | null;
-  tileArea: Area | undefined;
   displayableResource: Resource | undefined;
   resourceWidth: number;
   resourceHeight: number;
@@ -104,60 +74,26 @@ const TileOverlay = memo(({
   npcOnTile: NPC | undefined;
   strangerOnTile: Stranger | undefined;
   hoveredStrangerId: string | null;
-  facingDirection: FacingDirection;
-  isMoving: boolean;
-  userColor: string;
-  showDetails: boolean;
-  onMouseDown: () => void;
-  onMouseEnter: () => void;
-  onClick: () => void;
   onStrangerHover: (stranger: Stranger) => void;
   onStrangerLeave: () => void;
   onStrangerClick: (stranger: Stranger) => void;
 }) => {
-  let selectionStyle: React.CSSProperties = {};
-  if (isSelected) {
-    selectionStyle.boxShadow = 'inset 0 0 0 3px #fff';
-  } else if (isMultiSelected) {
-    selectionStyle.boxShadow = 'inset 0 0 0 2px #3b82f6';
-  } else if (isInDragSelection) {
-    selectionStyle.boxShadow = 'inset 0 0 0 2px rgba(59, 130, 246, 0.6)';
-  }
-
   const isMultiTileResource = resourceWidth > 1 || resourceHeight > 1;
 
   return (
     <div
-      className={cn(
-        'cursor-pointer relative box-border select-none',
-        marketOnTile && 'bg-amber-800/80',
-        (isInDragSelection || isMultiSelected) && isWalkable && 'bg-blue-500/20'
-      )}
+      className={cn('absolute box-border select-none pointer-events-none', marketOnTile && 'bg-amber-800/80')}
       style={{
-        gridColumn: screenX + 1,
-        gridRow: screenY + 1,
+        left: screenX * tileSize,
+        top: screenY * tileSize,
         width: tileSize,
         height: tileSize,
         fontSize: Math.max(10, tileSize * 0.5),
-        ...borderStyles,
-        ...selectionStyle,
+        zIndex: 4,
       }}
-      onMouseDown={onMouseDown}
-      onMouseEnter={onMouseEnter}
-      onClick={onClick}
     >
-      {/* Area color overlay */}
-      {tileArea && (
-        <div 
-          className="absolute inset-0 pointer-events-none z-5"
-          style={{ 
-            backgroundColor: tileArea.color,
-            opacity: 0.25,
-          }}
-        />
-      )}
       {/* Show market icon */}
-      {showDetails && marketOnTile && (
+      {marketOnTile && (
         <span 
           className="absolute inset-0 flex items-center justify-center drop-shadow-lg z-20"
           style={{ fontSize: Math.max(16, tileSize * 0.8) }}
@@ -166,7 +102,7 @@ const TileOverlay = memo(({
         </span>
       )}
       {/* Show displayable resources */}
-      {showDetails && displayableResource && (
+      {displayableResource && (
         <div 
           className="absolute flex flex-col items-center drop-shadow-md pointer-events-none"
           style={{ 
@@ -205,7 +141,7 @@ const TileOverlay = memo(({
               }}
             >
               <div 
-                className={`h-full transition-all duration-200 ${
+                className={`h-full ${
                   lifePercent > 50 ? 'bg-emerald-400' : 
                   lifePercent > 25 ? 'bg-amber-400' : 'bg-red-400'
                 }`}
@@ -229,7 +165,7 @@ const TileOverlay = memo(({
         </div>
       )}
       {/* NPC character */}
-      {showDetails && npcOnTile && (
+      {npcOnTile && (
         <div 
           className="absolute z-15 flex items-end justify-center pointer-events-none"
           style={{
@@ -248,9 +184,9 @@ const TileOverlay = memo(({
         </div>
       )}
       {/* Stranger on tile */}
-      {showDetails && strangerOnTile && !npcOnTile && (
+      {strangerOnTile && !npcOnTile && (
         <div 
-          className="absolute z-14 flex items-end justify-center cursor-pointer group"
+          className="absolute z-14 flex items-end justify-center cursor-pointer group pointer-events-auto"
           style={{
             left: 0,
             right: 0,
@@ -292,20 +228,10 @@ const TileOverlay = memo(({
           )}
         </div>
       )}
-      {/* Claim indicator */}
-      {isClaimed && !npcOnTile && (
-        <div 
-          className="absolute top-0.5 right-0.5 rounded-full"
-          style={{ 
-            backgroundColor: claimColor,
-            width: Math.max(4, tileSize * 0.15),
-            height: Math.max(4, tileSize * 0.15),
-          }}
-        />
-      )}
     </div>
   );
 });
+
 
 TileOverlay.displayName = 'TileOverlay';
 
