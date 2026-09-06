@@ -352,6 +352,33 @@ export const calculateTileValue = (tile: MapTile, resources: Resource[]): number
   return baseValue + resourceValue;
 };
 
+// Land claim adjacency rule: new claims must touch existing owned land (4-way).
+// If the owner has no land yet, any tile is allowed (first/spawn claim).
+export const ownsAnyTile = (tiles: MapTile[][], ownerId: string): boolean =>
+  tiles.some(row => row.some(t => t.claimedBy === ownerId));
+
+export const isAdjacentToOwnedLand = (
+  tiles: MapTile[][],
+  x: number,
+  y: number,
+  ownerId: string,
+  extraOwned: { x: number; y: number }[] = []
+): boolean => {
+  const neighbors = [
+    { x: x - 1, y },
+    { x: x + 1, y },
+    { x, y: y - 1 },
+    { x, y: y + 1 },
+  ];
+  return neighbors.some(n => {
+    if (extraOwned.some(p => p.x === n.x && p.y === n.y)) return true;
+    const t = tiles[n.y]?.[n.x];
+    return !!t && t.claimedBy === ownerId;
+  });
+};
+
+
+
 // Simplex-like noise generator for natural terrain
 const createNoise = (seed: number) => {
   const permutation = new Array(512);
