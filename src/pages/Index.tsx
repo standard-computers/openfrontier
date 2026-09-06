@@ -23,7 +23,7 @@ import PlayerRankingPanel from '@/components/game/PlayerRankingPanel';
 import StrangerInfoPanel from '@/components/game/StrangerInfoPanel';
 import DemoOverlay from '@/components/game/DemoOverlay';
 import { useDemoWorld } from '@/hooks/useDemoWorld';
-import { Market, Position, calculateTileValue, Sovereignty, Stranger, TILE_TYPES } from '@/types/game';
+import { Market, Position, TileType, calculateTileValue, Sovereignty, Stranger, TILE_TYPES } from '@/types/game';
 import { toast } from 'sonner';
 
 const MIN_TILE_SIZE = 4;
