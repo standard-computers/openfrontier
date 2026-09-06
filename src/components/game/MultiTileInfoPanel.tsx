@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { MapTile, Resource, RARITY_COLORS, TILE_TYPES, calculateTileValue, Position, AREA_COLORS } from '@/types/game';
-import { X, Flag, Package, Coins, ChevronDown, ChevronRight, AlertTriangle, MapPin } from 'lucide-react';
+import { MapTile, Resource, RARITY_COLORS, TILE_TYPES, TileType, calculateTileValue, Position, AREA_COLORS } from '@/types/game';
+import { X, Flag, Package, Coins, ChevronDown, ChevronRight, ChevronUp, AlertTriangle, MapPin, Paintbrush } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ResourceIcon from './ResourceIcon';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -21,6 +21,7 @@ interface MultiTileInfoPanelProps {
   onClaimAll: () => void;
   onGather: (x: number, y: number, resourceId: string) => void;
   onCreateArea?: (name: string, color: string, tiles: Position[]) => { success: boolean; message: string };
+  onConvert?: (newType: TileType) => void;
 }
 
 const CLAIM_RADIUS = 6;
