@@ -599,6 +599,7 @@ const Index = () => {
             userColor={world.userColor}
             coins={world.coins}
             claimedTiles={claimedCount}
+            population={(world.strangers || []).filter(s => s.allegiance?.userId === world.userId).length}
             username={username}
             onClose={() => setSovereigntyOpen(false)}
             onColorChange={setUserColor}
