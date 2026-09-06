@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import ResourceIcon from './ResourceIcon';
 import PixelCharacter from './PixelCharacter';
 import CanvasTileRenderer from './CanvasTileRenderer';
+import CanvasOverlayRenderer from './CanvasOverlayRenderer';
 
 type FacingDirection = 'north' | 'south' | 'east' | 'west';
 
@@ -37,24 +38,13 @@ interface GameMapProps {
   onStrangerClick?: (stranger: Stranger) => void;
 }
 
-// Memoized tile component to prevent unnecessary re-renders
+// Memoized overlay rendered only for tiles that actually have something on them
+// (market, resource, NPC, stranger). Claims/areas/selection are drawn on canvas.
 const TileOverlay = memo(({
-  x,
-  y,
   screenX,
   screenY,
   tileSize,
-  isPlayerHere,
-  isSelected,
-  isMultiSelected,
-  isInDragSelection,
-  isWalkable,
-  isClaimed,
-  isOwnClaim,
-  claimColor,
-  borderStyles,
   marketOnTile,
-  tileArea,
   displayableResource,
   resourceWidth,
   resourceHeight,
@@ -66,33 +56,14 @@ const TileOverlay = memo(({
   npcOnTile,
   strangerOnTile,
   hoveredStrangerId,
-  facingDirection,
-  isMoving,
-  userColor,
-  showDetails,
-  onMouseDown,
-  onMouseEnter,
-  onClick,
   onStrangerHover,
   onStrangerLeave,
   onStrangerClick,
 }: {
-  x: number;
-  y: number;
   screenX: number;
   screenY: number;
   tileSize: number;
-  isPlayerHere: boolean;
-  isSelected: boolean;
-  isMultiSelected: boolean;
-  isInDragSelection: boolean;
-  isWalkable: boolean;
-  isClaimed: boolean;
-  isOwnClaim: boolean;
-  claimColor: string;
-  borderStyles: React.CSSProperties;
   marketOnTile: Market | null;
-  tileArea: Area | undefined;
   displayableResource: Resource | undefined;
   resourceWidth: number;
   resourceHeight: number;
@@ -104,60 +75,26 @@ const TileOverlay = memo(({
   npcOnTile: NPC | undefined;
   strangerOnTile: Stranger | undefined;
   hoveredStrangerId: string | null;
-  facingDirection: FacingDirection;
-  isMoving: boolean;
-  userColor: string;
-  showDetails: boolean;
-  onMouseDown: () => void;
-  onMouseEnter: () => void;
-  onClick: () => void;
   onStrangerHover: (stranger: Stranger) => void;
   onStrangerLeave: () => void;
   onStrangerClick: (stranger: Stranger) => void;
 }) => {
-  let selectionStyle: React.CSSProperties = {};
-  if (isSelected) {
-    selectionStyle.boxShadow = 'inset 0 0 0 3px #fff';
-  } else if (isMultiSelected) {
-    selectionStyle.boxShadow = 'inset 0 0 0 2px #3b82f6';
-  } else if (isInDragSelection) {
-    selectionStyle.boxShadow = 'inset 0 0 0 2px rgba(59, 130, 246, 0.6)';
-  }
-
   const isMultiTileResource = resourceWidth > 1 || resourceHeight > 1;
 
   return (
     <div
-      className={cn(
-        'cursor-pointer relative box-border select-none',
-        marketOnTile && 'bg-amber-800/80',
-        (isInDragSelection || isMultiSelected) && isWalkable && 'bg-blue-500/20'
-      )}
+      className={cn('absolute box-border select-none pointer-events-none', marketOnTile && 'bg-amber-800/80')}
       style={{
-        gridColumn: screenX + 1,
-        gridRow: screenY + 1,
+        left: screenX * tileSize,
+        top: screenY * tileSize,
         width: tileSize,
         height: tileSize,
         fontSize: Math.max(10, tileSize * 0.5),
-        ...borderStyles,
-        ...selectionStyle,
+        zIndex: 4,
       }}
-      onMouseDown={onMouseDown}
-      onMouseEnter={onMouseEnter}
-      onClick={onClick}
     >
-      {/* Area color overlay */}
-      {tileArea && (
-        <div 
-          className="absolute inset-0 pointer-events-none z-5"
-          style={{ 
-            backgroundColor: tileArea.color,
-            opacity: 0.25,
-          }}
-        />
-      )}
       {/* Show market icon */}
-      {showDetails && marketOnTile && (
+      {marketOnTile && (
         <span 
           className="absolute inset-0 flex items-center justify-center drop-shadow-lg z-20"
           style={{ fontSize: Math.max(16, tileSize * 0.8) }}
@@ -166,7 +103,7 @@ const TileOverlay = memo(({
         </span>
       )}
       {/* Show displayable resources */}
-      {showDetails && displayableResource && (
+      {displayableResource && (
         <div 
           className="absolute flex flex-col items-center drop-shadow-md pointer-events-none"
           style={{ 
@@ -205,7 +142,7 @@ const TileOverlay = memo(({
               }}
             >
               <div 
-                className={`h-full transition-all duration-200 ${
+                className={`h-full ${
                   lifePercent > 50 ? 'bg-emerald-400' : 
                   lifePercent > 25 ? 'bg-amber-400' : 'bg-red-400'
                 }`}
@@ -229,7 +166,7 @@ const TileOverlay = memo(({
         </div>
       )}
       {/* NPC character */}
-      {showDetails && npcOnTile && (
+      {npcOnTile && (
         <div 
           className="absolute z-15 flex items-end justify-center pointer-events-none"
           style={{
@@ -248,9 +185,9 @@ const TileOverlay = memo(({
         </div>
       )}
       {/* Stranger on tile */}
-      {showDetails && strangerOnTile && !npcOnTile && (
+      {strangerOnTile && !npcOnTile && (
         <div 
-          className="absolute z-14 flex items-end justify-center cursor-pointer group"
+          className="absolute z-14 flex items-end justify-center cursor-pointer group pointer-events-auto"
           style={{
             left: 0,
             right: 0,
@@ -292,20 +229,10 @@ const TileOverlay = memo(({
           )}
         </div>
       )}
-      {/* Claim indicator */}
-      {isClaimed && !npcOnTile && (
-        <div 
-          className="absolute top-0.5 right-0.5 rounded-full"
-          style={{ 
-            backgroundColor: claimColor,
-            width: Math.max(4, tileSize * 0.15),
-            height: Math.max(4, tileSize * 0.15),
-          }}
-        />
-      )}
     </div>
   );
 });
+
 
 TileOverlay.displayName = 'TileOverlay';
 
@@ -584,26 +511,18 @@ const GameMap = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onMove]);
 
-  // Compute visible tiles data with all derived properties
+  // Only tiles that actually need a DOM overlay (market / resource / character).
+  // Claims, areas and selection highlights are painted on canvas instead.
   const visibleTilesData = useMemo(() => {
     const endX = Math.min(viewportOffset.x + viewportSize.tilesX, map.width);
     const endY = Math.min(viewportOffset.y + viewportSize.tilesY, map.height);
-    
+
     const result: Array<{
       x: number;
       y: number;
       screenX: number;
       screenY: number;
-      tile: typeof map.tiles[0][0];
-      isPlayerHere: boolean;
-      isSelected: boolean;
-      isWalkable: boolean;
-      isClaimed: boolean;
-      isOwnClaim: boolean;
-      claimColor: string;
-      borderStyles: React.CSSProperties;
       marketOnTile: Market | null;
-      tileArea: Area | undefined;
       displayableResource: Resource | undefined;
       resourceWidth: number;
       resourceHeight: number;
@@ -614,99 +533,67 @@ const GameMap = ({
       npcOnTile: NPC | undefined;
       strangerOnTile: Stranger | undefined;
     }> = [];
-    
+
+    if (!showDetails) return result;
+
+    const hasMarkets = marketPositionMap.size > 0;
+    const hasNpcs = npcPositionMap.size > 0;
+    const hasStrangers = strangerPositionMap.size > 0;
+
     for (let y = viewportOffset.y; y < endY; y++) {
+      const row = map.tiles[y];
+      if (!row) continue;
       for (let x = viewportOffset.x; x < endX; x++) {
-        const tile = map.tiles[y]?.[x];
+        const tile = row[x];
         if (!tile) continue;
-        
-        const screenX = x - viewportOffset.x;
-        const screenY = y - viewportOffset.y;
+
+        const hasResources = tile.resources.length > 0;
+        if (!hasResources && !hasMarkets && !hasNpcs && !hasStrangers) continue;
+
         const posKey = `${x}-${y}`;
-        
-        const isPlayerHere = x === playerPosition.x && y === playerPosition.y;
-        const isSelected = selectedTile?.x === x && selectedTile?.y === y;
-        const tileTypeInfo = TILE_TYPES.find(t => t.type === tile.type);
-        const isWalkable = tileTypeInfo?.walkable ?? tile.walkable;
-        const isClaimed = !!tile.claimedBy;
-        const isOwnClaim = tile.claimedBy === userId;
-        
-        // Get NPC claim owner
-        const npcClaimOwner = tile.claimedBy?.startsWith('npc-') 
-          ? npcs.find(npc => npc.id === tile.claimedBy)
-          : null;
-        
-        const claimColor = isOwnClaim 
-          ? userColor 
-          : npcClaimOwner 
-            ? npcClaimOwner.color 
-            : '#888';
-        
-        // Calculate border styles
-        let borderStyles: React.CSSProperties = {};
-        if (isClaimed && !isSelected && !selectedTilesSet.has(posKey)) {
-          const borderWidth = 2;
-          const topTile = map.tiles[y - 1]?.[x];
-          const bottomTile = map.tiles[y + 1]?.[x];
-          const leftTile = map.tiles[y]?.[x - 1];
-          const rightTile = map.tiles[y]?.[x + 1];
-          
-          borderStyles = {
-            borderTop: topTile?.claimedBy !== tile.claimedBy ? `${borderWidth}px solid ${claimColor}` : 'none',
-            borderBottom: bottomTile?.claimedBy !== tile.claimedBy ? `${borderWidth}px solid ${claimColor}` : 'none',
-            borderLeft: leftTile?.claimedBy !== tile.claimedBy ? `${borderWidth}px solid ${claimColor}` : 'none',
-            borderRight: rightTile?.claimedBy !== tile.claimedBy ? `${borderWidth}px solid ${claimColor}` : 'none',
-          };
+        const marketOnTile = hasMarkets ? marketPositionMap.get(posKey) || null : null;
+        const npcOnTile = hasNpcs ? npcPositionMap.get(posKey) : undefined;
+        const strangerOnTile = hasStrangers ? strangerPositionMap.get(posKey) : undefined;
+
+        let displayableResource: Resource | undefined;
+        let hasLightEmitter = false;
+        if (hasResources) {
+          let bestSize = -1;
+          for (const resId of tile.resources) {
+            const r = resourceMap.get(resId);
+            if (!r || !(r.isFloating || r.display)) continue;
+            if (isNighttime && r.emitsLight) hasLightEmitter = true;
+            const size = (r.tileWidth ?? 1) * (r.tileHeight ?? 1);
+            if (size > bestSize) {
+              bestSize = size;
+              displayableResource = r;
+            }
+          }
         }
-        
-        const marketOnTile = marketPositionMap.get(posKey) || null;
-        const tileArea = getAreaForTile(x, y);
-        const npcOnTile = npcPositionMap.get(posKey);
-        const strangerOnTile = strangerPositionMap.get(posKey);
-        
-        // Get displayable resources
-        const displayableResources = tile.resources
-          .map(resId => resourceMap.get(resId))
-          .filter((r): r is Resource => !!(r?.isFloating || r?.display))
-          .sort((a, b) => {
-            const aSize = (a.tileWidth ?? 1) * (a.tileHeight ?? 1);
-            const bSize = (b.tileWidth ?? 1) * (b.tileHeight ?? 1);
-            return bSize - aSize;
-          });
-        
-        const displayableResource = displayableResources[0];
+
+        if (!displayableResource && !marketOnTile && !npcOnTile && !strangerOnTile) continue;
+
         const resourceWidth = displayableResource?.tileWidth ?? 1;
         const resourceHeight = displayableResource?.tileHeight ?? 1;
-        
+
         const playerBehindResource = !!(displayableResource && (
-          playerPosition.x >= x && 
+          playerPosition.x >= x &&
           playerPosition.x < x + resourceWidth &&
-          playerPosition.y <= y && 
+          playerPosition.y <= y &&
           playerPosition.y > y - resourceHeight
         ));
-        
+
         const resourceLife = displayableResource ? tile.resourceLife?.[displayableResource.id] : undefined;
         const maxLife = displayableResource?.maxLife ?? 100;
         const isDamaged = !!(displayableResource?.destructible && resourceLife !== undefined && resourceLife < maxLife);
         const lifePercent = isDamaged ? (resourceLife! / maxLife) * 100 : 100;
-        
-        const hasLightEmitter = isNighttime && displayableResources.some(r => r.emitsLight);
-        
+
         result.push({
           x,
           y,
-          screenX,
-          screenY,
-          tile,
-          isPlayerHere,
-          isSelected,
-          isWalkable,
-          isClaimed,
-          isOwnClaim,
-          claimColor,
-          borderStyles,
+          screenX: x - viewportOffset.x,
+          screenY: y - viewportOffset.y,
           marketOnTile,
-          tileArea,
           displayableResource,
           resourceWidth,
           resourceHeight,
@@ -722,11 +609,12 @@ const GameMap = ({
     return result;
   }, [
     map.tiles, map.width, map.height,
-    viewportOffset, viewportSize,
-    playerPosition, selectedTile, userId, userColor,
-    resourceMap, npcPositionMap, strangerPositionMap, marketPositionMap, selectedTilesSet,
-    npcs, isNighttime, getAreaForTile
+    viewportOffset, viewportSize, showDetails,
+    playerPosition,
+    resourceMap, npcPositionMap, strangerPositionMap, marketPositionMap,
+    isNighttime
   ]);
+
 
   const handleStrangerHover = useCallback((stranger: Stranger) => {
     setHoveredStranger(stranger);
@@ -777,16 +665,61 @@ const GameMap = ({
     };
   }, [isPanning, tileSize, onPan]);
 
+  // --- Delegated pointer handling: one set of listeners for the whole map ---
+  const tileFromEvent = useCallback((e: React.MouseEvent): Position | null => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return null;
+    const x = viewportOffset.x + Math.floor((e.clientX - rect.left) / tileSize);
+    const y = viewportOffset.y + Math.floor((e.clientY - rect.top) / tileSize);
+    if (x < 0 || y < 0 || x >= map.width || y >= map.height) return null;
+    return { x, y };
+  }, [viewportOffset, tileSize, map.width, map.height]);
+
+  const handleContainerMouseDown = useCallback((e: React.MouseEvent) => {
+    handlePanStart(e);
+    if (!multiSelectMode) return;
+    const pos = tileFromEvent(e);
+    if (pos) handleTileMouseDown(pos.x, pos.y);
+  }, [handlePanStart, multiSelectMode, tileFromEvent, handleTileMouseDown]);
+
+  const handleContainerMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging || !multiSelectMode) return;
+    const pos = tileFromEvent(e);
+    if (pos && (pos.x !== dragEnd?.x || pos.y !== dragEnd?.y)) {
+      handleTileMouseEnter(pos.x, pos.y);
+    }
+  }, [isDragging, multiSelectMode, tileFromEvent, dragEnd, handleTileMouseEnter]);
+
+  const handleContainerClick = useCallback((e: React.MouseEvent) => {
+    if (panMode || multiSelectMode) return;
+    const pos = tileFromEvent(e);
+    if (!pos) return;
+    if (marketPositionMap.has(`${pos.x}-${pos.y}`)) return;
+    onTileSelect(pos.x, pos.y);
+  }, [panMode, multiSelectMode, tileFromEvent, marketPositionMap, onTileSelect]);
+
+  const dragRect = useMemo(() => {
+    if (!isDragging || !dragStart || !dragEnd) return null;
+    return {
+      minX: Math.min(dragStart.x, dragEnd.x),
+      maxX: Math.max(dragStart.x, dragEnd.x),
+      minY: Math.min(dragStart.y, dragEnd.y),
+      maxY: Math.max(dragStart.y, dragEnd.y),
+    };
+  }, [isDragging, dragStart, dragEnd]);
+
   return (
     <div
       ref={containerRef}
       className={cn(
         "w-full h-full overflow-hidden relative",
-        panMode && (isPanning ? "cursor-grabbing" : "cursor-grab")
+        panMode ? (isPanning ? "cursor-grabbing" : "cursor-grab") : "cursor-pointer"
       )}
       tabIndex={0}
       onWheel={handleWheel}
-      onMouseDown={handlePanStart}
+      onMouseDown={handleContainerMouseDown}
+      onMouseMove={handleContainerMouseMove}
+      onClick={handleContainerClick}
     >
 
       <CanvasTileRenderer
@@ -795,66 +728,45 @@ const GameMap = ({
         viewportSize={viewportSize}
         tileSize={tileSize}
       />
-      <div
-        className="absolute inset-0 grid"
-        style={{
-          gridTemplateColumns: `repeat(${viewportSize.tilesX}, ${tileSize}px)`,
-          gridTemplateRows: `repeat(${viewportSize.tilesY}, ${tileSize}px)`,
-        }}
-      >
-        {visibleTilesData.map((data) => {
-          const posKey = `${data.x}-${data.y}`;
-          const isMultiSelected = selectedTilesSet.has(posKey);
-          const isInDragSelection = isTileInDragSelection(data.x, data.y);
-          
-          return (
-            <TileOverlay
-              key={posKey}
-              x={data.x}
-              y={data.y}
-              screenX={data.screenX}
-              screenY={data.screenY}
-              tileSize={tileSize}
-              isPlayerHere={data.isPlayerHere}
-              isSelected={data.isSelected}
-              isMultiSelected={isMultiSelected}
-              isInDragSelection={isInDragSelection}
-              isWalkable={data.isWalkable}
-              isClaimed={data.isClaimed}
-              isOwnClaim={data.isOwnClaim}
-              claimColor={data.claimColor}
-              borderStyles={data.borderStyles}
-              marketOnTile={data.marketOnTile}
-              tileArea={data.tileArea}
-              displayableResource={data.displayableResource}
-              resourceWidth={data.resourceWidth}
-              resourceHeight={data.resourceHeight}
-              playerBehindResource={data.playerBehindResource}
-              isDamaged={data.isDamaged}
-              lifePercent={data.lifePercent}
-              hasLightEmitter={data.hasLightEmitter}
-              isNighttime={isNighttime}
-              npcOnTile={data.npcOnTile}
-              strangerOnTile={data.strangerOnTile}
-              hoveredStrangerId={hoveredStranger?.id || null}
-              facingDirection={facingDirection}
-              isMoving={isMoving}
-              userColor={userColor}
-              showDetails={showDetails}
-              onMouseDown={() => handleTileMouseDown(data.x, data.y)}
-              onMouseEnter={() => handleTileMouseEnter(data.x, data.y)}
-              onClick={() => {
-                if (!panMode && !multiSelectMode && !data.marketOnTile) {
-                  onTileSelect(data.x, data.y);
-                }
-              }}
-              onStrangerHover={handleStrangerHover}
-              onStrangerLeave={handleStrangerLeave}
-              onStrangerClick={handleStrangerClickInternal}
-            />
-          );
-        })}
+      <CanvasOverlayRenderer
+        map={map}
+        viewportOffset={viewportOffset}
+        viewportSize={viewportSize}
+        tileSize={tileSize}
+        userId={userId}
+        userColor={userColor}
+        npcs={npcs}
+        areas={areas}
+        selectedTile={selectedTile}
+        selectedTilesSet={selectedTilesSet}
+        dragRect={dragRect}
+      />
+      <div className="absolute inset-0 pointer-events-none">
+        {visibleTilesData.map((data) => (
+          <TileOverlay
+            key={`${data.x}-${data.y}`}
+            screenX={data.screenX}
+            screenY={data.screenY}
+            tileSize={tileSize}
+            marketOnTile={data.marketOnTile}
+            displayableResource={data.displayableResource}
+            resourceWidth={data.resourceWidth}
+            resourceHeight={data.resourceHeight}
+            playerBehindResource={data.playerBehindResource}
+            isDamaged={data.isDamaged}
+            lifePercent={data.lifePercent}
+            hasLightEmitter={data.hasLightEmitter}
+            isNighttime={isNighttime}
+            npcOnTile={data.npcOnTile}
+            strangerOnTile={data.strangerOnTile}
+            hoveredStrangerId={hoveredStranger?.id || null}
+            onStrangerHover={handleStrangerHover}
+            onStrangerLeave={handleStrangerLeave}
+            onStrangerClick={handleStrangerClickInternal}
+          />
+        ))}
       </div>
+
       
       {/* Time of day lighting overlay */}
       <div 

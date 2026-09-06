@@ -24,9 +24,13 @@ interface UseStrangerBehaviorProps {
   memberSovereignties?: Map<string, { username: string; sovereignty?: Sovereignty }>;
 }
 
+const WALKABLE_BY_TYPE = new Map(TILE_TYPES.map(t => [t.type, t.walkable]));
+const SOVEREIGNTY_CACHE_MS = 15000; // Re-scan the map for territory values at most this often
+
 export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovereignties }: UseStrangerBehaviorProps) => {
   const lastUpdateRef = useRef<number>(0);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sovereigntyCacheRef = useRef<{ at: number; data: SovereigntyInfo[] } | null>(null);
 
   // Calculate sovereignty values from map claims
   const calculateSovereigntyValues = useCallback((map: WorldMap, resources: Resource[]): SovereigntyInfo[] => {
@@ -68,11 +72,10 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
   }, [memberSovereignties]);
 
   // Evaluate if stranger should pledge allegiance
-  const evaluateAllegiance = useCallback((stranger: Stranger, map: WorldMap, resources: Resource[]): Stranger => {
+  const evaluateAllegiance = useCallback((stranger: Stranger, sovereignties: SovereigntyInfo[]): Stranger => {
     // Only evaluate sometimes
     if (Math.random() > STRANGER_ALLEGIANCE_CHANCE) return stranger;
     
-    const sovereignties = calculateSovereigntyValues(map, resources);
     if (sovereignties.length === 0) return stranger;
     
     // Find the most valuable sovereignty that meets threshold
@@ -104,7 +107,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     }
     
     return stranger;
-  }, [calculateSovereigntyValues]);
+  }, []);
 
   // Find adjacent walkable tiles
   const getAdjacentTiles = useCallback((x: number, y: number, map: WorldMap): { x: number; y: number }[] => {
@@ -120,8 +123,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
       .filter(pos => {
         if (pos.x < 0 || pos.x >= map.width || pos.y < 0 || pos.y >= map.height) return false;
         const tile = map.tiles[pos.y][pos.x];
-        const tileInfo = TILE_TYPES.find(t => t.type === tile.type);
-        return tileInfo?.walkable ?? tile.walkable;
+        return WALKABLE_BY_TYPE.get(tile.type) ?? tile.walkable;
       });
   }, []);
 
@@ -145,13 +147,11 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     
     const resourceToGather = gatherableResources[0];
     
-    const newTiles = map.tiles.map((row, ry) =>
-      row.map((t, rx) =>
-        rx === x && ry === y
-          ? { ...t, resources: t.resources.filter(r => r !== resourceToGather) }
-          : t
-      )
-    );
+    // Copy only the affected row instead of cloning the entire map
+    const newTiles = [...map.tiles];
+    const newRow = [...newTiles[y]];
+    newRow[x] = { ...currentTile, resources: currentTile.resources.filter(r => r !== resourceToGather) };
+    newTiles[y] = newRow;
     
     // Add to inventory
     let newInventory = [...stranger.inventory];
@@ -235,7 +235,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
   }, [getAdjacentTiles]);
 
   // Process one stranger's turn
-  const processStrangerTurn = useCallback((stranger: Stranger, currentMap: WorldMap, resources: Resource[]): {
+  const processStrangerTurn = useCallback((stranger: Stranger, currentMap: WorldMap, resources: Resource[], sovereignties: SovereigntyInfo[]): {
     stranger: Stranger;
     mapTiles?: WorldMap['tiles'];
   } => {
@@ -267,7 +267,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     }
     
     // Priority 4: Evaluate allegiance to sovereignties
-    updatedStranger = evaluateAllegiance(updatedStranger, currentMap, resources);
+    updatedStranger = evaluateAllegiance(updatedStranger, sovereignties);
     
     return { stranger: updatedStranger, mapTiles: newMapTiles };
   }, [strangerGatherFromTile, strangerConsumeResource, strangerMove, evaluateAllegiance]);
@@ -288,6 +288,16 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
         const updatedStrangers: Stranger[] = [];
         let mapChanged = false;
         
+        // Territory values are expensive to compute (full map scan) - cache them
+        const cache = sovereigntyCacheRef.current;
+        let sovereignties: SovereigntyInfo[];
+        if (cache && now - cache.at < SOVEREIGNTY_CACHE_MS) {
+          sovereignties = cache.data;
+        } else {
+          sovereignties = calculateSovereigntyValues(prev.map, prev.resources);
+          sovereigntyCacheRef.current = { at: now, data: sovereignties };
+        }
+        
         // Process only a subset of strangers each tick to reduce performance impact
         const maxStrangersPerTick = Math.min(prev.strangers.length, 50);
         const startIndex = Math.floor(Math.random() * Math.max(1, prev.strangers.length - maxStrangersPerTick));
@@ -297,7 +307,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
           
           // Only process a subset each tick
           if (i >= startIndex && i < startIndex + maxStrangersPerTick) {
-            const result = processStrangerTurn(stranger, currentMap, prev.resources);
+            const result = processStrangerTurn(stranger, currentMap, prev.resources, sovereignties);
             updatedStrangers.push(result.stranger);
             
             if (result.mapTiles) {
@@ -333,7 +343,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [world.enableStrangers, world.strangers?.length, processStrangerTurn, setWorld, saveMapData]);
+  }, [world.enableStrangers, world.strangers?.length, processStrangerTurn, calculateSovereigntyValues, setWorld, saveMapData]);
 
   return null;
 };

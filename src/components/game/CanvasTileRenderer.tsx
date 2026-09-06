@@ -299,10 +299,9 @@ const CanvasTileRenderer = ({
       for (let x = viewportOffset.x; x < endX; x++) {
         const type = row[x]?.type;
         if (type) {
-          for (let i = 0; i < type.length; i++) {
-            fingerprint = (fingerprint * 31 + type.charCodeAt(i) + x * 7 + y * 13) | 0;
-          }
+          fingerprint = (fingerprint * 31 + type.charCodeAt(0) + type.length) | 0;
         }
+
       }
     }
     return `${viewportOffset.x}-${viewportOffset.y}-${viewportSize.tilesX}-${viewportSize.tilesY}-${tileSize}-${fingerprint}`;

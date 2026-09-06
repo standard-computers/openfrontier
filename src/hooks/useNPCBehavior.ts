@@ -6,6 +6,9 @@ const NPC_CLAIM_CHANCE = 0.3; // 30% chance to claim a tile when possible
 const NPC_GATHER_CHANCE = 0.5; // 50% chance to gather resources
 const NPC_CONSUME_CHANCE = 0.2; // 20% chance to consume food when low health
 const NPC_MOVE_CHANCE = 0.7; // 70% chance to move
+const NPC_GATHER_RADIUS = 12; // Only look for gatherable owned tiles near the NPC
+
+const WALKABLE_BY_TYPE = new Map(TILE_TYPES.map(t => [t.type, t.walkable]));
 
 interface UseNPCBehaviorProps {
   world: GameWorld;
@@ -31,8 +34,7 @@ export const useNPCBehavior = ({ world, setWorld, saveMapData }: UseNPCBehaviorP
       .filter(pos => {
         if (pos.x < 0 || pos.x >= map.width || pos.y < 0 || pos.y >= map.height) return false;
         const tile = map.tiles[pos.y][pos.x];
-        const tileInfo = TILE_TYPES.find(t => t.type === tile.type);
-        return tileInfo?.walkable ?? tile.walkable;
+        return WALKABLE_BY_TYPE.get(tile.type) ?? tile.walkable;
       });
   }, []);
 
@@ -48,8 +50,7 @@ export const useNPCBehavior = ({ world, setWorld, saveMapData }: UseNPCBehaviorP
         if (x < 0 || x >= map.width || y < 0 || y >= map.height) continue;
         
         const tile = map.tiles[y][x];
-        const tileInfo = TILE_TYPES.find(t => t.type === tile.type);
-        const isWalkable = tileInfo?.walkable ?? tile.walkable;
+        const isWalkable = WALKABLE_BY_TYPE.get(tile.type) ?? tile.walkable;
         
         const adjacencyOk = !ownsAnyTile(map.tiles, npc.id) || isAdjacentToOwnedLand(map.tiles, x, y, npc.id);
         if (isWalkable && !tile.claimedBy && adjacencyOk) {
@@ -77,11 +78,11 @@ export const useNPCBehavior = ({ world, setWorld, saveMapData }: UseNPCBehaviorP
     
     const collected = [...tile.resources];
     
-    const newTiles = map.tiles.map((row, ry) =>
-      row.map((t, rx) =>
-        rx === x && ry === y ? { ...t, claimedBy: npc.id, resources: [] } : t
-      )
-    );
+    // Copy only the affected row instead of cloning the entire map
+    const newTiles = [...map.tiles];
+    const newRow = [...newTiles[y]];
+    newRow[x] = { ...tile, claimedBy: npc.id, resources: [] };
+    newTiles[y] = newRow;
     
     // Add collected resources to NPC inventory
     let newInventory = [...npc.inventory];
@@ -118,10 +119,17 @@ export const useNPCBehavior = ({ world, setWorld, saveMapData }: UseNPCBehaviorP
     // Find tiles owned by this NPC with resources
     const ownedTilesWithResources: { x: number; y: number; resources: string[] }[] = [];
     
-    for (let y = 0; y < map.height; y++) {
-      for (let x = 0; x < map.width; x++) {
-        const tile = map.tiles[y][x];
-        if (tile.claimedBy === npc.id && tile.resources.length > 0) {
+    const minY = Math.max(0, npc.position.y - NPC_GATHER_RADIUS);
+    const maxY = Math.min(map.height - 1, npc.position.y + NPC_GATHER_RADIUS);
+    const minX = Math.max(0, npc.position.x - NPC_GATHER_RADIUS);
+    const maxX = Math.min(map.width - 1, npc.position.x + NPC_GATHER_RADIUS);
+    
+    for (let y = minY; y <= maxY; y++) {
+      const row = map.tiles[y];
+      if (!row) continue;
+      for (let x = minX; x <= maxX; x++) {
+        const tile = row[x];
+        if (tile && tile.claimedBy === npc.id && tile.resources.length > 0) {
           ownedTilesWithResources.push({ x, y, resources: tile.resources });
         }
       }
@@ -133,13 +141,12 @@ export const useNPCBehavior = ({ world, setWorld, saveMapData }: UseNPCBehaviorP
     const targetTile = ownedTilesWithResources[Math.floor(Math.random() * ownedTilesWithResources.length)];
     const resourceToGather = targetTile.resources[0];
     
-    const newTiles = map.tiles.map((row, ry) =>
-      row.map((t, rx) =>
-        rx === targetTile.x && ry === targetTile.y
-          ? { ...t, resources: t.resources.filter(r => r !== resourceToGather) }
-          : t
-      )
-    );
+    // Copy only the affected row instead of cloning the entire map
+    const newTiles = [...map.tiles];
+    const gatherRow = [...newTiles[targetTile.y]];
+    const gatherTile = gatherRow[targetTile.x];
+    gatherRow[targetTile.x] = { ...gatherTile, resources: gatherTile.resources.filter(r => r !== resourceToGather) };
+    newTiles[targetTile.y] = gatherRow;
     
     // Add to inventory
     let newInventory = [...npc.inventory];
