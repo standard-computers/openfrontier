@@ -15,6 +15,10 @@ interface GameMapProps {
   selectedTile: Position | null;
   selectedTiles: Position[];
   multiSelectMode: boolean;
+  panMode?: boolean;
+  showDetails?: boolean;
+  onPan?: (dx: number, dy: number) => void;
+
   userColor: string;
   userId: string;
   tileSize: number;
