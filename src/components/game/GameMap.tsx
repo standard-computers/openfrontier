@@ -664,16 +664,61 @@ const GameMap = ({
     };
   }, [isPanning, tileSize, onPan]);
 
+  // --- Delegated pointer handling: one set of listeners for the whole map ---
+  const tileFromEvent = useCallback((e: React.MouseEvent): Position | null => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return null;
+    const x = viewportOffset.x + Math.floor((e.clientX - rect.left) / tileSize);
+    const y = viewportOffset.y + Math.floor((e.clientY - rect.top) / tileSize);
+    if (x < 0 || y < 0 || x >= map.width || y >= map.height) return null;
+    return { x, y };
+  }, [viewportOffset, tileSize, map.width, map.height]);
+
+  const handleContainerMouseDown = useCallback((e: React.MouseEvent) => {
+    handlePanStart(e);
+    if (!multiSelectMode) return;
+    const pos = tileFromEvent(e);
+    if (pos) handleTileMouseDown(pos.x, pos.y);
+  }, [handlePanStart, multiSelectMode, tileFromEvent, handleTileMouseDown]);
+
+  const handleContainerMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging || !multiSelectMode) return;
+    const pos = tileFromEvent(e);
+    if (pos && (pos.x !== dragEnd?.x || pos.y !== dragEnd?.y)) {
+      handleTileMouseEnter(pos.x, pos.y);
+    }
+  }, [isDragging, multiSelectMode, tileFromEvent, dragEnd, handleTileMouseEnter]);
+
+  const handleContainerClick = useCallback((e: React.MouseEvent) => {
+    if (panMode || multiSelectMode) return;
+    const pos = tileFromEvent(e);
+    if (!pos) return;
+    if (marketPositionMap.has(`${pos.x}-${pos.y}`)) return;
+    onTileSelect(pos.x, pos.y);
+  }, [panMode, multiSelectMode, tileFromEvent, marketPositionMap, onTileSelect]);
+
+  const dragRect = useMemo(() => {
+    if (!isDragging || !dragStart || !dragEnd) return null;
+    return {
+      minX: Math.min(dragStart.x, dragEnd.x),
+      maxX: Math.max(dragStart.x, dragEnd.x),
+      minY: Math.min(dragStart.y, dragEnd.y),
+      maxY: Math.max(dragStart.y, dragEnd.y),
+    };
+  }, [isDragging, dragStart, dragEnd]);
+
   return (
     <div
       ref={containerRef}
       className={cn(
         "w-full h-full overflow-hidden relative",
-        panMode && (isPanning ? "cursor-grabbing" : "cursor-grab")
+        panMode ? (isPanning ? "cursor-grabbing" : "cursor-grab") : "cursor-pointer"
       )}
       tabIndex={0}
       onWheel={handleWheel}
-      onMouseDown={handlePanStart}
+      onMouseDown={handleContainerMouseDown}
+      onMouseMove={handleContainerMouseMove}
+      onClick={handleContainerClick}
     >
 
       <CanvasTileRenderer
@@ -682,66 +727,45 @@ const GameMap = ({
         viewportSize={viewportSize}
         tileSize={tileSize}
       />
-      <div
-        className="absolute inset-0 grid"
-        style={{
-          gridTemplateColumns: `repeat(${viewportSize.tilesX}, ${tileSize}px)`,
-          gridTemplateRows: `repeat(${viewportSize.tilesY}, ${tileSize}px)`,
-        }}
-      >
-        {visibleTilesData.map((data) => {
-          const posKey = `${data.x}-${data.y}`;
-          const isMultiSelected = selectedTilesSet.has(posKey);
-          const isInDragSelection = isTileInDragSelection(data.x, data.y);
-          
-          return (
-            <TileOverlay
-              key={posKey}
-              x={data.x}
-              y={data.y}
-              screenX={data.screenX}
-              screenY={data.screenY}
-              tileSize={tileSize}
-              isPlayerHere={data.isPlayerHere}
-              isSelected={data.isSelected}
-              isMultiSelected={isMultiSelected}
-              isInDragSelection={isInDragSelection}
-              isWalkable={data.isWalkable}
-              isClaimed={data.isClaimed}
-              isOwnClaim={data.isOwnClaim}
-              claimColor={data.claimColor}
-              borderStyles={data.borderStyles}
-              marketOnTile={data.marketOnTile}
-              tileArea={data.tileArea}
-              displayableResource={data.displayableResource}
-              resourceWidth={data.resourceWidth}
-              resourceHeight={data.resourceHeight}
-              playerBehindResource={data.playerBehindResource}
-              isDamaged={data.isDamaged}
-              lifePercent={data.lifePercent}
-              hasLightEmitter={data.hasLightEmitter}
-              isNighttime={isNighttime}
-              npcOnTile={data.npcOnTile}
-              strangerOnTile={data.strangerOnTile}
-              hoveredStrangerId={hoveredStranger?.id || null}
-              facingDirection={facingDirection}
-              isMoving={isMoving}
-              userColor={userColor}
-              showDetails={showDetails}
-              onMouseDown={() => handleTileMouseDown(data.x, data.y)}
-              onMouseEnter={() => handleTileMouseEnter(data.x, data.y)}
-              onClick={() => {
-                if (!panMode && !multiSelectMode && !data.marketOnTile) {
-                  onTileSelect(data.x, data.y);
-                }
-              }}
-              onStrangerHover={handleStrangerHover}
-              onStrangerLeave={handleStrangerLeave}
-              onStrangerClick={handleStrangerClickInternal}
-            />
-          );
-        })}
+      <CanvasOverlayRenderer
+        map={map}
+        viewportOffset={viewportOffset}
+        viewportSize={viewportSize}
+        tileSize={tileSize}
+        userId={userId}
+        userColor={userColor}
+        npcs={npcs}
+        areas={areas}
+        selectedTile={selectedTile}
+        selectedTilesSet={selectedTilesSet}
+        dragRect={dragRect}
+      />
+      <div className="absolute inset-0 pointer-events-none">
+        {visibleTilesData.map((data) => (
+          <TileOverlay
+            key={`${data.x}-${data.y}`}
+            screenX={data.screenX}
+            screenY={data.screenY}
+            tileSize={tileSize}
+            marketOnTile={data.marketOnTile}
+            displayableResource={data.displayableResource}
+            resourceWidth={data.resourceWidth}
+            resourceHeight={data.resourceHeight}
+            playerBehindResource={data.playerBehindResource}
+            isDamaged={data.isDamaged}
+            lifePercent={data.lifePercent}
+            hasLightEmitter={data.hasLightEmitter}
+            isNighttime={isNighttime}
+            npcOnTile={data.npcOnTile}
+            strangerOnTile={data.strangerOnTile}
+            hoveredStrangerId={hoveredStranger?.id || null}
+            onStrangerHover={handleStrangerHover}
+            onStrangerLeave={handleStrangerLeave}
+            onStrangerClick={handleStrangerClickInternal}
+          />
+        ))}
       </div>
+
       
       {/* Time of day lighting overlay */}
       <div 
