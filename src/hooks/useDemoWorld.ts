@@ -137,6 +137,7 @@ export const useDemoWorld = () => {
     deleteArea,
     updateArea,
     renameTile,
+    convertTiles,
     placeItem,
     useItemOnFacingTile,
     toggleEnableMarkets,
