@@ -7,6 +7,7 @@ const STRANGER_CONSUME_CHANCE = 0.3; // 30% chance to consume food when low heal
 const STRANGER_MOVE_CHANCE = 0.8; // 80% chance to move (they wander more)
 const STRANGER_ALLEGIANCE_CHANCE = 0.05; // 5% chance per tick to evaluate allegiance
 const ALLEGIANCE_VALUE_THRESHOLD = 100; // Minimum territory value to attract allegiance
+const ALLEGIANCE_MIN_TILES = 10; // Sovereignty must control at least this many tiles before strangers pledge
 
 interface SovereigntyInfo {
   userId: string;
@@ -76,7 +77,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     
     // Find the most valuable sovereignty that meets threshold
     const topSovereignty = sovereignties[0];
-    if (topSovereignty.totalValue < ALLEGIANCE_VALUE_THRESHOLD) {
+    if (topSovereignty.totalValue < ALLEGIANCE_VALUE_THRESHOLD || topSovereignty.tileCount < ALLEGIANCE_MIN_TILES) {
       // No sovereignty is valuable enough, possibly remove allegiance
       if (stranger.allegiance && Math.random() < 0.1) {
         return { ...stranger, allegiance: undefined };
@@ -201,8 +202,25 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
 
   // Stranger moves to an adjacent tile (wanders around)
   const strangerMove = useCallback((stranger: Stranger, map: WorldMap): Stranger => {
-    const adjacentTiles = getAdjacentTiles(stranger.position.x, stranger.position.y, map);
+    let adjacentTiles = getAdjacentTiles(stranger.position.x, stranger.position.y, map);
     if (adjacentTiles.length === 0) return stranger;
+    
+    // Pledged strangers cannot leave their sovereignty's claimed area
+    if (stranger.allegiance) {
+      const currentTile = map.tiles[stranger.position.y]?.[stranger.position.x];
+      const insideTerritory = currentTile?.claimedBy === stranger.allegiance.userId;
+      if (insideTerritory) {
+        const territoryTiles = adjacentTiles.filter(
+          pos => map.tiles[pos.y][pos.x].claimedBy === stranger.allegiance!.userId
+        );
+        if (territoryTiles.length > 0) {
+          adjacentTiles = territoryTiles;
+        } else {
+          // Fully surrounded by unclaimed tiles: stay put rather than leave
+          return stranger;
+        }
+      }
+    }
     
     // Strangers prefer tiles with resources since they gather
     const preferredTiles = adjacentTiles.filter(pos => {
