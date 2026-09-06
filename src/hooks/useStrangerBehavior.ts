@@ -7,6 +7,7 @@ const STRANGER_CONSUME_CHANCE = 0.3; // 30% chance to consume food when low heal
 const STRANGER_MOVE_CHANCE = 0.8; // 80% chance to move (they wander more)
 const STRANGER_ALLEGIANCE_CHANCE = 0.05; // 5% chance per tick to evaluate allegiance
 const ALLEGIANCE_VALUE_THRESHOLD = 100; // Minimum territory value to attract allegiance
+const ALLEGIANCE_MIN_TILES = 10; // Sovereignty must control at least this many tiles before strangers pledge
 
 interface SovereigntyInfo {
   userId: string;
