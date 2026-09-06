@@ -1535,6 +1535,7 @@ export const useGameWorld = () => {
     selectTile,
     claimTile,
     claimMultipleTiles,
+    convertTiles,
     gatherFromTile,
     addResource,
     addExistingResource,
