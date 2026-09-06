@@ -624,6 +624,7 @@ const Index = () => {
             onClaim={handleClaim}
             onGather={handleGather}
             onRename={handleRenameTile}
+            onConvert={handleConvertTile}
             onViewUser={(member) => {
               setSelectedMember(member);
               setUserProfileOpen(true);
@@ -648,6 +649,7 @@ const Index = () => {
           onClaimAll={handleClaimAll}
           onGather={handleMultiGather}
           onCreateArea={createArea}
+          onConvert={handleConvertTiles}
         />
       )}
 
