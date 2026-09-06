@@ -149,7 +149,7 @@ const TileInfoPanel = ({
             </span>
           </div>
         ) : (
-          <button 
+          <button
             onClick={onClaim}
             disabled={!canAfford}
             className={cn(
@@ -160,6 +160,44 @@ const TileInfoPanel = ({
             <Flag className="w-4 h-4" />
             {canAfford ? `Claim for ${tileValue} coins` : `Need ${tileValue} coins`}
           </button>
+        )}
+
+        {/* Convert tile type - only for owned tiles */}
+        {isOwnClaim && onConvert && (
+          <div className="pt-1">
+            <button
+              onClick={() => setShowConvert(prev => !prev)}
+              className="btn btn-secondary w-full flex items-center justify-center gap-2"
+            >
+              <Paintbrush className="w-4 h-4" />
+              Convert Tile
+              {showConvert ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+            {showConvert && (
+              <div className="mt-2 grid grid-cols-2 gap-1">
+                {TILE_TYPES.filter(t => t.type !== tile.type).map((t) => (
+                  <button
+                    key={t.type}
+                    onClick={() => {
+                      onConvert(t.type);
+                      setShowConvert(false);
+                    }}
+                    disabled={userCoins < t.baseValue}
+                    className={cn(
+                      "flex items-center gap-1.5 p-1.5 rounded bg-secondary/50 text-xs hover:bg-secondary transition-colors",
+                      userCoins < t.baseValue && "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    <div className={cn('w-3 h-3 rounded flex-shrink-0', t.color)} />
+                    <span className="flex-1 text-left truncate">{t.label}</span>
+                    <span className="flex items-center gap-0.5 text-amber-400">
+                      <Coins className="w-3 h-3" />{t.baseValue}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
 
