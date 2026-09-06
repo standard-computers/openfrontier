@@ -26,9 +26,12 @@ import { useDemoWorld } from '@/hooks/useDemoWorld';
 import { Market, Position, calculateTileValue, Sovereignty, Stranger, TILE_TYPES } from '@/types/game';
 import { toast } from 'sonner';
 
-const MIN_TILE_SIZE = 12;
+const MIN_TILE_SIZE = 4;
 const MAX_TILE_SIZE = 64;
 const DEFAULT_TILE_SIZE = 39;
+// Below this zoom level, resource/character overlays are hidden for performance
+const DETAIL_ZOOM_THRESHOLD = 50;
+
 
 type FacingDirection = 'north' | 'south' | 'east' | 'west';
 
