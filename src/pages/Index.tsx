@@ -174,6 +174,34 @@ const Index = () => {
     }
   }, [selectedTiles, claimMultipleTiles, isDemoMode]);
 
+  const handleConvertTile = useCallback((newType: TileType) => {
+    if (isDemoMode) {
+      toast.error('Sign up to convert tiles!');
+      return;
+    }
+    if (!selectedTile) return;
+    const result = convertTiles([selectedTile], newType);
+    if (result.success) {
+      toast.success(result.message);
+    } else {
+      toast.error(result.message);
+    }
+  }, [selectedTile, convertTiles, isDemoMode]);
+
+  const handleConvertTiles = useCallback((newType: TileType) => {
+    if (isDemoMode) {
+      toast.error('Sign up to convert tiles!');
+      return;
+    }
+    if (selectedTiles.length === 0) return;
+    const result = convertTiles(selectedTiles, newType);
+    if (result.success) {
+      toast.success(result.message);
+    } else {
+      toast.error(result.message);
+    }
+  }, [selectedTiles, convertTiles, isDemoMode]);
+
   const handleMultiTileSelect = useCallback((tiles: Position[]) => {
     setSelectedTiles(tiles);
   }, []);
