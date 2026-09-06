@@ -1076,6 +1076,11 @@ export const generateNPCs = (
 const STRANGER_FIRST_NAMES = ['Wandering', 'Lost', 'Curious', 'Quiet', 'Humble', 'Swift', 'Gentle', 'Clever', 'Weary', 'Bold', 'Shy', 'Eager'];
 const STRANGER_LAST_NAMES = ['Traveler', 'Nomad', 'Drifter', 'Seeker', 'Walker', 'Gatherer', 'Scout', 'Rover', 'Wanderer', 'Forager', 'Hunter', 'Pilgrim'];
 
+// Strangers are always enabled; their population is derived from world size.
+export const calculateStrangerCount = (width: number, height: number): number => {
+  return Math.max(5, Math.min(2000, Math.round(width * height * 0.002)));
+};
+
 export const generateStrangers = (
   populationCount: number,
   map: WorldMap,

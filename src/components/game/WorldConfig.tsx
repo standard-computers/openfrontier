@@ -334,59 +334,6 @@ const WorldConfig = ({
                         )}
                       </div>
 
-                      {/* Strangers Settings */}
-                      <div className="p-3 bg-secondary/30 rounded-lg space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-2xl">👤</span>
-                            <div>
-                              <div className="font-medium text-sm">Enable Strangers</div>
-                              <div className="text-xs text-muted-foreground">Add wandering NPCs that don't claim territory</div>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => onToggleStrangers?.(!enableStrangers, strangerDensity)}
-                            className={cn(
-                              'w-12 h-6 rounded-full transition-colors relative',
-                              enableStrangers ? 'bg-primary' : 'bg-muted'
-                            )}
-                          >
-                            <div
-                              className={cn(
-                                'w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform',
-                                enableStrangers ? 'translate-x-6' : 'translate-x-0.5'
-                              )}
-                            />
-                          </button>
-                        </div>
-                        
-                        {enableStrangers && (
-                          <div className="space-y-3 pt-2 border-t border-border/50">
-                            <div className="flex items-center gap-3">
-                              <label className="text-sm text-muted-foreground">Population Count:</label>
-                              <input
-                                type="number"
-                                min={1}
-                                max={10000}
-                                step={1}
-                                value={Math.round(strangerDensity)}
-                                onChange={(e) => {
-                                  const value = Math.min(Math.max(parseInt(e.target.value) || 100, 1), 10000);
-                                  onUpdateStrangerDensity?.(value);
-                                }}
-                                className="input-field w-28 text-center"
-                              />
-                            </div>
-                            
-                            {strangerDensity > 5000 && (
-                              <div className="flex items-center gap-2 p-2 bg-destructive/20 rounded text-sm text-destructive">
-                                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                                <span>High population may cause performance issues!</span>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
                     </div>
                   )}
 
