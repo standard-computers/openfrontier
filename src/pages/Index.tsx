@@ -594,24 +594,8 @@ const Index = () => {
             onOpenMarketplace={() => setMarketplaceOpen(true)}
             onZoom={handleZoom}
             onConsumeResource={consumeResource}
-            onToggleMultiSelect={() => {
-              setMultiSelectMode(prev => {
-                if (!prev) {
-                  setPanMode(false);
-                  setSelectedTiles([]);
-                }
-                return !prev;
-              });
-            }}
-            onTogglePanMode={() => {
-              setPanMode(prev => {
-                if (!prev) {
-                  setMultiSelectMode(false);
-                  setSelectedTiles([]);
-                }
-                return !prev;
-              });
-            }}
+            onToggleMultiSelect={handleToggleMultiSelect}
+            onTogglePanMode={handleTogglePanMode}
 
             onReturnToPlayer={handleReturnToPlayer}
           />
