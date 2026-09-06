@@ -69,6 +69,7 @@ const TileOverlay = memo(({
   facingDirection,
   isMoving,
   userColor,
+  showDetails,
   onMouseDown,
   onMouseEnter,
   onClick,
@@ -106,6 +107,7 @@ const TileOverlay = memo(({
   facingDirection: FacingDirection;
   isMoving: boolean;
   userColor: string;
+  showDetails: boolean;
   onMouseDown: () => void;
   onMouseEnter: () => void;
   onClick: () => void;
@@ -155,7 +157,7 @@ const TileOverlay = memo(({
         />
       )}
       {/* Show market icon */}
-      {marketOnTile && (
+      {showDetails && marketOnTile && (
         <span 
           className="absolute inset-0 flex items-center justify-center drop-shadow-lg z-20"
           style={{ fontSize: Math.max(16, tileSize * 0.8) }}
@@ -164,7 +166,7 @@ const TileOverlay = memo(({
         </span>
       )}
       {/* Show displayable resources */}
-      {displayableResource && (
+      {showDetails && displayableResource && (
         <div 
           className="absolute flex flex-col items-center drop-shadow-md pointer-events-none"
           style={{ 
@@ -227,7 +229,7 @@ const TileOverlay = memo(({
         </div>
       )}
       {/* NPC character */}
-      {npcOnTile && (
+      {showDetails && npcOnTile && (
         <div 
           className="absolute z-15 flex items-end justify-center pointer-events-none"
           style={{
@@ -246,7 +248,7 @@ const TileOverlay = memo(({
         </div>
       )}
       {/* Stranger on tile */}
-      {strangerOnTile && !npcOnTile && (
+      {showDetails && strangerOnTile && !npcOnTile && (
         <div 
           className="absolute z-14 flex items-end justify-center cursor-pointer group"
           style={{
@@ -838,10 +840,11 @@ const GameMap = ({
               facingDirection={facingDirection}
               isMoving={isMoving}
               userColor={userColor}
+              showDetails={showDetails}
               onMouseDown={() => handleTileMouseDown(data.x, data.y)}
               onMouseEnter={() => handleTileMouseEnter(data.x, data.y)}
               onClick={() => {
-                if (!multiSelectMode && !data.marketOnTile) {
+                if (!panMode && !multiSelectMode && !data.marketOnTile) {
                   onTileSelect(data.x, data.y);
                 }
               }}
