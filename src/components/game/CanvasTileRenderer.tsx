@@ -288,10 +288,25 @@ const CanvasTileRenderer = ({
   const canvasHeight = viewportSize.tilesY * tileSize;
   
   // Create a stable key for the current viewport to detect real changes
-  const viewportKey = useMemo(() => 
-    `${viewportOffset.x}-${viewportOffset.y}-${viewportSize.tilesX}-${viewportSize.tilesY}-${tileSize}`,
-    [viewportOffset.x, viewportOffset.y, viewportSize.tilesX, viewportSize.tilesY, tileSize]
-  );
+  const viewportKey = useMemo(() => {
+    // Fingerprint visible tile types so terrain changes (e.g. tool transforms) trigger redraws
+    let fingerprint = 0;
+    const endX = Math.min(viewportOffset.x + viewportSize.tilesX, map.width);
+    const endY = Math.min(viewportOffset.y + viewportSize.tilesY, map.height);
+    for (let y = viewportOffset.y; y < endY; y++) {
+      const row = map.tiles[y];
+      if (!row) continue;
+      for (let x = viewportOffset.x; x < endX; x++) {
+        const type = row[x]?.type;
+        if (type) {
+          for (let i = 0; i < type.length; i++) {
+            fingerprint = (fingerprint * 31 + type.charCodeAt(i) + x * 7 + y * 13) | 0;
+          }
+        }
+      }
+    }
+    return `${viewportOffset.x}-${viewportOffset.y}-${viewportSize.tilesX}-${viewportSize.tilesY}-${tileSize}-${fingerprint}`;
+  }, [viewportOffset.x, viewportOffset.y, viewportSize.tilesX, viewportSize.tilesY, tileSize, map.tiles, map.width, map.height]);
   
   const draw = useCallback(() => {
     // Skip if nothing changed
