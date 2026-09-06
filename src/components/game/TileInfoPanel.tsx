@@ -38,6 +38,7 @@ const TileInfoPanel = ({
   onGather,
   onRename,
   onViewUser,
+  onConvert,
 }: TileInfoPanelProps) => {
   const tileInfo = TILE_TYPES.find(t => t.type === tile.type);
   const tileResources = tile.resources.map(id => resources.find(r => r.id === id)).filter(Boolean) as Resource[];
@@ -57,6 +58,7 @@ const TileInfoPanel = ({
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [tileName, setTileName] = useState(tile.name || '');
+  const [showConvert, setShowConvert] = useState(false);
 
   const handleSaveName = () => {
     onRename(tileName);
