@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import ResourceIcon from './ResourceIcon';
 import PixelCharacter from './PixelCharacter';
 import CanvasTileRenderer from './CanvasTileRenderer';
+import CanvasOverlayRenderer from './CanvasOverlayRenderer';
 
 type FacingDirection = 'north' | 'south' | 'east' | 'west';
 
