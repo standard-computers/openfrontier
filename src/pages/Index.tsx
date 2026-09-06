@@ -521,6 +521,16 @@ const Index = () => {
               setMultiSelectMode(prev => !prev);
               setSelectedTiles([]);
             }}
+            onTogglePanMode={() => {
+              setPanMode(prev => {
+                if (!prev) {
+                  setMultiSelectMode(false);
+                  setSelectedTiles([]);
+                }
+                return !prev;
+              });
+            }}
+
             onReturnToPlayer={handleReturnToPlayer}
           />
         )}
