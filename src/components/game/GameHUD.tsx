@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { GameWorld, Resource, MAX_HEALTH } from '@/types/game';
-import { Settings, User, Coins, ChevronRight, Hammer, ZoomIn, ZoomOut, Crown, Clock, Heart, Sparkles, BoxSelect, Trophy, Locate, Store } from 'lucide-react';
+import { Settings, User, Coins, ChevronRight, Hammer, ZoomIn, ZoomOut, Crown, Clock, Heart, Sparkles, BoxSelect, Trophy, Locate, Store, Hand } from 'lucide-react';
 import ResourceIcon from './ResourceIcon';
 import InventoryItemModal from './InventoryItemModal';
 import { cn } from '@/lib/utils';
@@ -14,6 +14,7 @@ interface GameHUDProps {
   username: string | null;
   selectedSlot: number;
   multiSelectMode: boolean;
+  panMode: boolean;
   members: WorldMember[];
   cameraOffset: boolean;
   onSelectSlot: (slot: number) => void;
@@ -28,10 +29,12 @@ interface GameHUDProps {
   onZoom: (delta: number) => void;
   onConsumeResource: (resourceId: string) => { success: boolean; message: string };
   onToggleMultiSelect: () => void;
+  onTogglePanMode: () => void;
   onReturnToPlayer: () => void;
 }
 
-const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiSelectMode, members, cameraOffset, onSelectSlot, onOpenConfig, onOpenAccount, onOpenSovereignty, onOpenStats, onOpenCrafting, onOpenClaimedTiles, onOpenRanking, onOpenMarketplace, onZoom, onConsumeResource, onToggleMultiSelect, onReturnToPlayer }: GameHUDProps) => {
+const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiSelectMode, panMode, members, cameraOffset, onSelectSlot, onOpenConfig, onOpenAccount, onOpenSovereignty, onOpenStats, onOpenCrafting, onOpenClaimedTiles, onOpenRanking, onOpenMarketplace, onZoom, onConsumeResource, onToggleMultiSelect, onTogglePanMode, onReturnToPlayer }: GameHUDProps) => {
+
   const getResource = (id: string | null) => resources.find(r => r.id === id);
   const [worldTime, setWorldTime] = useState({ days: 0, hours: 0 });
   const [selectedItem, setSelectedItem] = useState<{ resourceId: string; quantity: number; life?: number } | null>(null);
