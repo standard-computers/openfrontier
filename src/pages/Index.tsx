@@ -502,6 +502,8 @@ const Index = () => {
             username={username}
             selectedSlot={selectedSlot}
             multiSelectMode={multiSelectMode}
+            panMode={panMode}
+
             members={members}
             cameraOffset={cameraPosition !== null}
             onSelectSlot={setSelectedSlot}
