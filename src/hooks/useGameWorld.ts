@@ -1036,6 +1036,13 @@ export const useGameWorld = () => {
       
       const targetTile = prev.map.tiles[targetY][targetX];
       
+      // Players may only modify tiles they own
+      if (targetTile.ownerId !== prev.playerId) {
+        result = { success: false, message: 'You must own this tile to use tools on it' };
+        return prev;
+      }
+
+      
       // Check for produce tile functionality first (on empty tiles without resources)
       if (canProduceTile && targetTile.resources.length === 0) {
         const newTileType = heldResource.produceTileType!;
