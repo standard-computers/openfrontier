@@ -530,8 +530,13 @@ const Index = () => {
             onZoom={handleZoom}
             onConsumeResource={consumeResource}
             onToggleMultiSelect={() => {
-              setMultiSelectMode(prev => !prev);
-              setSelectedTiles([]);
+              setMultiSelectMode(prev => {
+                if (!prev) {
+                  setPanMode(false);
+                  setSelectedTiles([]);
+                }
+                return !prev;
+              });
             }}
             onTogglePanMode={() => {
               setPanMode(prev => {
