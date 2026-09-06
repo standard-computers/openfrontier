@@ -279,6 +279,18 @@ const Index = () => {
     setCameraPosition(position);
   }, []);
 
+  // Drag-pan the camera by a tile delta
+  const handlePan = useCallback((dx: number, dy: number) => {
+    setCameraPosition(prev => {
+      const base = prev ?? world.playerPosition;
+      return {
+        x: Math.max(0, Math.min(world.map.width - 1, base.x + dx)),
+        y: Math.max(0, Math.min(world.map.height - 1, base.y + dy)),
+      };
+    });
+  }, [world.playerPosition, world.map.width, world.map.height]);
+
+
   const handleReturnToPlayer = useCallback(() => {
     setCameraPosition(null);
   }, []);
