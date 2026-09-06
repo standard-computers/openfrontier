@@ -272,7 +272,7 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
           
           {/* Inventory slots */}
           <div className="flex gap-1 overflow-visible">
-            {world.inventory.slice(0, 12).map((slot, i) => {
+            {world.inventory.slice(0, 10).map((slot, i) => {
               const resource = getResource(slot.resourceId);
               const isSelected = selectedSlot === i;
               return (
