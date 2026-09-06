@@ -319,6 +319,11 @@ export const getTopPlayer = (
   members: WorldMember[]
 ): RankedPlayer | null => {
   const players: RankedPlayer[] = [];
+  const populations = new Map<string, number>();
+  (world.strangers || []).forEach(stranger => {
+    const owner = stranger.allegiance?.userId;
+    if (owner) populations.set(owner, (populations.get(owner) || 0) + 1);
+  });
 
   // Add current player
   const currentMember = members.find(m => m.userId === world.userId);
@@ -341,6 +346,7 @@ export const getTopPlayer = (
       landValue: stats.landValue,
       netWorth: stats.netWorth,
       claimedTiles: stats.claimedTiles,
+      population: populations.get(world.userId) || 0,
       member: currentMember,
     });
   }
@@ -374,6 +380,7 @@ export const getTopPlayer = (
       landValue,
       netWorth: landValue,
       claimedTiles,
+      population: populations.get(member.userId) || 0,
       member,
     });
   });
@@ -398,6 +405,7 @@ export const getTopPlayer = (
       landValue: stats.landValue,
       netWorth: stats.netWorth,
       claimedTiles: stats.claimedTiles,
+      population: populations.get(npc.id) || 0,
     });
   });
 
