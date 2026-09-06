@@ -629,7 +629,8 @@ export const useGameWorld = () => {
         const placedResources = t.placedResources || [];
         return { 
           ...t, 
-          resources: t.claimedBy ? [...placedResources] : [...placedResources],
+          // Claimed land keeps only player-placed resources — never wild spawns
+          resources: t.claimedBy ? [...placedResources] : [...t.resources],
           placedResources: [...placedResources]
         };
       })
