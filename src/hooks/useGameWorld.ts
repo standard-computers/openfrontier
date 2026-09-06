@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { GameWorld, Resource, Sovereignty, Market, NPC, Area, Position, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap, TILE_TYPES, generateNPCs, generateStrangers, calculateStrangerCount, Stranger, canAddResourceToTile, isLargeResource, isAdjacentToOwnedLand, ownsAnyTile } from '@/types/game';
+import { GameWorld, Resource, Sovereignty, Market, NPC, Area, Position, TileType, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, MAX_HEALTH, HEALTH_DECAY_PER_DAY, calculateTileValue, WorldMap, TILE_TYPES, generateNPCs, generateStrangers, calculateStrangerCount, Stranger, canAddResourceToTile, isLargeResource, isAdjacentToOwnedLand, ownsAnyTile } from '@/types/game';
 import type { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import { fetchWorldResources, addResourceToRepository, updateResourceInRepository, deleteResourceFromRepository } from '@/utils/resourceConverter';
@@ -519,6 +519,57 @@ export const useGameWorld = () => {
       message: `Claimed ${validPositions.length} tiles for ${totalCost} coins!`,
       claimedCount: validPositions.length,
       totalCost
+    };
+  }, [world, saveMapData]);
+
+  // Convert owned tiles to a new tile type for a per-tile coin cost
+  const convertTiles = useCallback((positions: { x: number; y: number }[], newType: TileType): { success: boolean; message: string; convertedCount: number; totalCost: number } => {
+    const typeInfo = TILE_TYPES.find(t => t.type === newType);
+    if (!typeInfo) {
+      return { success: false, message: 'Unknown tile type', convertedCount: 0, totalCost: 0 };
+    }
+
+    const eligible: Position[] = [];
+    for (const pos of positions) {
+      const tile = world.map.tiles[pos.y]?.[pos.x];
+      if (tile && tile.claimedBy === world.userId && tile.type !== newType) {
+        eligible.push(pos);
+      }
+    }
+
+    if (eligible.length === 0) {
+      return { success: false, message: 'No owned tiles to convert', convertedCount: 0, totalCost: 0 };
+    }
+
+    const totalCost = eligible.length * typeInfo.baseValue;
+    if (world.coins < totalCost) {
+      return { success: false, message: `Not enough coins! Need ${totalCost} coins`, convertedCount: 0, totalCost };
+    }
+
+    const targetSet = new Set(eligible.map(p => `${p.x},${p.y}`));
+    const newTiles = world.map.tiles.map((row, ry) => {
+      if (!eligible.some(p => p.y === ry)) return row;
+      return row.map((t, rx) =>
+        targetSet.has(`${rx},${ry}`) ? { ...t, type: newType, walkable: typeInfo.walkable } : t
+      );
+    });
+    const newMapData: WorldMap = { ...world.map, tiles: newTiles };
+
+    setWorld(prev => ({
+      ...prev,
+      coins: prev.coins - totalCost,
+      map: newMapData,
+    }));
+
+    setTimeout(() => saveMapData(newMapData), 500);
+
+    return {
+      success: true,
+      message: eligible.length === 1
+        ? `Converted tile to ${typeInfo.label} for ${totalCost} coins!`
+        : `Converted ${eligible.length} tiles to ${typeInfo.label} for ${totalCost} coins!`,
+      convertedCount: eligible.length,
+      totalCost,
     };
   }, [world, saveMapData]);
 
@@ -1484,6 +1535,7 @@ export const useGameWorld = () => {
     selectTile,
     claimTile,
     claimMultipleTiles,
+    convertTiles,
     gatherFromTile,
     addResource,
     addExistingResource,

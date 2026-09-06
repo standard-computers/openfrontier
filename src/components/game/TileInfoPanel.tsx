@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { MapTile, Resource, RARITY_COLORS, TILE_TYPES, calculateTileValue } from '@/types/game';
-import { X, Flag, Package, Coins, Pencil, Check } from 'lucide-react';
+import { MapTile, Resource, RARITY_COLORS, TILE_TYPES, TileType, calculateTileValue } from '@/types/game';
+import { X, Flag, Package, Coins, Pencil, Check, Paintbrush, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ResourceIcon from './ResourceIcon';
 import { WorldMember } from '@/hooks/useGameWorld';
@@ -19,6 +19,7 @@ interface TileInfoPanelProps {
   onGather: (resourceId: string) => void;
   onRename: (name: string) => void;
   onViewUser: (member: WorldMember) => void;
+  onConvert?: (newType: TileType) => void;
 }
 
 const CLAIM_RADIUS = 6;
@@ -37,6 +38,7 @@ const TileInfoPanel = ({
   onGather,
   onRename,
   onViewUser,
+  onConvert,
 }: TileInfoPanelProps) => {
   const tileInfo = TILE_TYPES.find(t => t.type === tile.type);
   const tileResources = tile.resources.map(id => resources.find(r => r.id === id)).filter(Boolean) as Resource[];
@@ -56,6 +58,7 @@ const TileInfoPanel = ({
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [tileName, setTileName] = useState(tile.name || '');
+  const [showConvert, setShowConvert] = useState(false);
 
   const handleSaveName = () => {
     onRename(tileName);
@@ -146,7 +149,7 @@ const TileInfoPanel = ({
             </span>
           </div>
         ) : (
-          <button 
+          <button
             onClick={onClaim}
             disabled={!canAfford}
             className={cn(
@@ -157,6 +160,44 @@ const TileInfoPanel = ({
             <Flag className="w-4 h-4" />
             {canAfford ? `Claim for ${tileValue} coins` : `Need ${tileValue} coins`}
           </button>
+        )}
+
+        {/* Convert tile type - only for owned tiles */}
+        {isOwnClaim && onConvert && (
+          <div className="pt-1">
+            <button
+              onClick={() => setShowConvert(prev => !prev)}
+              className="btn btn-secondary w-full flex items-center justify-center gap-2"
+            >
+              <Paintbrush className="w-4 h-4" />
+              Convert Tile
+              {showConvert ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+            {showConvert && (
+              <div className="mt-2 grid grid-cols-2 gap-1">
+                {TILE_TYPES.filter(t => t.type !== tile.type).map((t) => (
+                  <button
+                    key={t.type}
+                    onClick={() => {
+                      onConvert(t.type);
+                      setShowConvert(false);
+                    }}
+                    disabled={userCoins < t.baseValue}
+                    className={cn(
+                      "flex items-center gap-1.5 p-1.5 rounded bg-secondary/50 text-xs hover:bg-secondary transition-colors",
+                      userCoins < t.baseValue && "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    <div className={cn('w-3 h-3 rounded flex-shrink-0', t.color)} />
+                    <span className="flex-1 text-left truncate">{t.label}</span>
+                    <span className="flex items-center gap-0.5 text-amber-400">
+                      <Coins className="w-3 h-3" />{t.baseValue}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
 

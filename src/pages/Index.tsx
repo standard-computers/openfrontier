@@ -23,7 +23,7 @@ import PlayerRankingPanel from '@/components/game/PlayerRankingPanel';
 import StrangerInfoPanel from '@/components/game/StrangerInfoPanel';
 import DemoOverlay from '@/components/game/DemoOverlay';
 import { useDemoWorld } from '@/hooks/useDemoWorld';
-import { Market, Position, calculateTileValue, Sovereignty, Stranger, TILE_TYPES } from '@/types/game';
+import { Market, Position, TileType, calculateTileValue, Sovereignty, Stranger, TILE_TYPES } from '@/types/game';
 import { toast } from 'sonner';
 
 const MIN_TILE_SIZE = 4;
@@ -98,6 +98,7 @@ const Index = () => {
     deleteArea,
     updateArea,
     renameTile,
+    convertTiles,
     placeItem,
     useItemOnFacingTile,
     toggleEnableMarkets,
@@ -172,6 +173,34 @@ const Index = () => {
       toast.error(result.message);
     }
   }, [selectedTiles, claimMultipleTiles, isDemoMode]);
+
+  const handleConvertTile = useCallback((newType: TileType) => {
+    if (isDemoMode) {
+      toast.error('Sign up to convert tiles!');
+      return;
+    }
+    if (!selectedTile) return;
+    const result = convertTiles([selectedTile], newType);
+    if (result.success) {
+      toast.success(result.message);
+    } else {
+      toast.error(result.message);
+    }
+  }, [selectedTile, convertTiles, isDemoMode]);
+
+  const handleConvertTiles = useCallback((newType: TileType) => {
+    if (isDemoMode) {
+      toast.error('Sign up to convert tiles!');
+      return;
+    }
+    if (selectedTiles.length === 0) return;
+    const result = convertTiles(selectedTiles, newType);
+    if (result.success) {
+      toast.success(result.message);
+    } else {
+      toast.error(result.message);
+    }
+  }, [selectedTiles, convertTiles, isDemoMode]);
 
   const handleMultiTileSelect = useCallback((tiles: Position[]) => {
     setSelectedTiles(tiles);
@@ -595,6 +624,7 @@ const Index = () => {
             onClaim={handleClaim}
             onGather={handleGather}
             onRename={handleRenameTile}
+            onConvert={handleConvertTile}
             onViewUser={(member) => {
               setSelectedMember(member);
               setUserProfileOpen(true);
@@ -619,6 +649,7 @@ const Index = () => {
           onClaimAll={handleClaimAll}
           onGather={handleMultiGather}
           onCreateArea={createArea}
+          onConvert={handleConvertTiles}
         />
       )}
 
