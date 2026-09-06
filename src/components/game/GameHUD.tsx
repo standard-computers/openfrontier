@@ -306,7 +306,7 @@ const GameHUD = ({ world, resources, zoomPercent, username, selectedSlot, multiS
                   )}
                   {/* Slot number indicator */}
                   <span className="absolute top-0 left-0.5 text-[8px] text-muted-foreground font-medium">
-                    {i < 9 ? i + 1 : i === 9 ? '0' : i === 10 ? '-' : '='}
+                    {i < 9 ? i + 1 : '0'}
                   </span>
                   {resource && (
                     <>
