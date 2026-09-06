@@ -1112,7 +1112,12 @@ export const useGameWorld = () => {
           }
         }
         
-        result = { success: true, message: `Transformed tile to ${newTileType}` };
+        result = {
+          success: true,
+          message: transformSet.size > 1
+            ? `Transformed ${transformSet.size} tiles to ${newTileType}`
+            : `Transformed tile to ${newTileType}`
+        };
         return {
           ...prev,
           map: { ...prev.map, tiles: newTiles },
