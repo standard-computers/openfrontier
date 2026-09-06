@@ -513,7 +513,7 @@ const Index = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleOpenMarketplace, handleGatherAll, handleUseItem]);
+  }, [handleOpenMarketplace, handleGatherAll, handleUseItem, handleTogglePanMode, handleToggleMultiSelect]);
 
   const zoomPercent = Math.round((tileSize / DEFAULT_TILE_SIZE) * 100);
 
