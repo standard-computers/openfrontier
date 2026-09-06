@@ -471,6 +471,10 @@ const Index = () => {
           selectedTile={selectedTile}
           selectedTiles={selectedTiles}
           multiSelectMode={multiSelectMode}
+          panMode={panMode}
+          showDetails={zoomPercent >= DETAIL_ZOOM_THRESHOLD}
+          onPan={handlePan}
+
           userColor={world.userColor}
           userId={world.userId}
           tileSize={tileSize}
