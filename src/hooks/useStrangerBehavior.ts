@@ -242,14 +242,21 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     let updatedStranger: Stranger = { ...stranger, lastActionTime: Date.now() };
     let newMapTiles: WorldMap['tiles'] | undefined;
     
-    // Priority 1: Consume if low health
-    if (updatedStranger.health < 40 && Math.random() < STRANGER_CONSUME_CHANCE) {
+    // Priority 1: Consume if low health — only within own sovereign territory,
+    // or anywhere unclaimed when unpledged
+    const standingTile = currentMap.tiles[updatedStranger.position.y]?.[updatedStranger.position.x];
+    const canConsumeHere = updatedStranger.allegiance
+      ? standingTile?.claimedBy === updatedStranger.allegiance.userId
+      : !standingTile?.claimedBy;
+
+    if (canConsumeHere && updatedStranger.health < 40 && Math.random() < STRANGER_CONSUME_CHANCE) {
       const consumed = strangerConsumeResource(updatedStranger, resources);
       if (consumed) {
         updatedStranger = consumed;
         return { stranger: updatedStranger };
       }
     }
+
     
     // Priority 2: Gather from current tile (strangers don't claim, just gather)
     if (Math.random() < STRANGER_GATHER_CHANCE) {
