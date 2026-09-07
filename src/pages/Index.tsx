@@ -264,7 +264,7 @@ const Index = () => {
     }
     
     toast.success(`Gathered ${gatheredCount} resource${gatheredCount > 1 ? 's' : ''}`);
-  }, [selectedTile, world.map.tiles, world.playerPosition, world.userId, gatherFromTile, isDemoMode]);
+  }, [selectedTile, world.map.tiles, world.userId, gatherFromTile, isDemoMode]);
 
   const handleRenameTile = (name: string) => {
     if (isDemoMode) return;
