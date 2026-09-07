@@ -584,28 +584,11 @@ const Index = () => {
           <GameHUD
             world={world}
             resources={world.resources}
-            zoomPercent={zoomPercent}
-            username={username}
             selectedSlot={selectedSlot}
-            multiSelectMode={multiSelectMode}
-            panMode={panMode}
-
-            members={members}
             cameraOffset={cameraPosition !== null}
             onSelectSlot={setSelectedSlot}
-            onOpenConfig={() => setConfigOpen(true)}
-            onOpenAccount={() => setAccountOpen(true)}
-            onOpenSovereignty={() => setSovereigntyOpen(true)}
-            onOpenStats={() => setStatsOpen(true)}
-            onOpenCrafting={() => setCraftingOpen(true)}
             onOpenClaimedTiles={() => setClaimedTilesOpen(true)}
-            onOpenRanking={() => setRankingOpen(true)}
-            onOpenMarketplace={() => setMarketplaceOpen(true)}
-            onZoom={handleZoom}
             onConsumeResource={consumeResource}
-            onToggleMultiSelect={handleToggleMultiSelect}
-            onTogglePanMode={handleTogglePanMode}
-
             onReturnToPlayer={handleReturnToPlayer}
           />
         )}
@@ -680,16 +663,6 @@ const Index = () => {
       {/* All panels - only in non-demo mode */}
       {!isDemoMode && (
         <>
-          <AccountPanel
-            isOpen={accountOpen}
-            username={username}
-            userColor={world.userColor}
-            coins={world.coins}
-            claimedTiles={claimedCount}
-            onColorChange={setUserColor}
-            onClose={() => setAccountOpen(false)}
-          />
-
           <SovereigntyPanel
             isOpen={sovereigntyOpen}
             sovereignty={world.sovereignty}
