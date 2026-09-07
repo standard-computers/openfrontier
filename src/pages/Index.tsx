@@ -18,7 +18,7 @@ import CraftingPanel from '@/components/game/CraftingPanel';
 import UserProfilePanel from '@/components/game/UserProfilePanel';
 import ClaimedTilesPanel from '@/components/game/ClaimedTilesPanel';
 import MarketplacePanel from '@/components/game/MarketplacePanel';
-import PlayerRankingPanel from '@/components/game/PlayerRankingPanel';
+
 import StrangerInfoPanel from '@/components/game/StrangerInfoPanel';
 import DemoOverlay from '@/components/game/DemoOverlay';
 import { useDemoWorld } from '@/hooks/useDemoWorld';
@@ -45,7 +45,7 @@ const Index = () => {
   const [userProfileOpen, setUserProfileOpen] = useState(false);
   const [claimedTilesOpen, setClaimedTilesOpen] = useState(false);
   const [marketplaceOpen, setMarketplaceOpen] = useState(false);
-  const [rankingOpen, setRankingOpen] = useState(false);
+  
   const [currentMarket, setCurrentMarket] = useState<Market | null>(null);
   const [selectedMember, setSelectedMember] = useState<WorldMember | null>(null);
   const [tileSize, setTileSize] = useState(DEFAULT_TILE_SIZE);
@@ -552,7 +552,7 @@ const Index = () => {
           panMode={panMode}
           members={members}
           onOpenStats={() => setStatsOpen(true)}
-          onOpenRanking={() => setRankingOpen(true)}
+          
           onOpenMarketplace={() => setMarketplaceOpen(true)}
           onOpenPlayer={() => setSovereigntyOpen(true)}
           onOpenCrafting={() => setCraftingOpen(true)}
@@ -777,18 +777,6 @@ const Index = () => {
             }}
           />
 
-          <PlayerRankingPanel
-            isOpen={rankingOpen}
-            world={world}
-            resources={world.resources}
-            members={members}
-            onClose={() => setRankingOpen(false)}
-            onViewUser={(member) => {
-              setSelectedMember(member);
-              setUserProfileOpen(true);
-            }}
-            onNavigateToPosition={handleNavigateToPosition}
-          />
 
           {selectedStranger && (
             <StrangerInfoPanel

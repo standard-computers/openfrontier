@@ -71,7 +71,15 @@ export const calculateNetWorth = (
   };
 };
 
-const PlayerRankingPanel = ({ isOpen, onClose, world, resources, members, onViewUser, onNavigateToPosition }: PlayerRankingPanelProps) => {
+interface RankingListProps {
+  world: GameWorld;
+  resources: Resource[];
+  members: WorldMember[];
+  onViewUser: (member: WorldMember) => void;
+  onNavigateToPosition: (position: Position) => void;
+}
+
+export const RankingList = ({ world, resources, members, onViewUser, onNavigateToPosition }: RankingListProps) => {
   const rankedPlayers = useMemo(() => {
     const players: RankedPlayer[] = [];
 
@@ -170,25 +178,9 @@ const PlayerRankingPanel = ({ isOpen, onClose, world, resources, members, onView
     return players.sort((a, b) => b.netWorth - a.netWorth);
   }, [world, resources, members]);
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="game-panel w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between px-3 py-2 border-b border-border">
-          <div className="flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-amber-400" />
-            <h2 className="font-semibold">Leaderboard</h2>
-          </div>
-          <button onClick={onClose} className="btn btn-ghost p-1">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Rankings */}
-        <div className="p-4 overflow-auto flex-1 space-y-2">
-          {rankedPlayers.map((player, index) => (
+    <div className="space-y-2">
+      {rankedPlayers.map((player, index) => (
             <div
               key={player.id}
               onClick={() => player.member && onViewUser(player.member)}
@@ -255,7 +247,6 @@ const PlayerRankingPanel = ({ isOpen, onClose, world, resources, members, onView
                         const npc = world.npcs?.find(n => n.id === player.id);
                         if (npc) {
                           onNavigateToPosition(npc.position);
-                          onClose();
                           return;
                         }
                         // Find first claimed tile for players
@@ -263,7 +254,6 @@ const PlayerRankingPanel = ({ isOpen, onClose, world, resources, members, onView
                           for (let x = 0; x < world.map.tiles[y].length; x++) {
                             if (world.map.tiles[y][x].claimedBy === player.id) {
                               onNavigateToPosition({ x, y });
-                              onClose();
                               return;
                             }
                           }
@@ -299,11 +289,41 @@ const PlayerRankingPanel = ({ isOpen, onClose, world, resources, members, onView
             </div>
           ))}
 
-          {rankedPlayers.length === 0 && (
-            <div className="text-center text-muted-foreground py-8">
-              No players yet
-            </div>
-          )}
+      {rankedPlayers.length === 0 && (
+        <div className="text-center text-muted-foreground py-8">
+          No players yet
+        </div>
+      )}
+    </div>
+  );
+};
+
+const PlayerRankingPanel = ({ isOpen, onClose, world, resources, members, onViewUser, onNavigateToPosition }: PlayerRankingPanelProps) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+      <div className="game-panel w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+          <div className="flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-amber-400" />
+            <h2 className="font-semibold">Leaderboard</h2>
+          </div>
+          <button onClick={onClose} className="btn btn-ghost p-1">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="p-4 overflow-auto flex-1">
+          <RankingList
+            world={world}
+            resources={resources}
+            members={members}
+            onViewUser={onViewUser}
+            onNavigateToPosition={(pos) => {
+              onNavigateToPosition(pos);
+              onClose();
+            }}
+          />
         </div>
       </div>
     </div>

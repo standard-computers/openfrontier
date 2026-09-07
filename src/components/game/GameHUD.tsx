@@ -16,7 +16,6 @@ interface GameTopBarProps {
   panMode: boolean;
   members: WorldMember[];
   onOpenStats: () => void;
-  onOpenRanking: () => void;
   onOpenMarketplace: () => void;
   onOpenPlayer: () => void;
   onOpenCrafting: () => void;
@@ -26,7 +25,7 @@ interface GameTopBarProps {
   onTogglePanMode: () => void;
 }
 
-export const GameTopBar = ({ world, resources, zoomPercent, username, multiSelectMode, panMode, members, onOpenStats, onOpenRanking, onOpenMarketplace, onOpenPlayer, onOpenCrafting, onOpenConfig, onZoom, onToggleMultiSelect, onTogglePanMode }: GameTopBarProps) => {
+export const GameTopBar = ({ world, resources, zoomPercent, username, multiSelectMode, panMode, members, onOpenStats, onOpenMarketplace, onOpenPlayer, onOpenCrafting, onOpenConfig, onZoom, onToggleMultiSelect, onTogglePanMode }: GameTopBarProps) => {
   const [worldTime, setWorldTime] = useState({ days: 0, hours: 0 });
   const topPlayer = useMemo(() => getTopPlayer(world, resources, members), [world, resources, members]);
 
@@ -75,24 +74,6 @@ export const GameTopBar = ({ world, resources, zoomPercent, username, multiSelec
         <span>Home: {world.playerPosition.x}, {world.playerPosition.y}</span>
       </div>
 
-      {/* Player ranking button */}
-      <button
-        onClick={onOpenRanking}
-        className="px-2 py-1 rounded hover:bg-muted/60 transition-colors flex items-center gap-2"
-        title="Leaderboard"
-      >
-        <Trophy className="w-4 h-4 text-amber-400" />
-        {topPlayer && (
-          <div className="flex items-center gap-2">
-            <div
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: topPlayer.color }}
-            />
-            <span className="text-sm font-medium max-w-[80px] truncate">{topPlayer.name}</span>
-            <span className="text-xs text-amber-400">{topPlayer.netWorth.toLocaleString()}</span>
-          </div>
-        )}
-      </button>
 
       {/* Market button */}
       {(world.openMarkets !== false) && world.enableMarkets && (
@@ -160,6 +141,12 @@ export const GameTopBar = ({ world, resources, zoomPercent, username, multiSelec
             <Crown className="w-5 h-5 text-muted-foreground" />
             <span className="text-sm text-muted-foreground max-w-[80px] truncate">{username || 'Player'}</span>
           </>
+        )}
+        {topPlayer && (
+          <span className="flex items-center gap-1 text-xs text-amber-400" title={`Leader: ${topPlayer.name}`}>
+            <Trophy className="w-3 h-3" />
+            {topPlayer.netWorth.toLocaleString()}
+          </span>
         )}
       </button>
 

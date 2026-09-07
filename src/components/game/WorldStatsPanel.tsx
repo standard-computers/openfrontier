@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { X, Globe, Users, Map, Flag, Package, Coins, Crown, Bot, Heart, MapPin } from 'lucide-react';
+import { X, Globe, Users, Map, Flag, Package, Coins, Crown, Bot, Heart, MapPin, Trophy } from 'lucide-react';
+import { RankingList } from './PlayerRankingPanel';
 import { GameWorld, Resource, TILE_TYPES, calculateTileValue, RARITY_COLORS, NPC, Position } from '@/types/game';
 import { WorldMember } from '@/hooks/useGameWorld';
 import { cn } from '@/lib/utils';
@@ -15,7 +16,7 @@ interface WorldStatsPanelProps {
   onNavigateToPosition: (position: Position) => void;
 }
 
-type TabType = 'overview' | 'players' | 'terrain' | 'resources';
+type TabType = 'overview' | 'players' | 'leaderboard' | 'terrain' | 'resources';
 
 const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUser, onNavigateToPosition }: WorldStatsPanelProps) => {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
@@ -60,6 +61,7 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUse
   const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: 'Overview', icon: <Globe className="w-4 h-4" /> },
     { id: 'players', label: `Players (${totalPopulation})`, icon: <Users className="w-4 h-4" /> },
+    { id: 'leaderboard', label: 'Leaderboard', icon: <Trophy className="w-4 h-4" /> },
     { id: 'terrain', label: 'Terrain', icon: <Map className="w-4 h-4" /> },
     { id: 'resources', label: 'Resources', icon: <Package className="w-4 h-4" /> },
   ];
@@ -275,6 +277,20 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUse
                 </div>
               )}
             </div>
+          )}
+
+          {/* Leaderboard Tab */}
+          {activeTab === 'leaderboard' && (
+            <RankingList
+              world={world}
+              resources={resources}
+              members={members}
+              onViewUser={onViewUser}
+              onNavigateToPosition={(pos) => {
+                onNavigateToPosition(pos);
+                onClose();
+              }}
+            />
           )}
 
           {/* Terrain Tab */}
