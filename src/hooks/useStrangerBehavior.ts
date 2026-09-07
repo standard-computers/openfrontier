@@ -19,6 +19,8 @@ interface SovereigntyInfo {
   sovereignty: Sovereignty;
   totalValue: number;
   tileCount: number;
+  /** Sample of claimed tile positions (used to return pledged strangers home) */
+  territoryPositions: { x: number; y: number }[];
 }
 
 interface UseStrangerBehaviorProps {
@@ -41,17 +43,20 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     if (!memberSovereignties || memberSovereignties.size === 0) return [];
     
     // Calculate total value for each claimant
-    const claimValues = new Map<string, { totalValue: number; tileCount: number }>();
+    const claimValues = new Map<string, { totalValue: number; tileCount: number; positions: { x: number; y: number }[] }>();
     
     for (let y = 0; y < map.height; y++) {
       for (let x = 0; x < map.width; x++) {
         const tile = map.tiles[y]?.[x];
         if (tile?.claimedBy && !tile.claimedBy.startsWith('npc-')) {
-          const current = claimValues.get(tile.claimedBy) || { totalValue: 0, tileCount: 0 };
+          const current = claimValues.get(tile.claimedBy) || { totalValue: 0, tileCount: 0, positions: [] };
           const tileValue = calculateTileValue(tile, resources);
+          // Keep a bounded sample of positions (enough for random teleport targets)
+          if (current.positions.length < 200) current.positions.push({ x, y });
           claimValues.set(tile.claimedBy, {
             totalValue: current.totalValue + tileValue,
             tileCount: current.tileCount + 1,
+            positions: current.positions,
           });
         }
       }
@@ -68,6 +73,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
           sovereignty: memberInfo.sovereignty,
           totalValue: value.totalValue,
           tileCount: value.tileCount,
+          territoryPositions: value.positions,
         });
       }
     });
@@ -286,6 +292,22 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
   } => {
     let updatedStranger: Stranger = { ...stranger, lastActionTime: Date.now() };
     let newMapTiles: WorldMap['tiles'] | undefined;
+
+    // Hard rule: pledged strangers must live inside their sovereignty's territory.
+    // If the sovereignty no longer qualifies (too small / dissolved), the pledge lapses.
+    if (updatedStranger.allegiance) {
+      const own = sovereignties.find(s => s.userId === updatedStranger.allegiance!.userId);
+      if ((!own || own.tileCount < ALLEGIANCE_MIN_TILES) && sovereignties.length > 0) {
+        updatedStranger = { ...updatedStranger, allegiance: undefined };
+      } else {
+        const standing = currentMap.tiles[updatedStranger.position.y]?.[updatedStranger.position.x];
+        if (standing?.claimedBy !== own.userId && own.territoryPositions.length > 0) {
+          const home = own.territoryPositions[Math.floor(Math.random() * own.territoryPositions.length)];
+          updatedStranger = { ...updatedStranger, position: { ...home } };
+        }
+      }
+    }
+
     
     // Priority 1: Consume if low health — only within own sovereign territory,
     // or anywhere unclaimed when unpledged
