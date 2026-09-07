@@ -7,7 +7,11 @@ const STRANGER_CONSUME_CHANCE = 0.3; // 30% chance to consume food when low heal
 const STRANGER_MOVE_CHANCE = 0.8; // 80% chance to move (they wander more)
 const STRANGER_ALLEGIANCE_CHANCE = 0.05; // 5% chance per tick to evaluate allegiance
 const ALLEGIANCE_VALUE_THRESHOLD = 100; // Minimum territory value to attract allegiance
-const ALLEGIANCE_MIN_TILES = 10; // Sovereignty must control at least this many tiles before strangers pledge
+const ALLEGIANCE_MIN_TILES = 10;
+const HAPPINESS_LOVE_THRESHOLD = 70; // Both partners must be at least this happy
+const BIRTH_CHANCE = 0.15; // Chance per tick that a happy couple has a child
+const BIRTH_COOLDOWN_MS = 120000; // 2 minutes between children for a couple
+const MAX_POPULATION = 5000; // Sovereignty must control at least this many tiles before strangers pledge
 
 interface SovereigntyInfo {
   userId: string;
@@ -242,6 +246,39 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     return { ...stranger, position: newPos };
   }, [getAdjacentTiles]);
 
+  // Update the stranger's happy index based on their conditions
+  const updateHappiness = useCallback((stranger: Stranger, map: WorldMap, resources: Resource[]): Stranger => {
+    let happiness = stranger.happiness ?? 50;
+    const tile = map.tiles[stranger.position.y]?.[stranger.position.x];
+
+    // Health drives mood strongly
+    if (stranger.health >= 70) happiness += 2;
+    else if (stranger.health < 30) happiness -= 3;
+    else if (stranger.health < 50) happiness -= 1;
+
+    // Belonging to a sovereignty and standing on its land feels safe
+    if (stranger.allegiance) {
+      happiness += tile?.claimedBy === stranger.allegiance.userId ? 2 : -1;
+    }
+
+    // Having food on hand
+    const hasFood = stranger.inventory.some(slot => {
+      if (!slot.resourceId || slot.quantity <= 0) return false;
+      const res = resources.find(r => r.id === slot.resourceId);
+      return !!res?.consumable;
+    });
+    if (hasFood) happiness += 1;
+    else happiness -= 1;
+
+    // Abundance nearby
+    if (tile && tile.resources.length > 0) happiness += 1;
+
+    // Companionship
+    if (stranger.partnerId) happiness += 1;
+
+    return { ...stranger, happiness: Math.max(0, Math.min(100, happiness)) };
+  }, []);
+
   // Process one stranger's turn
   const processStrangerTurn = useCallback((stranger: Stranger, currentMap: WorldMap, resources: Resource[], sovereignties: SovereigntyInfo[]): {
     stranger: Stranger;
@@ -283,9 +320,95 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     
     // Priority 4: Evaluate allegiance to sovereignties
     updatedStranger = evaluateAllegiance(updatedStranger, sovereignties);
+
+    // Finally: recompute the happy index
+    updatedStranger = updateHappiness(updatedStranger, currentMap, resources);
     
     return { stranger: updatedStranger, mapTiles: newMapTiles };
-  }, [strangerGatherFromTile, strangerConsumeResource, strangerMove, evaluateAllegiance]);
+  }, [strangerGatherFromTile, strangerConsumeResource, strangerMove, evaluateAllegiance, updateHappiness]);
+
+  // Pair up happy pledged strangers and let couples have children
+  const processRomance = useCallback((strangers: Stranger[], map: WorldMap): Stranger[] => {
+    const now = Date.now();
+    const byId = new Map(strangers.map(s => [s.id, s]));
+    const result = strangers.map(s => ({ ...s }));
+    const indexById = new Map(result.map((s, i) => [s.id, i]));
+    const isEligible = (s: Stranger) => !!s.allegiance && (s.happiness ?? 0) >= HAPPINESS_LOVE_THRESHOLD;
+
+    // Break bonds that are no longer valid
+    result.forEach(s => {
+      if (!s.partnerId) return;
+      const partner = byId.get(s.partnerId);
+      if (!partner || !isEligible(s) || !partner.allegiance || partner.allegiance.userId !== s.allegiance?.userId) {
+        s.partnerId = undefined;
+      }
+    });
+
+    // Match singles that are standing next to each other under the same flag
+    const singlesByTile = new Map<string, Stranger>();
+    for (const s of result) {
+      if (s.partnerId || !isEligible(s)) continue;
+      const key = `${s.allegiance!.userId}:${s.position.x},${s.position.y}`;
+      const neighbourKeys = [
+        key,
+        `${s.allegiance!.userId}:${s.position.x + 1},${s.position.y}`,
+        `${s.allegiance!.userId}:${s.position.x - 1},${s.position.y}`,
+        `${s.allegiance!.userId}:${s.position.x},${s.position.y + 1}`,
+        `${s.allegiance!.userId}:${s.position.x},${s.position.y - 1}`,
+      ];
+      let matched: Stranger | undefined;
+      for (const nk of neighbourKeys) {
+        const candidate = singlesByTile.get(nk);
+        if (candidate && candidate.id !== s.id && !candidate.partnerId) {
+          matched = candidate;
+          singlesByTile.delete(nk);
+          break;
+        }
+      }
+      if (matched) {
+        s.partnerId = matched.id;
+        matched.partnerId = s.id;
+      } else {
+        singlesByTile.set(key, s);
+      }
+    }
+
+    // Couples may have a child
+    if (result.length >= MAX_POPULATION) return result;
+    const babies: Stranger[] = [];
+    const handled = new Set<string>();
+    for (const s of result) {
+      if (!s.partnerId || handled.has(s.id)) continue;
+      const pIndex = indexById.get(s.partnerId);
+      const partner = pIndex !== undefined ? result[pIndex] : undefined;
+      if (!partner || partner.partnerId !== s.id) continue;
+      handled.add(s.id);
+      handled.add(partner.id);
+      if (!isEligible(s) || !isEligible(partner)) continue;
+      if (now - (s.lastBirthTime ?? 0) < BIRTH_COOLDOWN_MS) continue;
+      if (result.length + babies.length >= MAX_POPULATION) break;
+      if (Math.random() > BIRTH_CHANCE) continue;
+
+      // Born on the parents' land
+      const tile = map.tiles[s.position.y]?.[s.position.x];
+      if (!tile || tile.claimedBy !== s.allegiance!.userId) continue;
+
+      s.lastBirthTime = now;
+      partner.lastBirthTime = now;
+      babies.push({
+        id: `stranger-born-${now}-${Math.floor(Math.random() * 100000)}`,
+        name: `Young ${s.name.split(' ').slice(-1)[0]}`,
+        color: s.color,
+        position: { ...s.position },
+        inventory: Array.from({ length: 5 }, () => ({ resourceId: null, quantity: 0 })),
+        health: 60,
+        happiness: 60,
+        allegiance: { ...s.allegiance! },
+      });
+    }
+
+    return babies.length > 0 ? [...result, ...babies] : result;
+  }, []);
 
   // Main stranger behavior loop
   useEffect(() => {
@@ -346,7 +469,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
         
         return {
           ...prev,
-          strangers: updatedStrangers,
+          strangers: processRomance(updatedStrangers, currentMap),
           map: currentMap,
         };
       });
@@ -358,7 +481,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [world.enableStrangers, world.strangers?.length, processStrangerTurn, calculateSovereigntyValues, setWorld, saveMapData]);
+  }, [world.enableStrangers, world.strangers?.length, processStrangerTurn, processRomance, calculateSovereigntyValues, setWorld, saveMapData]);
 
   return null;
 };
