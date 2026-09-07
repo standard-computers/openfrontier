@@ -188,6 +188,9 @@ export interface Stranger {
   health: number;
   lastActionTime?: number;
   allegiance?: StrangerAllegiance;
+  happiness?: number; // 0-100 happy index
+  partnerId?: string; // Stranger they fell in love with
+  lastBirthTime?: number;
 }
 
 export interface GameWorld {
@@ -1157,6 +1160,7 @@ export const generateStrangers = (
       position,
       inventory,
       health: 50 + Math.floor(Math.random() * 30), // Start with 50-80 health
+      happiness: 40 + Math.floor(Math.random() * 30), // Start with 40-70 happiness
     });
   }
   
