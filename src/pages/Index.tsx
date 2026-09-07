@@ -795,6 +795,8 @@ const Index = () => {
               stranger={selectedStranger}
               onClose={() => setSelectedStranger(null)}
               onRequestMove={handleRequestStrangerMove}
+              canRename={selectedStranger.allegiance?.userId === world.userId}
+              onRename={handleRenameStranger}
             />
           )}
         </>
