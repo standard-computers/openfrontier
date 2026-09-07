@@ -543,7 +543,11 @@ const Index = () => {
       
       if (e.key.toLowerCase() === 'g') {
         e.preventDefault();
-        handleGatherAll();
+        if (multiSelectMode && selectedTiles.length > 0) {
+          handleMultiGatherStep();
+        } else {
+          handleGatherAll();
+        }
       }
       
       if (e.key.toLowerCase() === 'e') {
