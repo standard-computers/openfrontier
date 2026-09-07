@@ -292,6 +292,22 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
   } => {
     let updatedStranger: Stranger = { ...stranger, lastActionTime: Date.now() };
     let newMapTiles: WorldMap['tiles'] | undefined;
+
+    // Hard rule: pledged strangers must live inside their sovereignty's territory.
+    // If the sovereignty no longer qualifies (too small / dissolved), the pledge lapses.
+    if (updatedStranger.allegiance) {
+      const own = sovereignties.find(s => s.userId === updatedStranger.allegiance!.userId);
+      if (!own || own.tileCount < ALLEGIANCE_MIN_TILES) {
+        updatedStranger = { ...updatedStranger, allegiance: undefined };
+      } else {
+        const standing = currentMap.tiles[updatedStranger.position.y]?.[updatedStranger.position.x];
+        if (standing?.claimedBy !== own.userId && own.territoryPositions.length > 0) {
+          const home = own.territoryPositions[Math.floor(Math.random() * own.territoryPositions.length)];
+          updatedStranger = { ...updatedStranger, position: { ...home } };
+        }
+      }
+    }
+
     
     // Priority 1: Consume if low health — only within own sovereign territory,
     // or anywhere unclaimed when unpledged
