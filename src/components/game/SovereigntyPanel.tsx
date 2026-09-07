@@ -149,9 +149,50 @@ const SovereigntyPanel = ({
             </button>
           </div>
 
-          <div className="p-4 space-y-4">
-            <div className="text-center py-6">
-              <Crown className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+          <div className="p-4 space-y-4 max-h-[400px] overflow-y-auto">
+            {/* Player stats */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-secondary/50 rounded-lg p-3 text-center">
+                <div className="flex items-center justify-center gap-1 text-amber-400 text-xl font-bold">
+                  <Coins className="w-5 h-5" />
+                  {coins}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Coins</p>
+              </div>
+              <div className="bg-secondary/50 rounded-lg p-3 text-center">
+                <div className="text-xl font-bold" style={{ color: userColor }}>
+                  {claimedTiles}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Tiles Claimed</p>
+              </div>
+            </div>
+
+            {/* Player color */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Palette className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Your Color</span>
+              </div>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {USER_COLORS.map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => onColorChange(color)}
+                    className={cn(
+                      'w-9 h-9 rounded-lg transition-all hover:scale-110',
+                      userColor === color && 'ring-2 ring-white ring-offset-2 ring-offset-card'
+                    )}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground text-center mt-2">
+                This color marks your claimed tiles
+              </p>
+            </div>
+
+            <div className="text-center py-4 border-t border-border">
+              <Crown className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
               <h3 className="font-medium mb-1">No Sovereignty Founded</h3>
               <p className="text-sm text-muted-foreground">
                 Establish your own sovereignty to mark your territory and build your legacy.

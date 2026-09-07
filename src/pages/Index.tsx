@@ -7,11 +7,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTouchDevice } from '@/hooks/useTouchDevice';
 import GameMap from '@/components/game/GameMap';
 import Minimap from '@/components/game/Minimap';
-import GameHUD from '@/components/game/GameHUD';
+import GameHUD, { GameTopBar } from '@/components/game/GameHUD';
 import TileInfoPanel from '@/components/game/TileInfoPanel';
 import MultiTileInfoPanel from '@/components/game/MultiTileInfoPanel';
 import WorldConfig from '@/components/game/WorldConfig';
-import AccountPanel from '@/components/game/AccountPanel';
 import SovereigntyPanel from '@/components/game/SovereigntyPanel';
 import TouchControls from '@/components/game/TouchControls';
 import WorldStatsPanel from '@/components/game/WorldStatsPanel';
@@ -40,7 +39,6 @@ const Index = () => {
   const { user, loading, username } = useAuth();
   const isTouchDevice = useTouchDevice();
   const [configOpen, setConfigOpen] = useState(false);
-  const [accountOpen, setAccountOpen] = useState(false);
   const [sovereigntyOpen, setSovereigntyOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
   const [craftingOpen, setCraftingOpen] = useState(false);
@@ -523,12 +521,34 @@ const Index = () => {
   })).filter(t => t.tile);
 
   return (
-    <div className="h-screen w-screen flex bg-background overflow-hidden">
+    <div className="h-screen w-screen flex flex-col bg-background overflow-hidden relative">
       {/* Demo mode overlay with login/signup buttons */}
       {isDemoMode && <DemoOverlay />}
-      
+
+      {/* Top bar - fixed above the map, only in non-demo mode */}
+      {!isDemoMode && (
+        <GameTopBar
+          world={world}
+          resources={world.resources}
+          zoomPercent={zoomPercent}
+          username={username}
+          multiSelectMode={multiSelectMode}
+          panMode={panMode}
+          members={members}
+          onOpenStats={() => setStatsOpen(true)}
+          onOpenRanking={() => setRankingOpen(true)}
+          onOpenMarketplace={() => setMarketplaceOpen(true)}
+          onOpenPlayer={() => setSovereigntyOpen(true)}
+          onOpenCrafting={() => setCraftingOpen(true)}
+          onOpenConfig={() => setConfigOpen(true)}
+          onZoom={handleZoom}
+          onToggleMultiSelect={handleToggleMultiSelect}
+          onTogglePanMode={handleTogglePanMode}
+        />
+      )}
+
       {/* Main map area */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative min-h-0">
         <GameMap
           map={world.map}
           playerPosition={world.playerPosition}
@@ -564,28 +584,11 @@ const Index = () => {
           <GameHUD
             world={world}
             resources={world.resources}
-            zoomPercent={zoomPercent}
-            username={username}
             selectedSlot={selectedSlot}
-            multiSelectMode={multiSelectMode}
-            panMode={panMode}
-
-            members={members}
             cameraOffset={cameraPosition !== null}
             onSelectSlot={setSelectedSlot}
-            onOpenConfig={() => setConfigOpen(true)}
-            onOpenAccount={() => setAccountOpen(true)}
-            onOpenSovereignty={() => setSovereigntyOpen(true)}
-            onOpenStats={() => setStatsOpen(true)}
-            onOpenCrafting={() => setCraftingOpen(true)}
             onOpenClaimedTiles={() => setClaimedTilesOpen(true)}
-            onOpenRanking={() => setRankingOpen(true)}
-            onOpenMarketplace={() => setMarketplaceOpen(true)}
-            onZoom={handleZoom}
             onConsumeResource={consumeResource}
-            onToggleMultiSelect={handleToggleMultiSelect}
-            onTogglePanMode={handleTogglePanMode}
-
             onReturnToPlayer={handleReturnToPlayer}
           />
         )}
@@ -660,16 +663,6 @@ const Index = () => {
       {/* All panels - only in non-demo mode */}
       {!isDemoMode && (
         <>
-          <AccountPanel
-            isOpen={accountOpen}
-            username={username}
-            userColor={world.userColor}
-            coins={world.coins}
-            claimedTiles={claimedCount}
-            onColorChange={setUserColor}
-            onClose={() => setAccountOpen(false)}
-          />
-
           <SovereigntyPanel
             isOpen={sovereigntyOpen}
             sovereignty={world.sovereignty}
