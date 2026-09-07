@@ -135,6 +135,78 @@ const ResourceRepository = ({
     setShowCreateModal(true);
   };
 
+  const handleGenerateWithAI = async () => {
+    const itemName = aiName.trim();
+    if (!itemName) {
+      toast.error('Enter an item name');
+      return;
+    }
+    if (!userId) {
+      toast.error('You must be logged in to create resources');
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const references = resources.slice(0, 40).map(r => ({
+        name: r.name,
+        rarity: r.rarity,
+        category: r.category,
+        coinValue: r.base_value,
+        gatherTime: r.gather_time,
+        spawnTiles: r.spawn_tiles,
+        spawnChance: Number(r.spawn_chance),
+        description: r.description,
+      }));
+
+      const { data, error } = await supabase.functions.invoke('generate-resource', {
+        body: { itemName, references },
+      });
+
+      if (error) throw error;
+      if (!data?.resource) throw new Error('No resource returned');
+
+      const g = data.resource;
+      setNewResource({
+        id: `new-${Date.now()}`,
+        name: g.name || itemName,
+        icon: data.iconUrl || '🔮',
+        iconType: data.iconUrl ? 'image' : 'emoji',
+        rarity: g.rarity || 'common',
+        description: g.description || '',
+        gatherTime: g.gatherTime ?? 1,
+        spawnTiles: (g.spawnTiles || []) as TileType[],
+        spawnChance: g.spawnChance ?? 0,
+        coinValue: g.coinValue ?? 10,
+        category: g.category || undefined,
+        consumable: !!g.consumable,
+        healthGain: g.healthGain ?? 0,
+        canInflictDamage: !!g.canInflictDamage,
+        damage: g.damage ?? 0,
+        recipes: [],
+        isContainer: false,
+        isFloating: !!g.isFloating,
+        tileWidth: 0,
+        tileHeight: 0,
+        placeable: g.placeable ?? true,
+        passable: g.passable ?? true,
+        destructible: g.destructible ?? true,
+        maxLife: g.maxLife ?? 10,
+        givesXp: !!g.givesXp,
+        xpAmount: g.xpAmount ?? 0,
+      });
+      setShowAiModal(false);
+      setAiName('');
+      setShowCreateModal(true);
+      if (!data.iconUrl) toast.warning('Created properties, but the image could not be generated');
+    } catch (err) {
+      console.error('AI generation failed:', err);
+      toast.error('Failed to generate resource');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   const handleSaveNewResource = async (resource: Resource) => {
     if (!userId) {
       toast.error('You must be logged in to create resources');
