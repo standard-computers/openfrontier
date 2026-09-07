@@ -143,6 +143,12 @@ export const GameTopBar = ({ world, resources, zoomPercent, username, multiSelec
             <span className="text-sm text-muted-foreground max-w-[80px] truncate">{username || 'Player'}</span>
           </>
         )}
+        {topPlayer && (
+          <span className="flex items-center gap-1 text-xs text-amber-400" title={`Leader: ${topPlayer.name}`}>
+            <Trophy className="w-3 h-3" />
+            {topPlayer.netWorth.toLocaleString()}
+          </span>
+        )}
       </button>
 
       <button onClick={onOpenConfig} className="p-2 rounded hover:bg-muted/60 transition-colors" title="Settings">
