@@ -316,6 +316,9 @@ const ResourceRepository = ({
               <span className="text-sm text-muted-foreground">{resources.length} resources</span>
             </div>
             <div className="flex items-center gap-2">
+              <button onClick={() => setShowAiModal(true)} className="btn btn-ghost text-sm">
+                <Sparkles className="w-4 h-4 mr-1" /> Create with AI
+              </button>
               <button onClick={handleCreateNew} className="btn btn-primary text-sm">
                 <Plus className="w-4 h-4 mr-1" /> Create New
               </button>
