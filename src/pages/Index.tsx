@@ -264,6 +264,44 @@ const Index = () => {
     toast.success(`Gathered ${gatheredCount} resource${gatheredCount > 1 ? 's' : ''}`);
   }, [selectedTile, world.map.tiles, world.userId, gatherFromTile, isDemoMode]);
 
+  // Gather one resource at a time across the multi-tile selection.
+  // Each press of G grabs the next available gatherable resource, cycling
+  // through the selected tiles until all resources are collected.
+  const handleMultiGatherStep = useCallback(() => {
+    if (isDemoMode) {
+      toast.error('Sign up to gather resources!');
+      return;
+    }
+    if (!selectedTiles.length) {
+      toast.info('No tiles selected');
+      return;
+    }
+
+    // Find the first selected tile that still has a gatherable resource.
+    for (const pos of selectedTiles) {
+      const tile = world.map.tiles[pos.y]?.[pos.x];
+      if (!tile) continue;
+      if (tile.claimedBy && tile.claimedBy !== world.userId) continue;
+      // Skip placed resources — those are destroyed via tools, not gathered.
+      const gatherable = tile.resources.find(
+        rid => !tile.placedResources?.includes(rid)
+      );
+      if (!gatherable) continue;
+
+      const resource = world.resources.find(r => r.id === gatherable);
+      gatherFromTile(pos.x, pos.y, gatherable);
+      if (resource) {
+        const iconDisplay = resource.iconType === 'image' ? '✓' : resource.icon;
+        toast.success(`Gathered ${iconDisplay} ${resource.name}`);
+      } else {
+        toast.success('Gathered 1 resource');
+      }
+      return;
+    }
+
+    toast.info('No more resources to gather in selection');
+  }, [selectedTiles, world.map.tiles, world.userId, world.resources, gatherFromTile, isDemoMode]);
+
   const handleRenameTile = (name: string) => {
     if (isDemoMode) return;
     if (selectedTile) {
