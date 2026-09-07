@@ -867,7 +867,7 @@ export const useGameWorld = () => {
           : `Consumed ${resource.name}!` 
       };
       
-      return { ...prev, inventory: newInventory, health: newHealth, xp: newXp };
+      return { ...prev, inventory: newInventory, xp: newXp };
     });
     
     return result;

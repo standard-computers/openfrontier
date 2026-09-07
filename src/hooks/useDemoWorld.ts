@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { GameWorld, Resource, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, STARTING_HEALTH, DEFAULT_RESOURCES, WorldMap, TILE_TYPES, generateStrangers, Position } from '@/types/game';
+import { GameWorld, Resource, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, DEFAULT_RESOURCES, WorldMap, TILE_TYPES, generateStrangers, Position } from '@/types/game';
 import type { WorldMember } from '@/hooks/useGameWorld';
 
 // Generate a demo world for unauthenticated users to explore
@@ -21,7 +21,6 @@ const createDemoWorld = (): GameWorld => {
     userColor: USER_COLORS[0],
     coins: STARTING_COINS,
     createdAt: new Date().toISOString(),
-    health: STARTING_HEALTH,
     xp: 0,
     enableMarkets: false,
     openMarkets: false,
