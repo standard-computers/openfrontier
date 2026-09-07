@@ -159,7 +159,6 @@ export interface NPC {
   position: { x: number; y: number };
   coins: number;
   inventory: InventorySlot[];
-  health: number;
   lastActionTime?: number;
 }
 
@@ -206,7 +205,6 @@ export interface GameWorld {
   sovereignty?: Sovereignty;
   areas?: Area[];
   createdAt: string;
-  health: number;
   xp: number; // Experience points - gains 1 per game day
   joinCode?: string;
   enableMarkets?: boolean;
@@ -1012,9 +1010,7 @@ export const createEmptyInventory = (size: number = 30): InventorySlot[] =>
   Array.from({ length: size }, () => ({ resourceId: null, quantity: 0 }));
 
 export const STARTING_COINS = 500;
-export const STARTING_HEALTH = 80;
-export const MAX_HEALTH = 100;
-export const HEALTH_DECAY_PER_DAY = 5;
+export const MAX_HEALTH = 100; // Used by strangers
 
 // NPC name prefixes and suffixes for generating names
 const NPC_NAME_PREFIXES = ['Sir', 'Lady', 'Lord', 'Baron', 'Duke', 'Captain', 'Elder', 'Chief', 'Master', 'Scholar', 'Merchant', 'Sage'];
@@ -1095,7 +1091,6 @@ export const generateNPCs = (
       position,
       coins: 200 + Math.floor(Math.random() * 300), // Start with 200-500 coins
       inventory,
-      health: 70 + Math.floor(Math.random() * 30), // Start with 70-100 health
     });
   }
   
