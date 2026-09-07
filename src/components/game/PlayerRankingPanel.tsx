@@ -291,11 +291,41 @@ export const RankingList = ({ world, resources, members, onViewUser, onNavigateT
             </div>
           ))}
 
-          {rankedPlayers.length === 0 && (
-            <div className="text-center text-muted-foreground py-8">
-              No players yet
-            </div>
-          )}
+      {rankedPlayers.length === 0 && (
+        <div className="text-center text-muted-foreground py-8">
+          No players yet
+        </div>
+      )}
+    </div>
+  );
+};
+
+const PlayerRankingPanel = ({ isOpen, onClose, world, resources, members, onViewUser, onNavigateToPosition }: PlayerRankingPanelProps) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+      <div className="game-panel w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+          <div className="flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-amber-400" />
+            <h2 className="font-semibold">Leaderboard</h2>
+          </div>
+          <button onClick={onClose} className="btn btn-ghost p-1">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="p-4 overflow-auto flex-1">
+          <RankingList
+            world={world}
+            resources={resources}
+            members={members}
+            onViewUser={onViewUser}
+            onNavigateToPosition={(pos) => {
+              onNavigateToPosition(pos);
+              onClose();
+            }}
+          />
         </div>
       </div>
     </div>
