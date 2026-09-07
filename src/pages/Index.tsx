@@ -659,6 +659,7 @@ const Index = () => {
           onCreateArea={createArea}
           onConvert={handleConvertTiles}
         />
+        </div>
       )}
 
       {/* All panels - only in non-demo mode */}
