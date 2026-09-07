@@ -521,12 +521,34 @@ const Index = () => {
   })).filter(t => t.tile);
 
   return (
-    <div className="h-screen w-screen flex bg-background overflow-hidden">
+    <div className="h-screen w-screen flex flex-col bg-background overflow-hidden relative">
       {/* Demo mode overlay with login/signup buttons */}
       {isDemoMode && <DemoOverlay />}
-      
+
+      {/* Top bar - fixed above the map, only in non-demo mode */}
+      {!isDemoMode && (
+        <GameTopBar
+          world={world}
+          resources={world.resources}
+          zoomPercent={zoomPercent}
+          username={username}
+          multiSelectMode={multiSelectMode}
+          panMode={panMode}
+          members={members}
+          onOpenStats={() => setStatsOpen(true)}
+          onOpenRanking={() => setRankingOpen(true)}
+          onOpenMarketplace={() => setMarketplaceOpen(true)}
+          onOpenPlayer={() => setSovereigntyOpen(true)}
+          onOpenCrafting={() => setCraftingOpen(true)}
+          onOpenConfig={() => setConfigOpen(true)}
+          onZoom={handleZoom}
+          onToggleMultiSelect={handleToggleMultiSelect}
+          onTogglePanMode={handleTogglePanMode}
+        />
+      )}
+
       {/* Main map area */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative min-h-0">
         <GameMap
           map={world.map}
           playerPosition={world.playerPosition}
