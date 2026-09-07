@@ -39,6 +39,9 @@ const ResourceRepository = ({
   const [newResource, setNewResource] = useState<Resource | null>(null);
   const [editingRepoResource, setEditingRepoResource] = useState<RepositoryResource | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [aiName, setAiName] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
