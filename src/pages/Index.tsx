@@ -410,6 +410,22 @@ const Index = () => {
     });
   }, [setWorld, isDemoMode]);
 
+  const handleRenameStranger = useCallback((strangerId: string, newName: string) => {
+    if (isDemoMode) return;
+    setWorld(prev => {
+      if (!prev.strangers) return prev;
+      const idx = prev.strangers.findIndex(s => s.id === strangerId);
+      if (idx === -1) return prev;
+      const stranger = prev.strangers[idx];
+      if (stranger.allegiance?.userId !== prev.userId) return prev;
+      const newStrangers = [...prev.strangers];
+      newStrangers[idx] = { ...stranger, name: newName };
+      toast.success(`Stranger renamed to ${newName}`);
+      return { ...prev, strangers: newStrangers };
+    });
+    setSelectedStranger(prev => prev && prev.id === strangerId ? { ...prev, name: newName } : prev);
+  }, [setWorld, isDemoMode]);
+
   const handleUseItem = useCallback(() => {
     if (isDemoMode) {
       toast.error('Sign up to use items!');

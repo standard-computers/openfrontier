@@ -1,22 +1,36 @@
-import { X, User, Flag, Heart, Package, ArrowRightLeft } from 'lucide-react';
+import { useState } from 'react';
+import { X, User, Flag, Heart, Package, ArrowRightLeft, Pencil, Check } from 'lucide-react';
 import { Stranger } from '@/types/game';
 import PixelCharacter from './PixelCharacter';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface StrangerInfoPanelProps {
   stranger: Stranger;
   onClose: () => void;
   onRequestMove?: (strangerId: string) => void;
+  canRename?: boolean;
+  onRename?: (strangerId: string, newName: string) => void;
 }
 
-const StrangerInfoPanel = ({ stranger, onClose, onRequestMove }: StrangerInfoPanelProps) => {
+const StrangerInfoPanel = ({ stranger, onClose, onRequestMove, canRename, onRename }: StrangerInfoPanelProps) => {
   const totalItems = stranger.inventory.reduce((sum, slot) => sum + (slot.quantity || 0), 0);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [nameValue, setNameValue] = useState(stranger.name);
 
   const handleRequestMove = () => {
     if (onRequestMove) {
       onRequestMove(stranger.id);
       onClose();
     }
+  };
+
+  const handleSaveName = () => {
+    const trimmed = nameValue.trim();
+    if (trimmed && trimmed !== stranger.name && onRename) {
+      onRename(stranger.id, trimmed);
+    }
+    setIsEditingName(false);
   };
 
   return (
@@ -34,7 +48,37 @@ const StrangerInfoPanel = ({ stranger, onClose, onRequestMove }: StrangerInfoPan
               />
             </div>
             <div>
-              <h2 className="font-semibold text-foreground">{stranger.name}</h2>
+              {isEditingName ? (
+                <div className="flex items-center gap-1">
+                  <Input
+                    value={nameValue}
+                    onChange={(e) => setNameValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSaveName();
+                      if (e.key === 'Escape') setIsEditingName(false);
+                    }}
+                    className="h-7 w-36 text-sm"
+                    maxLength={24}
+                    autoFocus
+                  />
+                  <button onClick={handleSaveName} className="btn btn-ghost p-1" title="Save name">
+                    <Check className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1">
+                  <h2 className="font-semibold text-foreground">{stranger.name}</h2>
+                  {canRename && onRename && (
+                    <button
+                      onClick={() => { setNameValue(stranger.name); setIsEditingName(true); }}
+                      className="btn btn-ghost p-1"
+                      title="Rename stranger"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              )}
               <p className="text-xs text-muted-foreground">Wandering Stranger</p>
             </div>
           </div>
