@@ -167,33 +167,6 @@ export const useNPCBehavior = ({ world, setWorld, saveMapData }: UseNPCBehaviorP
     };
   }, []);
 
-  // NPC consumes a resource for health
-  const npcConsumeResource = useCallback((npc: NPC, resources: Resource[]): NPC | null => {
-    // Find consumable resources in inventory
-    for (let i = 0; i < npc.inventory.length; i++) {
-      const slot = npc.inventory[i];
-      if (!slot.resourceId || slot.quantity <= 0) continue;
-      
-      const resource = resources.find(r => r.id === slot.resourceId);
-      if (resource?.consumable && resource.healthGain && resource.healthGain > 0) {
-        // Consume this resource
-        const newInventory = [...npc.inventory];
-        newInventory[i] = { ...newInventory[i], quantity: newInventory[i].quantity - 1 };
-        if (newInventory[i].quantity === 0) {
-          newInventory[i] = { resourceId: null, quantity: 0 };
-        }
-        
-        return {
-          ...npc,
-          inventory: newInventory,
-          health: Math.min(MAX_HEALTH, npc.health + resource.healthGain),
-        };
-      }
-    }
-    
-    return null;
-  }, []);
-
   // NPC moves to an adjacent tile
   const npcMove = useCallback((npc: NPC, map: WorldMap): NPC => {
     const adjacentTiles = getAdjacentTiles(npc.position.x, npc.position.y, map);
@@ -219,16 +192,7 @@ export const useNPCBehavior = ({ world, setWorld, saveMapData }: UseNPCBehaviorP
     let updatedNpc: NPC = { ...npc, lastActionTime: Date.now() };
     let newMapTiles: WorldMap['tiles'] | undefined;
     
-    // Priority 1: Consume if low health
-    if (updatedNpc.health < 50 && Math.random() < NPC_CONSUME_CHANCE) {
-      const consumed = npcConsumeResource(updatedNpc, resources);
-      if (consumed) {
-        updatedNpc = consumed;
-        return { npc: updatedNpc };
-      }
-    }
-    
-    // Priority 2: Claim nearby tiles
+    // Priority 1: Claim nearby tiles
     if (Math.random() < NPC_CLAIM_CHANCE) {
       const unclaimedTiles = getNearbyUnclaimedTiles(updatedNpc, currentMap, 2);
       if (unclaimedTiles.length > 0) {
