@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, User, Flag, Heart, Package, ArrowRightLeft, Pencil, Check } from 'lucide-react';
+import { X, User, Flag, Heart, Package, ArrowRightLeft, Pencil, Check , Smile } from 'lucide-react';
 import { Stranger } from '@/types/game';
 import PixelCharacter from './PixelCharacter';
 import { Button } from '@/components/ui/button';
@@ -128,6 +128,26 @@ const StrangerInfoPanel = ({ stranger, onClose, onRequestMove, canRename, onRena
               </div>
               <p className="text-xs text-muted-foreground mt-1">Items</p>
             </div>
+          </div>
+
+          {/* Happiness */}
+          <div className="bg-secondary/50 rounded-lg p-3">
+            <div className="flex items-center justify-between text-sm mb-1">
+              <span className="flex items-center gap-1">
+                <Smile className="w-4 h-4 text-yellow-400" />
+                Happiness
+              </span>
+              <span className="font-bold">{Math.round(stranger.happiness ?? 50)}%</span>
+            </div>
+            <div className="h-2 rounded-full bg-background overflow-hidden">
+              <div
+                className="h-full bg-yellow-400 transition-all"
+                style={{ width: `${Math.max(0, Math.min(100, stranger.happiness ?? 50))}%` }}
+              />
+            </div>
+            {stranger.partnerId && (
+              <p className="text-xs text-muted-foreground mt-2">In love — this pair may start a family.</p>
+            )}
           </div>
 
           {/* Location */}
