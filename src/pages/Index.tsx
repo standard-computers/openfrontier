@@ -558,7 +558,7 @@ const Index = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleOpenMarketplace, handleGatherAll, handleUseItem, handleTogglePanMode, handleToggleMultiSelect]);
+  }, [handleOpenMarketplace, handleGatherAll, handleMultiGatherStep, handleUseItem, handleTogglePanMode, handleToggleMultiSelect, multiSelectMode, selectedTiles]);
 
   const zoomPercent = Math.round((tileSize / DEFAULT_TILE_SIZE) * 100);
 
