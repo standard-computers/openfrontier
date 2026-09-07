@@ -71,7 +71,15 @@ export const calculateNetWorth = (
   };
 };
 
-const PlayerRankingPanel = ({ isOpen, onClose, world, resources, members, onViewUser, onNavigateToPosition }: PlayerRankingPanelProps) => {
+interface RankingListProps {
+  world: GameWorld;
+  resources: Resource[];
+  members: WorldMember[];
+  onViewUser: (member: WorldMember) => void;
+  onNavigateToPosition: (position: Position) => void;
+}
+
+export const RankingList = ({ world, resources, members, onViewUser, onNavigateToPosition }: RankingListProps) => {
   const rankedPlayers = useMemo(() => {
     const players: RankedPlayer[] = [];
 
