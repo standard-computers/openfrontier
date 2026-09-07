@@ -640,8 +640,9 @@ const Index = () => {
         </div>
       )}
 
-      {/* Multi-tile selection panel - only in non-demo mode */}
+      {/* Multi-tile selection pane - right side, only in non-demo mode */}
       {multiSelectMode && selectedTilesWithData.length > 0 && !isDemoMode && (
+        <div className="absolute right-0 top-0 bottom-0 z-40">
         <MultiTileInfoPanel
           tiles={selectedTilesWithData}
           playerPosition={world.playerPosition}
