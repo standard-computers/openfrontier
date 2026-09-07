@@ -19,6 +19,8 @@ interface SovereigntyInfo {
   sovereignty: Sovereignty;
   totalValue: number;
   tileCount: number;
+  /** Sample of claimed tile positions (used to return pledged strangers home) */
+  territoryPositions: { x: number; y: number }[];
 }
 
 interface UseStrangerBehaviorProps {
