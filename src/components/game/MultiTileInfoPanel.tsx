@@ -111,7 +111,7 @@ const MultiTileInfoPanel = ({
   };
 
   return (
-    <div className="game-panel w-80 max-h-[500px] overflow-hidden flex flex-col">
+    <div className="game-panel w-80 h-full overflow-hidden flex flex-col rounded-none border-y-0 border-r-0">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-border">
         <div>
