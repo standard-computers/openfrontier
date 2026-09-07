@@ -247,7 +247,6 @@ export const RankingList = ({ world, resources, members, onViewUser, onNavigateT
                         const npc = world.npcs?.find(n => n.id === player.id);
                         if (npc) {
                           onNavigateToPosition(npc.position);
-                          onClose();
                           return;
                         }
                         // Find first claimed tile for players
@@ -255,7 +254,6 @@ export const RankingList = ({ world, resources, members, onViewUser, onNavigateT
                           for (let x = 0; x < world.map.tiles[y].length; x++) {
                             if (world.map.tiles[y][x].claimedBy === player.id) {
                               onNavigateToPosition({ x, y });
-                              onClose();
                               return;
                             }
                           }
