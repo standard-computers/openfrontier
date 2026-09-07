@@ -247,17 +247,6 @@ const Index = () => {
     const tile = world.map.tiles[selectedTile.y]?.[selectedTile.x];
     if (!tile) return;
     
-    const distance = Math.max(
-      Math.abs(selectedTile.x - world.playerPosition.x),
-      Math.abs(selectedTile.y - world.playerPosition.y)
-    );
-    const CLAIM_RADIUS = 6;
-    
-    if (distance > CLAIM_RADIUS) {
-      toast.error(`Too far away (${distance} tiles, max ${CLAIM_RADIUS})`);
-      return;
-    }
-    
     if (tile.claimedBy && tile.claimedBy !== world.userId) {
       toast.error('Cannot gather from another player\'s tile');
       return;
@@ -275,7 +264,7 @@ const Index = () => {
     }
     
     toast.success(`Gathered ${gatheredCount} resource${gatheredCount > 1 ? 's' : ''}`);
-  }, [selectedTile, world.map.tiles, world.playerPosition, world.userId, gatherFromTile, isDemoMode]);
+  }, [selectedTile, world.map.tiles, world.userId, gatherFromTile, isDemoMode]);
 
   const handleRenameTile = (name: string) => {
     if (isDemoMode) return;
