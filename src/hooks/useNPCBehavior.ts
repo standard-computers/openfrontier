@@ -1,10 +1,9 @@
 import { useEffect, useCallback, useRef } from 'react';
-import { GameWorld, NPC, WorldMap, Resource, InventorySlot, calculateTileValue, TILE_TYPES, MAX_HEALTH, isAdjacentToOwnedLand, ownsAnyTile } from '@/types/game';
+import { GameWorld, NPC, WorldMap, Resource, InventorySlot, calculateTileValue, TILE_TYPES, isAdjacentToOwnedLand, ownsAnyTile } from '@/types/game';
 
 const NPC_ACTION_INTERVAL = 2000; // NPCs act every 2 seconds
 const NPC_CLAIM_CHANCE = 0.3; // 30% chance to claim a tile when possible
 const NPC_GATHER_CHANCE = 0.5; // 50% chance to gather resources
-const NPC_CONSUME_CHANCE = 0.2; // 20% chance to consume food when low health
 const NPC_MOVE_CHANCE = 0.7; // 70% chance to move
 const NPC_GATHER_RADIUS = 12; // Only look for gatherable owned tiles near the NPC
 

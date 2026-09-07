@@ -873,15 +873,6 @@ export const useGameWorld = () => {
     return result;
   }, []);
 
-  const takeDamage = useCallback((amount: number): { success: boolean; health: number } => {
-    let newHealth = 0;
-    setWorld(prev => {
-      newHealth = Math.max(0, prev.health - amount);
-      return { ...prev, health: newHealth };
-    });
-    return { success: true, health: newHealth };
-  }, []);
-
   const placeItem = useCallback((resourceId: string, direction: 'north' | 'south' | 'east' | 'west', target?: { x: number; y: number }): { success: boolean; message: string } => {
     let result = { success: false, message: '' };
     
