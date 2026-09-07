@@ -205,21 +205,29 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     let adjacentTiles = getAdjacentTiles(stranger.position.x, stranger.position.y, map);
     if (adjacentTiles.length === 0) return stranger;
     
-    // Pledged strangers cannot leave their sovereignty's claimed area
     if (stranger.allegiance) {
+      // Pledged strangers must stay inside their sovereignty's territory
       const currentTile = map.tiles[stranger.position.y]?.[stranger.position.x];
       const insideTerritory = currentTile?.claimedBy === stranger.allegiance.userId;
+      const territoryTiles = adjacentTiles.filter(
+        pos => map.tiles[pos.y][pos.x].claimedBy === stranger.allegiance!.userId
+      );
       if (insideTerritory) {
-        const territoryTiles = adjacentTiles.filter(
-          pos => map.tiles[pos.y][pos.x].claimedBy === stranger.allegiance!.userId
-        );
-        if (territoryTiles.length > 0) {
-          adjacentTiles = territoryTiles;
-        } else {
-          // Fully surrounded by unclaimed tiles: stay put rather than leave
-          return stranger;
-        }
+        // Never step outside: move within territory or stay put
+        if (territoryTiles.length === 0) return stranger;
+        adjacentTiles = territoryTiles;
+      } else if (territoryTiles.length > 0) {
+        // Outside (e.g. just pledged): head back into the territory
+        adjacentTiles = territoryTiles;
+      } else {
+        // No direct path home this step: only unclaimed tiles are allowed
+        adjacentTiles = adjacentTiles.filter(pos => !map.tiles[pos.y][pos.x].claimedBy);
+        if (adjacentTiles.length === 0) return stranger;
       }
+    } else {
+      // Unpledged strangers cannot enter anyone's claimed territory
+      adjacentTiles = adjacentTiles.filter(pos => !map.tiles[pos.y][pos.x].claimedBy);
+      if (adjacentTiles.length === 0) return stranger;
     }
     
     // Strangers prefer tiles with resources since they gather
