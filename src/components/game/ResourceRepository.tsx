@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Plus, Search, Database, Upload, Edit2, Filter, Tag, Check } from 'lucide-react';
+import { X, Plus, Search, Database, Upload, Edit2, Filter, Tag, Check, Sparkles, Loader2 } from 'lucide-react';
 import { Resource, RARITY_COLORS, TileType } from '@/types/game';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -39,6 +39,9 @@ const ResourceRepository = ({
   const [newResource, setNewResource] = useState<Resource | null>(null);
   const [editingRepoResource, setEditingRepoResource] = useState<RepositoryResource | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [aiName, setAiName] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -130,6 +133,78 @@ const ResourceRepository = ({
       maxLife: 10,
     });
     setShowCreateModal(true);
+  };
+
+  const handleGenerateWithAI = async () => {
+    const itemName = aiName.trim();
+    if (!itemName) {
+      toast.error('Enter an item name');
+      return;
+    }
+    if (!userId) {
+      toast.error('You must be logged in to create resources');
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const references = resources.slice(0, 40).map(r => ({
+        name: r.name,
+        rarity: r.rarity,
+        category: r.category,
+        coinValue: r.base_value,
+        gatherTime: r.gather_time,
+        spawnTiles: r.spawn_tiles,
+        spawnChance: Number(r.spawn_chance),
+        description: r.description,
+      }));
+
+      const { data, error } = await supabase.functions.invoke('generate-resource', {
+        body: { itemName, references },
+      });
+
+      if (error) throw error;
+      if (!data?.resource) throw new Error('No resource returned');
+
+      const g = data.resource;
+      setNewResource({
+        id: `new-${Date.now()}`,
+        name: g.name || itemName,
+        icon: data.iconUrl || '🔮',
+        iconType: data.iconUrl ? 'image' : 'emoji',
+        rarity: g.rarity || 'common',
+        description: g.description || '',
+        gatherTime: g.gatherTime ?? 1,
+        spawnTiles: (g.spawnTiles || []) as TileType[],
+        spawnChance: g.spawnChance ?? 0,
+        coinValue: g.coinValue ?? 10,
+        category: g.category || undefined,
+        consumable: !!g.consumable,
+        healthGain: g.healthGain ?? 0,
+        canInflictDamage: !!g.canInflictDamage,
+        damage: g.damage ?? 0,
+        recipes: [],
+        isContainer: false,
+        isFloating: !!g.isFloating,
+        tileWidth: 0,
+        tileHeight: 0,
+        placeable: g.placeable ?? true,
+        passable: g.passable ?? true,
+        destructible: g.destructible ?? true,
+        maxLife: g.maxLife ?? 10,
+        givesXp: !!g.givesXp,
+        xpAmount: g.xpAmount ?? 0,
+      });
+      setShowAiModal(false);
+      setAiName('');
+      setShowCreateModal(true);
+      if (!data.iconUrl) toast.warning('Created properties, but the image could not be generated');
+    } catch (err) {
+      console.error('AI generation failed:', err);
+      toast.error('Failed to generate resource');
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const handleSaveNewResource = async (resource: Resource) => {
@@ -241,6 +316,9 @@ const ResourceRepository = ({
               <span className="text-sm text-muted-foreground">{resources.length} resources</span>
             </div>
             <div className="flex items-center gap-2">
+              <button onClick={() => setShowAiModal(true)} className="btn btn-ghost text-sm">
+                <Sparkles className="w-4 h-4 mr-1" /> Create with AI
+              </button>
               <button onClick={handleCreateNew} className="btn btn-primary text-sm">
                 <Plus className="w-4 h-4 mr-1" /> Create New
               </button>
@@ -434,6 +512,47 @@ const ResourceRepository = ({
           </div>
         </div>
       </div>
+
+      {showAiModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
+          <div className="game-panel w-full max-w-md p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-primary" /> Create with AI
+              </h3>
+              <button
+                onClick={() => { if (!aiLoading) { setShowAiModal(false); setAiName(''); } }}
+                className="btn btn-ghost p-1"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Enter an item name. Properties are filled in based on the resources already in the repository, and an image is generated.
+            </p>
+            <input
+              autoFocus
+              value={aiName}
+              onChange={(e) => setAiName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !aiLoading) handleGenerateWithAI(); }}
+              placeholder="e.g. Copper Lantern"
+              className="input-field w-full"
+              disabled={aiLoading}
+            />
+            <button
+              onClick={handleGenerateWithAI}
+              disabled={aiLoading || !aiName.trim()}
+              className="btn btn-primary w-full"
+            >
+              {aiLoading ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating…</>
+              ) : (
+                <><Sparkles className="w-4 h-4 mr-2" /> Generate</>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
 
       {showCreateModal && newResource && (
         <ResourceEditorModal
