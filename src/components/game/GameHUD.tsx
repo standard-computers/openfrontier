@@ -75,24 +75,6 @@ export const GameTopBar = ({ world, resources, zoomPercent, username, multiSelec
         <span>Home: {world.playerPosition.x}, {world.playerPosition.y}</span>
       </div>
 
-      {/* Player ranking button */}
-      <button
-        onClick={onOpenRanking}
-        className="px-2 py-1 rounded hover:bg-muted/60 transition-colors flex items-center gap-2"
-        title="Leaderboard"
-      >
-        <Trophy className="w-4 h-4 text-amber-400" />
-        {topPlayer && (
-          <div className="flex items-center gap-2">
-            <div
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: topPlayer.color }}
-            />
-            <span className="text-sm font-medium max-w-[80px] truncate">{topPlayer.name}</span>
-            <span className="text-xs text-amber-400">{topPlayer.netWorth.toLocaleString()}</span>
-          </div>
-        )}
-      </button>
 
       {/* Market button */}
       {(world.openMarkets !== false) && world.enableMarkets && (

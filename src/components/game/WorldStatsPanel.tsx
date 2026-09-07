@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { X, Globe, Users, Map, Flag, Package, Coins, Crown, Bot, Heart, MapPin } from 'lucide-react';
+import { X, Globe, Users, Map, Flag, Package, Coins, Crown, Bot, Heart, MapPin, Trophy } from 'lucide-react';
+import { RankingList } from './PlayerRankingPanel';
 import { GameWorld, Resource, TILE_TYPES, calculateTileValue, RARITY_COLORS, NPC, Position } from '@/types/game';
 import { WorldMember } from '@/hooks/useGameWorld';
 import { cn } from '@/lib/utils';

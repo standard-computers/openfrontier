@@ -18,7 +18,7 @@ import CraftingPanel from '@/components/game/CraftingPanel';
 import UserProfilePanel from '@/components/game/UserProfilePanel';
 import ClaimedTilesPanel from '@/components/game/ClaimedTilesPanel';
 import MarketplacePanel from '@/components/game/MarketplacePanel';
-import PlayerRankingPanel from '@/components/game/PlayerRankingPanel';
+
 import StrangerInfoPanel from '@/components/game/StrangerInfoPanel';
 import DemoOverlay from '@/components/game/DemoOverlay';
 import { useDemoWorld } from '@/hooks/useDemoWorld';
@@ -777,18 +777,6 @@ const Index = () => {
             }}
           />
 
-          <PlayerRankingPanel
-            isOpen={rankingOpen}
-            world={world}
-            resources={world.resources}
-            members={members}
-            onClose={() => setRankingOpen(false)}
-            onViewUser={(member) => {
-              setSelectedMember(member);
-              setUserProfileOpen(true);
-            }}
-            onNavigateToPosition={handleNavigateToPosition}
-          />
 
           {selectedStranger && (
             <StrangerInfoPanel
