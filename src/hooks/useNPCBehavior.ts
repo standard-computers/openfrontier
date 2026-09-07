@@ -1,10 +1,9 @@
 import { useEffect, useCallback, useRef } from 'react';
-import { GameWorld, NPC, WorldMap, Resource, InventorySlot, calculateTileValue, TILE_TYPES, MAX_HEALTH, isAdjacentToOwnedLand, ownsAnyTile } from '@/types/game';
+import { GameWorld, NPC, WorldMap, Resource, InventorySlot, calculateTileValue, TILE_TYPES, isAdjacentToOwnedLand, ownsAnyTile } from '@/types/game';
 
 const NPC_ACTION_INTERVAL = 2000; // NPCs act every 2 seconds
 const NPC_CLAIM_CHANCE = 0.3; // 30% chance to claim a tile when possible
 const NPC_GATHER_CHANCE = 0.5; // 50% chance to gather resources
-const NPC_CONSUME_CHANCE = 0.2; // 20% chance to consume food when low health
 const NPC_MOVE_CHANCE = 0.7; // 70% chance to move
 const NPC_GATHER_RADIUS = 12; // Only look for gatherable owned tiles near the NPC
 
@@ -168,33 +167,6 @@ export const useNPCBehavior = ({ world, setWorld, saveMapData }: UseNPCBehaviorP
     };
   }, []);
 
-  // NPC consumes a resource for health
-  const npcConsumeResource = useCallback((npc: NPC, resources: Resource[]): NPC | null => {
-    // Find consumable resources in inventory
-    for (let i = 0; i < npc.inventory.length; i++) {
-      const slot = npc.inventory[i];
-      if (!slot.resourceId || slot.quantity <= 0) continue;
-      
-      const resource = resources.find(r => r.id === slot.resourceId);
-      if (resource?.consumable && resource.healthGain && resource.healthGain > 0) {
-        // Consume this resource
-        const newInventory = [...npc.inventory];
-        newInventory[i] = { ...newInventory[i], quantity: newInventory[i].quantity - 1 };
-        if (newInventory[i].quantity === 0) {
-          newInventory[i] = { resourceId: null, quantity: 0 };
-        }
-        
-        return {
-          ...npc,
-          inventory: newInventory,
-          health: Math.min(MAX_HEALTH, npc.health + resource.healthGain),
-        };
-      }
-    }
-    
-    return null;
-  }, []);
-
   // NPC moves to an adjacent tile
   const npcMove = useCallback((npc: NPC, map: WorldMap): NPC => {
     const adjacentTiles = getAdjacentTiles(npc.position.x, npc.position.y, map);
@@ -220,16 +192,7 @@ export const useNPCBehavior = ({ world, setWorld, saveMapData }: UseNPCBehaviorP
     let updatedNpc: NPC = { ...npc, lastActionTime: Date.now() };
     let newMapTiles: WorldMap['tiles'] | undefined;
     
-    // Priority 1: Consume if low health
-    if (updatedNpc.health < 50 && Math.random() < NPC_CONSUME_CHANCE) {
-      const consumed = npcConsumeResource(updatedNpc, resources);
-      if (consumed) {
-        updatedNpc = consumed;
-        return { npc: updatedNpc };
-      }
-    }
-    
-    // Priority 2: Claim nearby tiles
+    // Priority 1: Claim nearby tiles
     if (Math.random() < NPC_CLAIM_CHANCE) {
       const unclaimedTiles = getNearbyUnclaimedTiles(updatedNpc, currentMap, 2);
       if (unclaimedTiles.length > 0) {
@@ -265,7 +228,7 @@ export const useNPCBehavior = ({ world, setWorld, saveMapData }: UseNPCBehaviorP
     }
     
     return { npc: updatedNpc, mapTiles: newMapTiles };
-  }, [getNearbyUnclaimedTiles, npcClaimTile, npcGatherFromTile, npcConsumeResource, npcMove]);
+  }, [getNearbyUnclaimedTiles, npcClaimTile, npcGatherFromTile, npcMove]);
 
   // Main NPC behavior loop
   useEffect(() => {

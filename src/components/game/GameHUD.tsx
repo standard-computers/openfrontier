@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { GameWorld, Resource, MAX_HEALTH } from '@/types/game';
-import { Settings, Coins, ChevronRight, Hammer, ZoomIn, ZoomOut, Crown, Clock, Heart, Sparkles, BoxSelect, Trophy, Locate, Store, Hand } from 'lucide-react';
+import { GameWorld, Resource } from '@/types/game';
+import { Settings, Coins, ChevronRight, Hammer, ZoomIn, ZoomOut, Crown, Clock, Sparkles, BoxSelect, Trophy, Locate, Store, Hand } from 'lucide-react';
 import ResourceIcon from './ResourceIcon';
 import InventoryItemModal from './InventoryItemModal';
 import { cn } from '@/lib/utils';
@@ -213,7 +213,7 @@ const GameHUD = ({ world, resources, selectedSlot, cameraOffset, onSelectSlot, o
         </div>
       )}
 
-      {/* Inventory bar with tiles, health, xp, coins */}
+      {/* Inventory bar with tiles, xp, coins */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 game-panel p-2 pointer-events-auto z-50 overflow-visible">
         <div className="flex items-center gap-2 overflow-visible">
           {/* Claimed tiles indicator */}
@@ -228,12 +228,6 @@ const GameHUD = ({ world, resources, selectedSlot, cameraOffset, onSelectSlot, o
             />
             <span className="text-sm text-muted-foreground">{claimedCount}</span>
           </button>
-
-          {/* Health */}
-          <div className="flex items-center gap-1 px-3 py-1 bg-red-500/20 rounded">
-            <Heart className="w-4 h-4 text-red-500" />
-            <span className="font-bold text-red-500 text-sm">{Math.floor(world.health)}/{MAX_HEALTH}</span>
-          </div>
 
           {/* XP */}
           <div className="flex items-center gap-1 px-3 py-1 bg-purple-400/20 rounded">
