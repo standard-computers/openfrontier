@@ -252,14 +252,10 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUse
                             />
                           </div>
                           {/* NPC Stats */}
-                          <div className="grid grid-cols-4 gap-2 text-xs">
+                          <div className="grid grid-cols-3 gap-2 text-xs">
                             <div className="bg-secondary/50 rounded px-2 py-1 flex items-center gap-1">
                               <Coins className="w-3 h-3 text-amber-400" />
                               <span>{npc.coins?.toLocaleString() || 0}</span>
-                            </div>
-                            <div className="bg-secondary/50 rounded px-2 py-1 flex items-center gap-1">
-                              <Heart className="w-3 h-3 text-red-400" />
-                              <span>{Math.round(npc.health || 0)}</span>
                             </div>
                             <div className="bg-secondary/50 rounded px-2 py-1 flex items-center gap-1">
                               <Flag className="w-3 h-3 text-primary" />

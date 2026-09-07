@@ -1497,7 +1497,6 @@ export const useGameWorld = () => {
     updateArea,
     renameTile,
     consumeResource,
-    takeDamage,
     placeItem,
     useItemOnFacingTile,
     toggleEnableMarkets,
