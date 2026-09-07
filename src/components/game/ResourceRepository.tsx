@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Plus, Search, Database, Upload, Edit2, Filter, Tag, Check } from 'lucide-react';
+import { X, Plus, Search, Database, Upload, Edit2, Filter, Tag, Check, Sparkles, Loader2 } from 'lucide-react';
 import { Resource, RARITY_COLORS, TileType } from '@/types/game';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
