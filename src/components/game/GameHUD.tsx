@@ -16,7 +16,6 @@ interface GameTopBarProps {
   panMode: boolean;
   members: WorldMember[];
   onOpenStats: () => void;
-  onOpenRanking: () => void;
   onOpenMarketplace: () => void;
   onOpenPlayer: () => void;
   onOpenCrafting: () => void;
@@ -26,7 +25,7 @@ interface GameTopBarProps {
   onTogglePanMode: () => void;
 }
 
-export const GameTopBar = ({ world, resources, zoomPercent, username, multiSelectMode, panMode, members, onOpenStats, onOpenRanking, onOpenMarketplace, onOpenPlayer, onOpenCrafting, onOpenConfig, onZoom, onToggleMultiSelect, onTogglePanMode }: GameTopBarProps) => {
+export const GameTopBar = ({ world, resources, zoomPercent, username, multiSelectMode, panMode, members, onOpenStats, onOpenMarketplace, onOpenPlayer, onOpenCrafting, onOpenConfig, onZoom, onToggleMultiSelect, onTogglePanMode }: GameTopBarProps) => {
   const [worldTime, setWorldTime] = useState({ days: 0, hours: 0 });
   const topPlayer = useMemo(() => getTopPlayer(world, resources, members), [world, resources, members]);
 

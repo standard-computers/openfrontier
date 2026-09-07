@@ -45,7 +45,7 @@ const Index = () => {
   const [userProfileOpen, setUserProfileOpen] = useState(false);
   const [claimedTilesOpen, setClaimedTilesOpen] = useState(false);
   const [marketplaceOpen, setMarketplaceOpen] = useState(false);
-  const [rankingOpen, setRankingOpen] = useState(false);
+  
   const [currentMarket, setCurrentMarket] = useState<Market | null>(null);
   const [selectedMember, setSelectedMember] = useState<WorldMember | null>(null);
   const [tileSize, setTileSize] = useState(DEFAULT_TILE_SIZE);
@@ -552,7 +552,7 @@ const Index = () => {
           panMode={panMode}
           members={members}
           onOpenStats={() => setStatsOpen(true)}
-          onOpenRanking={() => setRankingOpen(true)}
+          
           onOpenMarketplace={() => setMarketplaceOpen(true)}
           onOpenPlayer={() => setSovereigntyOpen(true)}
           onOpenCrafting={() => setCraftingOpen(true)}
