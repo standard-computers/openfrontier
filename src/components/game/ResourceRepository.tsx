@@ -513,6 +513,47 @@ const ResourceRepository = ({
         </div>
       </div>
 
+      {showAiModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
+          <div className="game-panel w-full max-w-md p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-primary" /> Create with AI
+              </h3>
+              <button
+                onClick={() => { if (!aiLoading) { setShowAiModal(false); setAiName(''); } }}
+                className="btn btn-ghost p-1"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Enter an item name. Properties are filled in based on the resources already in the repository, and an image is generated.
+            </p>
+            <input
+              autoFocus
+              value={aiName}
+              onChange={(e) => setAiName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !aiLoading) handleGenerateWithAI(); }}
+              placeholder="e.g. Copper Lantern"
+              className="input-field w-full"
+              disabled={aiLoading}
+            />
+            <button
+              onClick={handleGenerateWithAI}
+              disabled={aiLoading || !aiName.trim()}
+              className="btn btn-primary w-full"
+            >
+              {aiLoading ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating…</>
+              ) : (
+                <><Sparkles className="w-4 h-4 mr-2" /> Generate</>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
       {showCreateModal && newResource && (
         <ResourceEditorModal
           resource={newResource}
