@@ -228,7 +228,7 @@ export const useNPCBehavior = ({ world, setWorld, saveMapData }: UseNPCBehaviorP
     }
     
     return { npc: updatedNpc, mapTiles: newMapTiles };
-  }, [getNearbyUnclaimedTiles, npcClaimTile, npcGatherFromTile, npcConsumeResource, npcMove]);
+  }, [getNearbyUnclaimedTiles, npcClaimTile, npcGatherFromTile, npcMove]);
 
   // Main NPC behavior loop
   useEffect(() => {
