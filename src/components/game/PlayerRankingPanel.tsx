@@ -178,25 +178,9 @@ export const RankingList = ({ world, resources, members, onViewUser, onNavigateT
     return players.sort((a, b) => b.netWorth - a.netWorth);
   }, [world, resources, members]);
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="game-panel w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between px-3 py-2 border-b border-border">
-          <div className="flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-amber-400" />
-            <h2 className="font-semibold">Leaderboard</h2>
-          </div>
-          <button onClick={onClose} className="btn btn-ghost p-1">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Rankings */}
-        <div className="p-4 overflow-auto flex-1 space-y-2">
-          {rankedPlayers.map((player, index) => (
+    <div className="space-y-2">
+      {rankedPlayers.map((player, index) => (
             <div
               key={player.id}
               onClick={() => player.member && onViewUser(player.member)}
