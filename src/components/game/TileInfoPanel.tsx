@@ -270,17 +270,16 @@ const TileInfoPanel = ({
                       </div>
                     </div>
                   </div>
-                  {isPlaced ? (
-                    <span className="text-xs text-muted-foreground">Use tool to destroy</span>
-                  ) : canGather ? (
-                    <button
+                  {canGather && (!isPlaced || isOwnClaim) ? (
+                    <Button
                       onClick={() => onGather(resource.id)}
-                      className="btn btn-accent text-xs py-1 px-2"
+                      size="sm"
+                      className="text-xs"
                     >
                       Gather
-                    </button>
+                    </Button>
                   ) : (
-                    <span className="text-xs text-muted-foreground">Not yours</span>
+                    <span className="text-xs text-muted-foreground">{isPlaced && !isClaimed ? 'Claim to gather' : 'Not yours'}</span>
                   )}
                 </div>
               );

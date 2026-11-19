@@ -352,7 +352,7 @@ const MultiTileInfoPanel = ({
                               <ResourceIcon icon={resource.icon} iconType={resource.iconType} size="sm" />
                               <span className="text-xs">{resource.name}</span>
                             </div>
-                            {canGather ? (
+                            {canGather && (!tile.placedResources?.includes(resource.id) || isOwnClaim) ? (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();

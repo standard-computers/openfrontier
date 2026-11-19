@@ -14,7 +14,7 @@ export interface GatherTarget {
 export interface SelectionGatherPlan {
   // True when every selected tile is unclaimed or claimed by this player.
   allMineOrUnclaimed: boolean;
-  // Resources that can actually be picked up (player-placed items are excluded).
+  // Placed resources are gatherable only on the player's own land.
   gatherable: GatherTarget[];
   // True only when the whole selection is gatherable and something remains to pick.
   canGatherAll: boolean;
@@ -35,7 +35,7 @@ export function getSelectionGatherPlan(
     }
     const placed = tile.placedResources ?? [];
     for (const resourceId of tile.resources) {
-      if (placed.includes(resourceId)) continue;
+      if (placed.includes(resourceId) && tile.claimedBy !== userId) continue;
       gatherable.push({ x: position.x, y: position.y, resourceId });
     }
   }

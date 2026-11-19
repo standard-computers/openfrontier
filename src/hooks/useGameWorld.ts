@@ -618,16 +618,21 @@ export const useGameWorld = () => {
     if (!tile.resources.includes(resourceId)) return;
     if (tile.claimedBy && tile.claimedBy !== currentWorld.userId) return;
     
-    // Cannot gather player-placed resources - they must be destroyed
-    if (tile.placedResources?.includes(resourceId)) {
-      toast.error('Placed items cannot be gathered. Use a tool to destroy it.');
+    // Placed resources can only be recovered from owned land.
+    if (tile.placedResources?.includes(resourceId) && tile.claimedBy !== currentWorld.userId) {
+      toast.error('Claim this tile to gather placed items.');
       return;
     }
     
     const newTiles = currentWorld.map.tiles.map((row, ry) =>
       row.map((t, rx) =>
         rx === x && ry === y
-          ? { ...t, resources: t.resources.filter(r => r !== resourceId) }
+          ? {
+              ...t,
+              resources: t.resources.filter(r => r !== resourceId),
+              placedResources: t.placedResources?.filter(r => r !== resourceId),
+              resourceLife: t.resourceLife ? Object.fromEntries(Object.entries(t.resourceLife).filter(([id]) => id !== resourceId)) : undefined,
+            }
           : t
       )
     );
@@ -660,8 +665,7 @@ export const useGameWorld = () => {
       if (!tile) continue;
       if (!tile.resources.includes(target.resourceId)) continue;
       if (tile.claimedBy && tile.claimedBy !== currentWorld.userId) continue;
-      // Player-placed items must be destroyed with a tool, not gathered.
-      if (tile.placedResources?.includes(target.resourceId)) continue;
+      if (tile.placedResources?.includes(target.resourceId) && tile.claimedBy !== currentWorld.userId) continue;
 
       addToInventory(inventory, target.resourceId);
       picked.push(target);
@@ -674,7 +678,12 @@ export const useGameWorld = () => {
       row.map((t, rx) => {
         if (t.resources.length === 0) return t;
         const resources = t.resources.filter(rid => !removeKeys.has(`${rx},${ry},${rid}`));
-        return resources.length === t.resources.length ? t : { ...t, resources };
+        return resources.length === t.resources.length ? t : {
+          ...t,
+          resources,
+          placedResources: t.placedResources?.filter(rid => !removeKeys.has(`${rx},${ry},${rid}`)),
+          resourceLife: t.resourceLife ? Object.fromEntries(Object.entries(t.resourceLife).filter(([rid]) => !removeKeys.has(`${rx},${ry},${rid}`))) : undefined,
+        };
       })
     );
     const newMapData: WorldMap = { ...currentWorld.map, tiles: newTiles };

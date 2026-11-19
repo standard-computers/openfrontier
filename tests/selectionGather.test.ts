@@ -49,12 +49,33 @@ describe('multi-tile gather all', () => {
     assert.deepEqual(plan.gatherable, [{ x: 0, y: 0, resourceId: 'apple' }]);
   });
 
-  test('ignores player-placed items', () => {
+  test('ignores placed items on unclaimed land', () => {
     const plan = getSelectionGatherPlan(
       [at(0, 0, { resources: ['fence', 'apple'], placedResources: ['fence'] })],
       'owner'
     );
     assert.deepEqual(plan.gatherable, [{ x: 0, y: 0, resourceId: 'apple' }]);
+  });
+
+  test('gathers placed resources on tiles I own', () => {
+    const plan = getSelectionGatherPlan(
+      [at(0, 0, { claimedBy: 'owner', resources: ['fence', 'apple'], placedResources: ['fence'] })],
+      'owner'
+    );
+    assert.equal(plan.canGatherAll, true);
+    assert.deepEqual(plan.gatherable, [
+      { x: 0, y: 0, resourceId: 'fence' },
+      { x: 0, y: 0, resourceId: 'apple' },
+    ]);
+  });
+
+  test('cannot gather placed resources from another owner', () => {
+    const plan = getSelectionGatherPlan(
+      [at(0, 0, { claimedBy: 'other', resources: ['fence'], placedResources: ['fence'] })],
+      'owner'
+    );
+    assert.equal(plan.canGatherAll, false);
+    assert.deepEqual(plan.gatherable, []);
   });
 
   test('offers nothing when the selection is empty or already picked clean', () => {

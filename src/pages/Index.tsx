@@ -284,14 +284,11 @@ const Index = () => {
       return;
     }
     
-    let gatheredCount = 0;
-    for (const resourceId of [...tile.resources]) {
-      gatherFromTile(selectedTile.x, selectedTile.y, resourceId);
-      gatheredCount++;
-    }
+    const plan = getSelectionGatherPlan([{ tile, position: selectedTile }], world.userId);
+    const gatheredCount = gatherManyFromTiles(plan.gatherable);
     
     toast.success(`Gathered ${gatheredCount} resource${gatheredCount > 1 ? 's' : ''}`);
-  }, [selectedTile, world.map.tiles, world.userId, gatherFromTile, isDemoMode]);
+  }, [selectedTile, world.map.tiles, world.userId, gatherManyFromTiles, isDemoMode]);
 
   // Gather one resource at a time across the multi-tile selection.
   // Each press of G grabs the next available gatherable resource, cycling
@@ -311,9 +308,9 @@ const Index = () => {
       const tile = world.map.tiles[pos.y]?.[pos.x];
       if (!tile) continue;
       if (tile.claimedBy && tile.claimedBy !== world.userId) continue;
-      // Skip placed resources — those are destroyed via tools, not gathered.
+      // Recover placed resources only on owned tiles.
       const gatherable = tile.resources.find(
-        rid => !tile.placedResources?.includes(rid)
+        rid => !tile.placedResources?.includes(rid) || tile.claimedBy === world.userId
       );
       if (!gatherable) continue;
 
