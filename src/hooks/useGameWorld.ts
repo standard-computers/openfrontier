@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { GameWorld, Resource, Sovereignty, Market, NPC, Area, Position, TileType, generateMap, createEmptyInventory, addToInventory, USER_COLORS, STARTING_COINS, calculateTileValue, WorldMap, TILE_TYPES, generateNPCs, generateStrangers, calculateStrangerCount, Stranger, canAddResourceToTile, isLargeResource, isAdjacentToOwnedLand, ownsAnyTile } from '@/types/game';
 import type { Json } from '@/integrations/supabase/types';
@@ -45,6 +45,7 @@ export const useGameWorld = () => {
   const [members, setMembers] = useState<WorldMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [dbWorldId, setDbWorldId] = useState<string | null>(null);
+  const tradeCoinsRef = useRef(0);
 
   // Load world from database
   useEffect(() => {
@@ -108,6 +109,7 @@ export const useGameWorld = () => {
         };
 
         const mapData = worldData.map_data as unknown as WorldMap;
+        tradeCoinsRef.current = membershipData.land_trade_coins ?? 0;
         // Fetch resources from repository using resource_ids
         const resourceIds = (worldData as any).resource_ids as string[] || [];
         const resources = await fetchWorldResources(resourceIds);
@@ -165,7 +167,7 @@ export const useGameWorld = () => {
           playerPosition: spawnPos,
           userId: user.id,
           userColor: playerData.userColor || USER_COLORS[0],
-          coins: playerData.coins ?? STARTING_COINS,
+          coins: (playerData.coins ?? STARTING_COINS) + tradeCoinsRef.current,
           sovereignty: playerData.sovereignty,
           areas: playerData.areas ?? [],
           createdAt: worldData.created_at,
@@ -211,7 +213,7 @@ export const useGameWorld = () => {
       const playerData = {
         position: world.playerPosition,
         inventory: world.inventory,
-        coins: world.coins,
+        coins: world.coins - tradeCoinsRef.current,
         userColor: world.userColor,
         sovereignty: world.sovereignty,
         areas: world.areas,
@@ -253,6 +255,18 @@ export const useGameWorld = () => {
   }, [world.createdAt, loading]);
 
   // Save world map data - all members can save map changes (for tile claiming)
+  const refreshTileNegotiations = useCallback(async () => {
+    if (!dbWorldId) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data } = await supabase.from('world_members').select('land_trade_coins').eq('world_id', dbWorldId).eq('user_id', user.id).single();
+    if (data) {
+      const delta = data.land_trade_coins - tradeCoinsRef.current;
+      tradeCoinsRef.current = data.land_trade_coins;
+      if (delta) setWorld(prev => ({ ...prev, coins: prev.coins + delta }));
+    }
+  }, [dbWorldId]);
+
   const saveMapData = useCallback(async (mapData?: WorldMap) => {
     if (!dbWorldId) return;
     const dataToSave = mapData || world.map;
@@ -1474,5 +1488,6 @@ export const useGameWorld = () => {
     toggleEnableStrangers,
     updateStrangerDensity,
     saveMapData,
+    refreshTileNegotiations,
   };
 };

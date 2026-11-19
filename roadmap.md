@@ -1,0 +1,3 @@
+- [ ] Persist offers, counters, contests, and secure tile transfers with a game-day deadline.
+- [ ] Add tile actions and an inbox for receiving and responding to requests.
+- [ ] Test rules and verify signed-in request flows.

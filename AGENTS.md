@@ -1,2 +1,3 @@
 - Inventory drag placement uses a typed slot payload and validates ownership and inventory in the page before calling the existing placement action; this keeps drag-and-drop within presentation code and preserves placement limits and persistence.
 - NPC aggression uses the shared action-interval helper and a persisted world setting; changing cadence preserves action probabilities and existing claim rules.
+- Tile negotiations use authenticated transactional database functions and game-hour deadlines; append-only trade coin adjustments and ownership guards prevent stale client saves from undoing settlements.

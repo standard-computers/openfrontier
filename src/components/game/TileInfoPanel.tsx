@@ -4,6 +4,9 @@ import { X, Flag, Package, Coins, Pencil, Check, Paintbrush, ChevronDown, Chevro
 import { cn } from '@/lib/utils';
 import ResourceIcon from './ResourceIcon';
 import { WorldMember } from '@/hooks/useGameWorld';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { isValidLandOffer, type TileRequest } from '@/lib/tileNegotiations';
 
 interface TileInfoPanelProps {
   tile: MapTile;
@@ -20,6 +23,10 @@ interface TileInfoPanelProps {
   onRename: (name: string) => void;
   onViewUser: (member: WorldMember) => void;
   onConvert?: (newType: TileType) => void;
+  onOffer?: (amount: number) => void;
+  onContest?: () => void;
+  activeRequest?: TileRequest;
+  requestBusy?: boolean;
 }
 
 const CLAIM_RADIUS = 6;
@@ -39,6 +46,10 @@ const TileInfoPanel = ({
   onRename,
   onViewUser,
   onConvert,
+  onOffer,
+  onContest,
+  activeRequest,
+  requestBusy,
 }: TileInfoPanelProps) => {
   const tileInfo = TILE_TYPES.find(t => t.type === tile.type);
   const tileResources = tile.resources.map(id => resources.find(r => r.id === id)).filter(Boolean) as Resource[];
@@ -59,6 +70,9 @@ const TileInfoPanel = ({
   const [isEditingName, setIsEditingName] = useState(false);
   const [tileName, setTileName] = useState(tile.name || '');
   const [showConvert, setShowConvert] = useState(false);
+  const [offerOpen, setOfferOpen] = useState(false);
+  const [offerAmount, setOfferAmount] = useState(String(tileValue));
+  const [contestConfirm, setContestConfirm] = useState(false);
 
   const handleSaveName = () => {
     onRename(tileName);
@@ -202,6 +216,23 @@ const TileInfoPanel = ({
       </div>
 
       {/* Resources */}
+      {isClaimed && !isOwnClaim && onOffer && onContest && <div className="p-3 border-b border-border space-y-2">
+        {activeRequest ? <p className="text-sm text-muted-foreground capitalize">{activeRequest.kind} · {activeRequest.status}</p> : <>
+          <div className="grid grid-cols-2 gap-2">
+            <Button size="sm" variant="outline" disabled={requestBusy} onClick={() => { setOfferAmount(String(tileValue)); setOfferOpen(v => !v); setContestConfirm(false); }}><Coins />Make offer</Button>
+            <Button size="sm" variant="secondary" disabled={requestBusy} onClick={() => { setContestConfirm(v => !v); setOfferOpen(false); }}><Flag />Contest</Button>
+          </div>
+          {offerOpen && <div className="space-y-2">
+            <label htmlFor="land-offer" className="text-xs text-muted-foreground">Minimum {tileValue} coins</label>
+            <Input id="land-offer" aria-label="Offer amount" type="text" inputMode="numeric" value={offerAmount} onChange={e => setOfferAmount(e.target.value)} />
+            <Button size="sm" className="w-full" disabled={requestBusy || !isValidLandOffer(Number(offerAmount), tileValue) || Number(offerAmount) > userCoins} onClick={() => onOffer(Number(offerAmount))}>Send offer</Button>
+          </div>}
+          {contestConfirm && <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">Response due in one game day. No response transfers this tile to you.</p>
+            <Button size="sm" variant="destructive" className="w-full" disabled={requestBusy} onClick={onContest}>Confirm contest</Button>
+          </div>}
+        </>}
+      </div>}
       <div className="flex-1 overflow-auto p-3">
         <div className="flex items-center gap-2 mb-2">
           <Package className="w-4 h-4 text-muted-foreground" />

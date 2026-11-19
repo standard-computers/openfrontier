@@ -8,6 +8,7 @@ import { WorldMember } from '@/hooks/useGameWorld';
 import { getTopPlayer } from './PlayerRankingPanel';
 import { Button } from '@/components/ui/button';
 import { INVENTORY_DRAG_TYPE } from '@/lib/inventoryDrag';
+import { Mail } from 'lucide-react';
 
 interface GameTopBarProps {
   world: GameWorld;
@@ -25,9 +26,11 @@ interface GameTopBarProps {
   onZoom: (delta: number) => void;
   onToggleMultiSelect: () => void;
   onTogglePanMode: () => void;
+  onOpenRequests?: () => void;
+  requestCount?: number;
 }
 
-export const GameTopBar = ({ world, resources, zoomPercent, username, multiSelectMode, panMode, members, onOpenStats, onOpenMarketplace, onOpenPlayer, onOpenCrafting, onOpenConfig, onZoom, onToggleMultiSelect, onTogglePanMode }: GameTopBarProps) => {
+export const GameTopBar = ({ world, resources, zoomPercent, username, multiSelectMode, panMode, members, onOpenStats, onOpenMarketplace, onOpenPlayer, onOpenCrafting, onOpenConfig, onZoom, onToggleMultiSelect, onTogglePanMode, onOpenRequests, requestCount = 0 }: GameTopBarProps) => {
   const [worldTime, setWorldTime] = useState({ days: 0, hours: 0 });
   const topPlayer = useMemo(() => getTopPlayer(world, resources, members), [world, resources, members]);
 
@@ -93,6 +96,7 @@ export const GameTopBar = ({ world, resources, zoomPercent, username, multiSelec
       <div className="flex-1 min-w-[8px]" />
 
       {/* Tools */}
+      {onOpenRequests && <Button variant="ghost" size="sm" title="Land Requests" aria-label={`Land Requests (${requestCount})`} onClick={onOpenRequests}><Mail />{requestCount > 0 && <span>{requestCount}</span>}</Button>}
       <button
         onClick={onTogglePanMode}
         className={cn(

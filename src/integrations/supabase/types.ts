@@ -173,10 +173,61 @@ export type Database = {
         }
         Relationships: []
       }
+      tile_requests: {
+        Row: {
+          amount: number | null
+          created_at: string
+          deadline_game_hour: number | null
+          id: string
+          kind: string
+          owner_id: string
+          requester_id: string
+          status: string
+          tile_x: number
+          tile_y: number
+          world_id: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          deadline_game_hour?: number | null
+          id?: string
+          kind: string
+          owner_id: string
+          requester_id: string
+          status?: string
+          tile_x: number
+          tile_y: number
+          world_id: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          deadline_game_hour?: number | null
+          id?: string
+          kind?: string
+          owner_id?: string
+          requester_id?: string
+          status?: string
+          tile_x?: number
+          tile_y?: number
+          world_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tile_requests_world_id_fkey"
+            columns: ["world_id"]
+            isOneToOne: false
+            referencedRelation: "worlds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       world_members: {
         Row: {
           id: string
           joined_at: string
+          land_trade_coins: number
           player_data: Json
           role: string
           user_id: string
@@ -185,6 +236,7 @@ export type Database = {
         Insert: {
           id?: string
           joined_at?: string
+          land_trade_coins?: number
           player_data?: Json
           role?: string
           user_id: string
@@ -193,6 +245,7 @@ export type Database = {
         Update: {
           id?: string
           joined_at?: string
+          land_trade_coins?: number
           player_data?: Json
           role?: string
           user_id?: string
@@ -267,6 +320,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_tile_request: {
+        Args: {
+          _amount?: number
+          _kind: string
+          _world: string
+          _x: number
+          _y: number
+        }
+        Returns: string
+      }
       create_world_with_owner:
         | {
             Args: {
@@ -372,6 +435,15 @@ export type Database = {
       join_world_by_code: {
         Args: { _join_code: string; _user_color?: string; _user_id: string }
         Returns: string
+      }
+      resolve_tile_contests: { Args: { _world?: string }; Returns: number }
+      respond_tile_request: {
+        Args: { _action: string; _amount?: number; _id: string }
+        Returns: undefined
+      }
+      tile_land_value: {
+        Args: { _world: string; _x: number; _y: number }
+        Returns: number
       }
     }
     Enums: {

@@ -107,6 +107,7 @@ export const useDemoWorld = () => {
   const toggleEnableStrangers = useCallback(() => {}, []);
   const updateStrangerDensity = useCallback(() => {}, []);
   const saveMapData = useCallback(async () => {}, []);
+  const refreshTileNegotiations = useCallback(async () => {}, []);
 
   const members: WorldMember[] = [];
   const isOwner = false;
@@ -153,5 +154,6 @@ export const useDemoWorld = () => {
     toggleEnableStrangers,
     updateStrangerDensity,
     saveMapData,
+    refreshTileNegotiations,
   };
 };

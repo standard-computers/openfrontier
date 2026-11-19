@@ -26,6 +26,8 @@ import { Market, Position, TileType, calculateTileValue, Sovereignty, Stranger, 
 import { toast } from 'sonner';
 import { getInventoryDropResource } from '@/lib/inventoryDrag';
 import { getSelectionGatherPlan } from '@/lib/selectionGather';
+import { useTileRequests } from '@/hooks/useTileRequests';
+import TileRequestsPanel from '@/components/game/TileRequestsPanel';
 
 const MIN_TILE_SIZE = 4;
 const MAX_TILE_SIZE = 64;
@@ -41,6 +43,7 @@ const Index = () => {
   const { user, loading, username } = useAuth();
   const isTouchDevice = useTouchDevice();
   const [configOpen, setConfigOpen] = useState(false);
+  const [requestsOpen, setRequestsOpen] = useState(false);
   const [sovereigntyOpen, setSovereigntyOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
   const [craftingOpen, setCraftingOpen] = useState(false);
@@ -113,7 +116,24 @@ const Index = () => {
     toggleEnableStrangers,
     updateStrangerDensity,
     saveMapData,
+    refreshTileNegotiations,
   } = isDemoMode ? demoWorld : gameWorld;
+  const tileRequests = useTileRequests(world, !isDemoMode && !worldLoading && world.id !== 'world-default', refreshTileNegotiations);
+  useEffect(() => {
+    const completed = tileRequests.requests.filter(r => r.status === 'accepted' || r.status === 'expired');
+    if (!completed.length) return;
+    setWorld(prev => {
+      let tiles = prev.map.tiles;
+      for (const request of [...completed].reverse()) {
+        const tile = tiles[request.tile_y]?.[request.tile_x];
+        if (!tile || tile.claimedBy === request.requester_id) continue;
+        if (tiles === prev.map.tiles) tiles = [...tiles];
+        tiles[request.tile_y] = [...tiles[request.tile_y]];
+        tiles[request.tile_y][request.tile_x] = { ...tile, claimedBy: request.requester_id };
+      }
+      return tiles === prev.map.tiles ? prev : { ...prev, map: { ...prev.map, tiles } };
+    });
+  }, [tileRequests.requests, setWorld]);
 
   // Build member sovereignty map for stranger allegiance
   const memberSovereignties = useMemo(() => {
@@ -653,6 +673,8 @@ const Index = () => {
           onOpenPlayer={() => setSovereigntyOpen(true)}
           onOpenCrafting={() => setCraftingOpen(true)}
           onOpenConfig={() => setConfigOpen(true)}
+          onOpenRequests={() => setRequestsOpen(true)}
+          requestCount={tileRequests.actionableCount}
           onZoom={handleZoom}
           onToggleMultiSelect={handleToggleMultiSelect}
           onTogglePanMode={handleTogglePanMode}
@@ -729,18 +751,23 @@ const Index = () => {
       </div>
 
       {/* Tile Info Panel - show in both modes */}
-      {selectedTileData && !multiSelectMode && (
+      {selectedTileData && selectedTile && !multiSelectMode && (
         <div className="absolute right-4 top-1/2 -translate-y-1/2 z-50">
           <TileInfoPanel
+            key={`${selectedTile.x},${selectedTile.y}`}
             tile={selectedTileData}
             resources={world.resources}
-            position={selectedTile!}
+            position={selectedTile}
             playerPosition={world.playerPosition}
             userId={world.userId}
             userColor={world.userColor}
             userCoins={world.coins}
             members={members}
-            onClose={() => selectTile(selectedTile!.x, selectedTile!.y)}
+            onClose={() => selectTile(selectedTile.x, selectedTile.y)}
+            onOffer={!isDemoMode && members.some(m => m.userId === selectedTileData.claimedBy) ? amount => void tileRequests.create(selectedTile.x, selectedTile.y, 'offer', amount) : undefined}
+            onContest={!isDemoMode && members.some(m => m.userId === selectedTileData.claimedBy) ? () => void tileRequests.create(selectedTile.x, selectedTile.y, 'contest') : undefined}
+            activeRequest={tileRequests.requests.find(r => r.tile_x === selectedTile.x && r.tile_y === selectedTile.y && ['pending', 'countered', 'conflict'].includes(r.status))}
+            requestBusy={tileRequests.busy}
             onClaim={handleClaim}
             onGather={handleGather}
             onRename={handleRenameTile}
@@ -754,6 +781,7 @@ const Index = () => {
       )}
 
       {/* Multi-tile selection pane - right side, only in non-demo mode */}
+      <TileRequestsPanel open={requestsOpen} onClose={() => setRequestsOpen(false)} world={world} members={members} requests={tileRequests.requests} busy={tileRequests.busy} onRespond={tileRequests.respond} onViewTile={(x, y) => { setRequestsOpen(false); setMultiSelectMode(false); setCameraPosition({ x, y }); selectTile(x, y); }} />
       {multiSelectMode && selectedTilesWithData.length > 0 && !isDemoMode && (
         <div className="absolute right-0 top-0 bottom-0 z-40">
         <MultiTileInfoPanel
