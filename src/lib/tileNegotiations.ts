@@ -7,6 +7,7 @@ export interface TileRequest {
   tile_y: number;
   requester_id: string;
   owner_id: string;
+  npc_owner_id?: string | null;
   kind: 'offer' | 'contest';
   amount: number | null;
   status: TileRequestStatus;
@@ -24,5 +25,11 @@ export const isValidLandOffer = (amount: number, landValue: number) =>
   Number.isSafeInteger(amount) && amount >= landValue && amount > 0;
 
 export const canRespondToTileRequest = (request: TileRequest, userId: string) =>
-  (request.status === 'pending' && request.owner_id === userId) ||
+  (request.status === 'pending' && !request.npc_owner_id && request.owner_id === userId) ||
   (request.status === 'countered' && request.requester_id === userId);
+
+// Presentation only: the server remains responsible for validating membership.
+export const getTileNegotiationTarget = (ownerId: string | undefined, userId: string) => {
+  if (!ownerId || ownerId === userId) return 'none';
+  return ownerId.startsWith('npc-') ? 'npc' : 'player';
+};

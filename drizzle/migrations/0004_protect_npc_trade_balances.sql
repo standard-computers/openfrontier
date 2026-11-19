@@ -1,0 +1,3 @@
+CREATE FUNCTION public.protect_npc_land_trade_coins() RETURNS trigger LANGUAGE plpgsql SET search_path=public AS $$ BEGIN IF current_user IN('authenticated','anon') THEN IF TG_OP='INSERT' THEN IF NEW.npc_land_trade_coins<>'{}'::jsonb THEN RAISE EXCEPTION 'NPC trade coins are managed by tile transactions'; END IF; ELSIF NEW.npc_land_trade_coins IS DISTINCT FROM OLD.npc_land_trade_coins THEN RAISE EXCEPTION 'NPC trade coins are managed by tile transactions'; END IF; END IF; RETURN NEW; END $$;
+CREATE TRIGGER protect_npc_land_trade_coins BEFORE INSERT OR UPDATE ON public.worlds FOR EACH ROW EXECUTE FUNCTION public.protect_npc_land_trade_coins();
+REVOKE ALL ON FUNCTION public.protect_npc_land_trade_coins() FROM PUBLIC,anon,authenticated;

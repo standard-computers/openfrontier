@@ -6,7 +6,7 @@ import ResourceIcon from './ResourceIcon';
 import { WorldMember } from '@/hooks/useGameWorld';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { isValidLandOffer, type TileRequest } from '@/lib/tileNegotiations';
+import { getTileNegotiationTarget, isValidLandOffer, type TileRequest } from '@/lib/tileNegotiations';
 
 interface TileInfoPanelProps {
   tile: MapTile;
@@ -56,6 +56,7 @@ const TileInfoPanel = ({
   const isClaimed = !!tile.claimedBy;
   const isOwnClaim = tile.claimedBy === userId;
   const canGather = !isClaimed || isOwnClaim;
+  const negotiationTarget = getTileNegotiationTarget(tile.claimedBy, userId);
   
   const tileValue = calculateTileValue(tile, resources);
   const canAfford = userCoins >= tileValue;
@@ -80,7 +81,7 @@ const TileInfoPanel = ({
   };
 
   return (
-    <div className="game-panel w-80 max-h-[450px] overflow-hidden flex flex-col">
+    <div className="game-panel w-80 max-w-[calc(100vw-2rem)] max-h-[min(600px,calc(100dvh-8rem))] overflow-y-auto flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-border">
         <div className="flex items-center gap-2">
@@ -151,7 +152,7 @@ const TileInfoPanel = ({
                     Owned by {owner.username}
                   </button>
                 ) : (
-                  <span className="text-sm">Claimed by another player</span>
+                  <span className="text-sm">{negotiationTarget === 'npc' ? 'Owned by an NPC' : 'Claimed by another player'}</span>
                 );
               })()
             )}
@@ -228,12 +229,12 @@ const TileInfoPanel = ({
             <Button size="sm" className="w-full" disabled={requestBusy || !isValidLandOffer(Number(offerAmount), tileValue) || Number(offerAmount) > userCoins} onClick={() => onOffer(Number(offerAmount))}>Send offer</Button>
           </div>}
           {contestConfirm && <div className="space-y-2">
-            <p className="text-xs text-muted-foreground">Response due in one game day. No response transfers this tile to you.</p>
+            <p className="text-xs text-muted-foreground">{negotiationTarget === 'npc' ? 'This NPC will give up the tile or start a conflict based on world aggression.' : 'Response due in one game day. No response transfers this tile to you.'}</p>
             <Button size="sm" variant="destructive" className="w-full" disabled={requestBusy} onClick={onContest}>Confirm contest</Button>
           </div>}
         </>}
       </div>}
-      <div className="flex-1 overflow-auto p-3">
+      <div className="p-3">
         <div className="flex items-center gap-2 mb-2">
           <Package className="w-4 h-4 text-muted-foreground" />
           <span className="text-sm font-medium">

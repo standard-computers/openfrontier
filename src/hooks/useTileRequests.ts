@@ -28,8 +28,14 @@ export const useTileRequests = (world: GameWorld, enabled: boolean, refresh: () 
     try {
       const { error } = await supabase.rpc('create_tile_request', { _world: world.id, _x: x, _y: y, _kind: kind, _amount: amount });
       if (error) throw error;
-      toast.success(kind === 'offer' ? 'Offer sent' : 'Contest started — response due in one game day');
       await load();
+      const { data: result } = await supabase.from('tile_requests').select('status,npc_owner_id,amount').eq('world_id', world.id).eq('tile_x', x).eq('tile_y', y).eq('requester_id', world.userId).order('created_at', { ascending: false }).limit(1).maybeSingle();
+      if (result?.npc_owner_id) {
+        const message = result.status === 'accepted' ? 'NPC gave up the tile — it is now yours' : result.status === 'countered' ? `NPC counteroffer: ${result.amount} coins — open Land Requests to respond` : result.status === 'conflict' ? 'NPC started a conflict — ownership remains unchanged' : 'NPC rejected your offer';
+        toast.success(message);
+      } else {
+        toast.success(kind === 'offer' ? 'Offer sent' : 'Contest started — response due in one game day');
+      }
     } catch (error) { toast.error(error instanceof Error ? error.message : (error as { message?: string }).message ?? 'Could not send request'); }
     finally { setBusy(false); }
   };

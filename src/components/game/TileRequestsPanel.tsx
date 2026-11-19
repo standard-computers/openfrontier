@@ -22,8 +22,9 @@ const RequestRow = ({ request, ...props }: Omit<Props, 'open' | 'onClose' | 'req
   const [counter, setCounter] = useState('');
   const [counterOpen, setCounterOpen] = useState(false);
   const { world, members, busy, onRespond, onViewTile } = props;
-  const incoming = request.owner_id === world.userId;
+  const incoming = !request.npc_owner_id && request.owner_id === world.userId;
   const other = members.find(m => m.userId === (incoming ? request.requester_id : request.owner_id));
+  const npcOwner = world.npcs.find(npc => npc.id === request.npc_owner_id);
   const tile = world.map.tiles[request.tile_y]?.[request.tile_x];
   const minimum = tile ? calculateTileValue(tile, world.resources) : 0;
   const canRespond = canRespondToTileRequest(request, world.userId);
@@ -33,7 +34,7 @@ const RequestRow = ({ request, ...props }: Omit<Props, 'open' | 'onClose' | 'req
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="font-medium flex items-center gap-2">{request.kind === 'offer' ? <Coins /> : <Flag />}{request.kind === 'offer' ? (request.status === 'countered' ? 'Counteroffer' : 'Land offer') : 'Tile contest'}</div>
-          <p className="text-sm text-muted-foreground">{incoming ? 'From' : 'To'} {other?.username ?? 'Player'} · {request.tile_x}, {request.tile_y}</p>
+          <p className="text-sm text-muted-foreground">{incoming ? 'From' : 'To'} {request.npc_owner_id ? npcOwner?.sovereignty.name ?? request.npc_owner_id : other?.username ?? 'Player'} · {request.tile_x}, {request.tile_y}</p>
         </div>
         <Button variant="ghost" size="icon" title="View tile" onClick={() => onViewTile(request.tile_x, request.tile_y)}><MapPin /></Button>
       </div>

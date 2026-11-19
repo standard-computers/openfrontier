@@ -46,6 +46,7 @@ export const useGameWorld = () => {
   const [loading, setLoading] = useState(true);
   const [dbWorldId, setDbWorldId] = useState<string | null>(null);
   const tradeCoinsRef = useRef(0);
+  const npcTradeCoinsRef = useRef<Record<string, number>>({});
 
   // Load world from database
   useEffect(() => {
@@ -143,6 +144,8 @@ export const useGameWorld = () => {
         const npcs = enableNpcs && npcCount > 0 
           ? generateNPCs(npcCount, mapData)
           : [];
+        npcTradeCoinsRef.current = (worldData.npc_land_trade_coins ?? {}) as Record<string, number>;
+        for (const npc of npcs) npc.coins += npcTradeCoinsRef.current[npc.id] ?? 0;
 
         // Generate Strangers (always enabled)
         const strangers = generateStrangers(strangerDensity, mapData);
@@ -265,6 +268,13 @@ export const useGameWorld = () => {
       const delta = data.land_trade_coins - tradeCoinsRef.current;
       tradeCoinsRef.current = data.land_trade_coins;
       if (delta) setWorld(prev => ({ ...prev, coins: prev.coins + delta }));
+    }
+    const { data: worldData } = await supabase.from('worlds').select('npc_land_trade_coins').eq('id', dbWorldId).single();
+    if (worldData) {
+      const balances = (worldData.npc_land_trade_coins ?? {}) as Record<string, number>;
+      const previous = npcTradeCoinsRef.current;
+      npcTradeCoinsRef.current = balances;
+      setWorld(prev => ({ ...prev, npcs: prev.npcs.map(npc => ({ ...npc, coins: npc.coins + (balances[npc.id] ?? 0) - (previous[npc.id] ?? 0) })) }));
     }
   }, [dbWorldId]);
 

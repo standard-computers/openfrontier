@@ -180,6 +180,7 @@ export type Database = {
           deadline_game_hour: number | null
           id: string
           kind: string
+          npc_owner_id: string | null
           owner_id: string
           requester_id: string
           status: string
@@ -193,6 +194,7 @@ export type Database = {
           deadline_game_hour?: number | null
           id?: string
           kind: string
+          npc_owner_id?: string | null
           owner_id: string
           requester_id: string
           status?: string
@@ -206,6 +208,7 @@ export type Database = {
           deadline_game_hour?: number | null
           id?: string
           kind?: string
+          npc_owner_id?: string | null
           owner_id?: string
           requester_id?: string
           status?: string
@@ -274,6 +277,7 @@ export type Database = {
           name: string
           npc_aggression: string
           npc_count: number
+          npc_land_trade_coins: Json
           resource_ids: string[]
           resources: Json
           stranger_density: number
@@ -291,6 +295,7 @@ export type Database = {
           name: string
           npc_aggression?: string
           npc_count?: number
+          npc_land_trade_coins?: Json
           resource_ids?: string[]
           resources: Json
           stranger_density?: number
@@ -308,6 +313,7 @@ export type Database = {
           name?: string
           npc_aggression?: string
           npc_count?: number
+          npc_land_trade_coins?: Json
           resource_ids?: string[]
           resources?: Json
           stranger_density?: number
@@ -320,6 +326,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_player_tile_request: {
+        Args: {
+          _amount?: number
+          _kind: string
+          _world: string
+          _x: number
+          _y: number
+        }
+        Returns: string
+      }
       create_tile_request: {
         Args: {
           _amount?: number
@@ -436,11 +452,25 @@ export type Database = {
         Args: { _join_code: string; _user_color?: string; _user_id: string }
         Returns: string
       }
+      npc_land_response: {
+        Args: {
+          _aggression: string
+          _amount: number
+          _kind: string
+          _value: number
+        }
+        Returns: string
+      }
       resolve_tile_contests: { Args: { _world?: string }; Returns: number }
+      respond_player_tile_request: {
+        Args: { _action: string; _amount?: number; _id: string }
+        Returns: undefined
+      }
       respond_tile_request: {
         Args: { _action: string; _amount?: number; _id: string }
         Returns: undefined
       }
+      settle_npc_tile_request: { Args: { _id: string }; Returns: undefined }
       tile_land_value: {
         Args: { _world: string; _x: number; _y: number }
         Returns: number

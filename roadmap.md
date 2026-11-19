@@ -2,3 +2,6 @@
 - [x] Add tile actions and an inbox for receiving and responding to requests.
 - [x] Test minimum prices, recipient responses, game-day expiry, and conflict blocking; verify the signed-in inbox.
 - [ ] Verify a two-player settlement end to end: no other player in the available world, and temporary player creation failed.
+- [x] Show missing tile negotiation actions and distinguish NPC-owned land; verify the tile view.
+- [x] Enable automatic NPC offers, counters, and contest responses based on aggression; verify settlement.
+- [ ] Run Low/High server decision checks: Cloud became unavailable after the verified Medium counteroffer settlement.

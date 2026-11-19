@@ -1,8 +1,24 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { GAME_DAY_MS, getGameHours, isContestExpired, isValidLandOffer, canRespondToTileRequest, type TileRequest } from '../src/lib/tileNegotiations';
+import { GAME_DAY_MS, getGameHours, isContestExpired, isValidLandOffer, canRespondToTileRequest, getTileNegotiationTarget, type TileRequest } from '../src/lib/tileNegotiations';
 
 const request: TileRequest = { id: 'r', world_id: 'w', tile_x: 1, tile_y: 2, requester_id: 'buyer', owner_id: 'seller', kind: 'contest', amount: null, status: 'pending', created_at: '2026-11-19T00:00:00Z', deadline_game_hour: 48 };
+
+test('another player is a negotiation target without requiring loaded member names', () => {
+  assert.equal(getTileNegotiationTarget('seller', 'buyer'), 'player');
+});
+test('own and unclaimed tiles are not negotiation targets', () => {
+  assert.equal(getTileNegotiationTarget('buyer', 'buyer'), 'none');
+  assert.equal(getTileNegotiationTarget(undefined, 'buyer'), 'none');
+});
+test('NPC land is identified separately from human player land', () => {
+  assert.equal(getTileNegotiationTarget('npc-0', 'buyer'), 'npc');
+});
+test('a buyer can answer an NPC counteroffer but never act as its owner', () => {
+  const npc = { ...request, owner_id: 'buyer', npc_owner_id: 'npc-0' };
+  assert.equal(canRespondToTileRequest(npc, 'buyer'), false);
+  assert.equal(canRespondToTileRequest({ ...npc, status: 'countered' }, 'buyer'), true);
+});
 
 test('offers and counters cannot fall below land value', () => {
   assert.equal(isValidLandOffer(11, 12), false);

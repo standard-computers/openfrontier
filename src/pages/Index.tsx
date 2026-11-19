@@ -764,8 +764,8 @@ const Index = () => {
             userCoins={world.coins}
             members={members}
             onClose={() => selectTile(selectedTile.x, selectedTile.y)}
-            onOffer={!isDemoMode && members.some(m => m.userId === selectedTileData.claimedBy) ? amount => void tileRequests.create(selectedTile.x, selectedTile.y, 'offer', amount) : undefined}
-            onContest={!isDemoMode && members.some(m => m.userId === selectedTileData.claimedBy) ? () => void tileRequests.create(selectedTile.x, selectedTile.y, 'contest') : undefined}
+            onOffer={!isDemoMode ? amount => void tileRequests.create(selectedTile.x, selectedTile.y, 'offer', amount) : undefined}
+            onContest={!isDemoMode ? () => void tileRequests.create(selectedTile.x, selectedTile.y, 'contest') : undefined}
             activeRequest={tileRequests.requests.find(r => r.tile_x === selectedTile.x && r.tile_y === selectedTile.y && ['pending', 'countered', 'conflict'].includes(r.status))}
             requestBusy={tileRequests.busy}
             onClaim={handleClaim}
