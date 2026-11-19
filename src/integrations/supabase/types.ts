@@ -226,6 +226,24 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       world_citizens: {
         Row: {
           revision: number
@@ -352,6 +370,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_edit_all_resources: { Args: never; Returns: boolean }
       create_player_tile_request: {
         Args: {
           _amount?: number
@@ -533,7 +552,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "resource_editor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -660,6 +679,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["resource_editor"],
+    },
   },
 } as const

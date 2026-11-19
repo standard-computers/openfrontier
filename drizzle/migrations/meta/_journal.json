@@ -78,6 +78,13 @@
       "when": 1795130251132,
       "tag": "0010_tighten_resource_profile_icon_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1795131234278,
+      "tag": "0011_add_resource_editor_access",
+      "breakpoints": true
     }
   ]
 }

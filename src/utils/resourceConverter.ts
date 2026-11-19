@@ -1,5 +1,6 @@
 import { Resource, TileType } from '@/types/game';
 import { supabase } from '@/integrations/supabase/client';
+import { withoutResourceCreator } from '@/lib/resourcePermissions';
 
 // Type for the database resource_marketplace row
 export interface RepositoryResource {
@@ -231,12 +232,14 @@ export const addResourceToRepository = async (resource: Resource, userId: string
  * Update a resource in the repository
  */
 export const updateResourceInRepository = async (resourceId: string, resource: Resource, userId?: string): Promise<boolean> => {
-  const repoData = gameResourceToRepository(resource, userId);
+  const repoData = withoutResourceCreator(gameResourceToRepository(resource, userId));
 
   const { error } = await supabase
     .from('resource_marketplace')
     .update(repoData)
-    .eq('id', resourceId);
+    .eq('id', resourceId)
+    .select('id')
+    .single();
 
   if (error) {
     console.error('Failed to update resource in repository:', error);

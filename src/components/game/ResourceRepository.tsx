@@ -8,6 +8,7 @@ import ResourceEditorModal from './ResourceEditorModal';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { RepositoryResource, repositoryToGameResource, gameResourceToRepository } from '@/utils/resourceConverter';
+import { canEditRepositoryResource, withoutResourceCreator } from '@/lib/resourcePermissions';
 
 // RepositoryResource is now imported from resourceConverter
 
@@ -42,6 +43,17 @@ const ResourceRepository = ({
   const [showAiModal, setShowAiModal] = useState(false);
   const [aiName, setAiName] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
+  const [editorAccess, setEditorAccess] = useState<{ userId: string; allowed: boolean } | null>(null);
+  const canEditAll = editorAccess?.userId === userId && editorAccess?.allowed === true;
+
+  useEffect(() => {
+    let active = true;
+    if (!isOpen || !userId) return;
+    supabase.rpc('can_edit_all_resources').then(({ data, error }) => {
+      if (active) setEditorAccess({ userId, allowed: !error && data === true });
+    });
+    return () => { active = false; };
+  }, [isOpen, userId]);
 
   useEffect(() => {
     if (isOpen) {
@@ -229,8 +241,8 @@ const ResourceRepository = ({
   };
 
   const handleEditResource = (repoResource: RepositoryResource) => {
-    if (repoResource.created_by !== userId) {
-      toast.error('You can only edit resources you created');
+    if (!canEditRepositoryResource(userId, repoResource.created_by, canEditAll)) {
+      toast.error('You do not have permission to edit this resource');
       return;
     }
     setEditingRepoResource(repoResource);
@@ -240,11 +252,13 @@ const ResourceRepository = ({
     if (!editingRepoResource || !userId) return;
 
     try {
-      const repoData = gameResourceToRepository(resource, userId);
+      const repoData = withoutResourceCreator(gameResourceToRepository(resource, userId));
       const { error } = await supabase
         .from('resource_marketplace')
         .update(repoData)
-        .eq('id', editingRepoResource.id);
+        .eq('id', editingRepoResource.id)
+        .select('id')
+        .single();
 
       if (error) throw error;
       toast.success(`Updated "${resource.name}"`);
@@ -453,20 +467,20 @@ const ResourceRepository = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {filteredResources.map((resource) => {
                   const isImageIcon = resource.icon?.startsWith('http');
-                  const isCreator = resource.created_by === userId;
+                  const canEdit = canEditRepositoryResource(userId, resource.created_by, canEditAll);
                   return (
                   <div
                     key={resource.id}
-                    onClick={() => isCreator && handleEditResource(resource)}
-                    className={`game-panel p-4 space-y-3 transition-colors ${isCreator ? 'hover:bg-muted/50 cursor-pointer' : 'hover:bg-muted/30'}`}
-                    title={isCreator ? 'Click to edit' : undefined}
+                    onClick={() => canEdit && handleEditResource(resource)}
+                    className={`game-panel p-4 space-y-3 transition-colors ${canEdit ? 'hover:bg-muted/50 cursor-pointer' : 'hover:bg-muted/30'}`}
+                    title={canEdit ? 'Click to edit' : undefined}
                   >
                     <div className="flex items-start gap-3">
                       <ResourceIcon icon={resource.icon} iconType={isImageIcon ? 'image' : 'emoji'} size="lg" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <h3 className="font-medium truncate">{resource.name}</h3>
-                          {isCreator && <Edit2 className="w-3 h-3 text-muted-foreground" />}
+                          {canEdit && <Edit2 className="w-3 h-3 text-muted-foreground" />}
                         </div>
                         <div className="flex items-center gap-2 text-xs flex-wrap">
                           <span className={RARITY_COLORS[resource.rarity as keyof typeof RARITY_COLORS]}>
@@ -699,7 +713,7 @@ const ResourceRepository = ({
           categories={categories}
           isNew={false}
           onSave={handleUpdateResource}
-          onDelete={() => handleDeleteRepoResource(editingRepoResource.id)}
+          onDelete={editingRepoResource.created_by === userId ? () => handleDeleteRepoResource(editingRepoResource.id) : undefined}
           onClose={() => setEditingRepoResource(null)}
         />
       )}
