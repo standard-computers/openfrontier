@@ -114,6 +114,8 @@ export interface Sovereignty {
   flag: string;
   motto: string;
   foundedAt: number;
+  capitalAreaId?: string;
+  home?: Position;
 }
 
 export interface Area {

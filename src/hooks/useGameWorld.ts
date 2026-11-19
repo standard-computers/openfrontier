@@ -5,6 +5,7 @@ import type { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import { normalizeNpcAggression, type NpcAggression } from '@/lib/npcAggression';
 import { readCitizenSnapshot } from '@/lib/citizenPersistence';
+import { makeAreaCapital } from '@/lib/sovereigntyCapital';
 import { useCitizenPersistence } from './useCitizenPersistence';
 import { fetchWorldResources, addResourceToRepository, updateResourceInRepository, deleteResourceFromRepository } from '@/utils/resourceConverter';
 
@@ -48,6 +49,7 @@ export interface MemberSovereignty {
   motto: string;
   foundedAt: number;
   color: string;
+  home?: Position;
 }
 
 const MAP_SAVE_INTERVAL_MS = 3000;
@@ -118,7 +120,7 @@ export const useGameWorld = () => {
 
         // Fetch every member's sovereignty so the world view can list them
         const { data: sovRows, error: sovError } = await supabase
-          .rpc('get_world_sovereignties', { _world_id: worldId });
+          .rpc('get_world_sovereignties_with_home', { _world_id: worldId });
 
         if (!sovError && sovRows) {
           setWorldSovereignties((sovRows as any[]).map((s: any) => ({
@@ -129,6 +131,7 @@ export const useGameWorld = () => {
             motto: s.sovereignty_motto || '',
             foundedAt: Number(s.sovereignty_founded_at) || 0,
             color: s.user_color || '#888888',
+            home: s.home,
           })));
         }
 
@@ -198,7 +201,7 @@ export const useGameWorld = () => {
 
         // Third-person mode: the player's spawn point is their claimed territory.
         // If the player has no claimed tiles yet, claim the spawn tile for free.
-        const spawnPos = playerData.position || mapData.spawnPoint || { x: 0, y: 0 };
+        const spawnPos = playerData.sovereignty?.home || playerData.position || mapData.spawnPoint || { x: 0, y: 0 };
         const hasClaimedTile = mapData.tiles.some(row => row.some(t => t.claimedBy === user.id));
         const spawnTile = mapData.tiles[spawnPos.y]?.[spawnPos.x];
         let claimedSpawn = false;
@@ -864,7 +867,14 @@ export const useGameWorld = () => {
     setWorld(prev => ({
       ...prev,
       areas: (prev.areas || []).filter(a => a.id !== areaId),
+      sovereignty: prev.sovereignty?.capitalAreaId === areaId
+        ? { ...prev.sovereignty, capitalAreaId: undefined }
+        : prev.sovereignty,
     }));
+  }, []);
+
+  const setCapitalArea = useCallback((areaId: string) => {
+    setWorld(prev => makeAreaCapital(prev, areaId));
   }, []);
 
   const updateArea = useCallback((areaId: string, updates: Partial<Omit<Area, 'id' | 'createdAt'>>) => {
@@ -1575,6 +1585,7 @@ export const useGameWorld = () => {
     createArea,
     deleteArea,
     updateArea,
+    setCapitalArea,
     renameTile,
     consumeResource,
     placeItem,

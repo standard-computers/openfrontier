@@ -64,6 +64,13 @@
       "when": 1795127357324,
       "tag": "0008_persist_world_citizens",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795128829857,
+      "tag": "0009_sovereignty_capital_homes",
+      "breakpoints": true
     }
   ]
 }

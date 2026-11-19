@@ -66,6 +66,16 @@ const base = {
 };
 
 describe('buildSovereigntyRows', () => {
+  test('shows the newly selected capital home instead of the first claimed tile', () => {
+    const rows = buildSovereigntyRows({ ...base, currentSovereignty: {
+      name: 'Reich', flag: '⚔️', motto: 'Order', foundedAt: 1, capitalAreaId: 'town', home: { x: 1, y: 0 },
+    } });
+    assert.deepEqual(rows.find(r => r.id === 'u1')?.home, { x: 1, y: 0 });
+  });
+  test('shows another member’s saved capital home', () => {
+    const rows = buildSovereigntyRows({ ...base, userId: 'u2', worldSovereignties: [{ ...reich, home: { x: 0, y: 1 } }] });
+    assert.deepEqual(rows.find(r => r.id === 'u1')?.home, { x: 0, y: 1 });
+  });
   test('sums territory, land value, pledged population and home tile', () => {
     const rows = buildSovereigntyRows(base);
     assert.deepEqual(rows.map(r => r.id), ['u1', 'npc-0']);

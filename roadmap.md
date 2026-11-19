@@ -7,3 +7,4 @@
 - [x] Run Low/High server decision checks: passed against the live backend (Low accepts, Medium counters at 150%, High rejects below double value).
 - [x] Persist citizens and their complete state across world entry; prevent stale population overwrites.
 - [x] Give newly generated and newborn citizens natural names; test saving and re-entry.
+- [x] Add capital selection to sovereignty areas, persist home coordinates, and verify selection, reload, and world table.

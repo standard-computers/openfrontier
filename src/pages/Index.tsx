@@ -824,6 +824,7 @@ const Index = () => {
             onUpdateSovereignty={updateSovereignty}
             onDeleteArea={deleteArea}
             onUpdateArea={updateArea}
+            onSetCapitalArea={gameWorld.setCapitalArea}
           />
 
           <WorldConfig

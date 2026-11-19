@@ -3,6 +3,7 @@ import { Sovereignty, USER_COLORS, Area, AREA_COLORS } from '@/types/game';
 import { X, Flag, Crown, Palette, Coins, Info, Settings, Plus, MapPin, Trash2, RefreshCw, Check } from 'lucide-react';
 import { generateRandomSovereigntyName } from '@/utils/nameGenerator';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 const FLAG_OPTIONS = ['🏴', '🏳️', '🚩', '⚔️', '🛡️', '👑', '🦁', '🦅', '🐉', '🌟', '⭐', '🔱', '🏰', '⚜️', '🗡️', '🎭'];
 
@@ -20,6 +21,7 @@ interface SovereigntyPanelProps {
   onCreateSovereignty: (name: string, flag: string, motto: string) => void;
   onUpdateSovereignty: (updates: Partial<Sovereignty>) => void;
   onDeleteArea?: (areaId: string) => void;
+  onSetCapitalArea?: (areaId: string) => void;
   onUpdateArea?: (areaId: string, updates: Partial<Omit<Area, 'id' | 'createdAt'>>) => void;
 }
 
@@ -38,6 +40,7 @@ const SovereigntyPanel = ({
   onUpdateSovereignty,
   onDeleteArea,
   onUpdateArea,
+  onSetCapitalArea,
 }: SovereigntyPanelProps) => {
   const [activeTab, setActiveTab] = useState<'general' | 'areas' | 'controls'>('general');
   const [isCreating, setIsCreating] = useState(false);
@@ -362,6 +365,23 @@ const SovereigntyPanel = ({
                       <span>{area.tiles.length} tiles</span>
                       <span>{new Date(area.createdAt).toLocaleDateString()}</span>
                     </div>
+                    {onSetCapitalArea && (
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        <Button
+                          variant={sovereignty.capitalAreaId === area.id ? 'secondary' : 'outline'}
+                          size="sm"
+                          disabled={sovereignty.capitalAreaId === area.id || area.tiles.length === 0}
+                          onClick={() => onSetCapitalArea(area.id)}
+                          aria-label={`Make ${area.name} capital`}
+                        >
+                          <Crown />
+                          {sovereignty.capitalAreaId === area.id ? 'Capital' : 'Make Capital'}
+                        </Button>
+                        {sovereignty.capitalAreaId === area.id && sovereignty.home && (
+                          <span className="text-xs text-muted-foreground">Home: {sovereignty.home.x}, {sovereignty.home.y}</span>
+                        )}
+                      </div>
+                    )}
                     {onUpdateArea && (
                       <div className="flex flex-wrap gap-1 mt-2">
                         {AREA_COLORS.map((color) => (

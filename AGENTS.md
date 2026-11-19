@@ -2,3 +2,4 @@
 - NPC aggression uses the shared action-interval helper and a persisted world setting; changing cadence preserves action probabilities and existing claim rules.
 - Citizens use a dedicated world snapshot with membership-checked, revision-guarded saves and fixed-cadence exit flushing; world-size generation seeds only unsaved worlds, preventing population resets and stale session overwrites.
 - Tile negotiations use authenticated transactional database functions and game-hour deadlines; append-only trade coin adjustments and ownership guards prevent stale client saves from undoing settlements. NPC requests retain human participant IDs and a separate NPC owner key, decide server-side from world aggression, and keep NPC sale proceeds in protected append-only balances.
+- Capital selection stores the area ID and an owned representative tile in sovereignty data and the saved home position; shared sovereignty lookup returns this home so all home displays agree.

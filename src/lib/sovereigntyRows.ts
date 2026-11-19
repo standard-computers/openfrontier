@@ -10,6 +10,7 @@ export interface SovereigntyRecord {
   motto: string;
   foundedAt: number;
   color: string;
+  home?: Position;
 }
 
 export interface SovereigntyRow {
@@ -89,7 +90,7 @@ export const buildSovereigntyRows = (input: SovereigntyRowInput): SovereigntyRow
       tiles: stats?.count || 0,
       value: stats?.value || 0,
       population: populationByOwner[sov.userId] || 0,
-      home: stats?.home || null,
+      home: (sov.userId === userId ? currentSovereignty?.home : undefined) || sov.home || stats?.home || null,
     });
   });
 
@@ -107,7 +108,7 @@ export const buildSovereigntyRows = (input: SovereigntyRowInput): SovereigntyRow
       tiles: stats?.count || 0,
       value: stats?.value || 0,
       population: populationByOwner[userId] || 0,
-      home: stats?.home || null,
+      home: currentSovereignty.home || stats?.home || null,
     });
   }
 
