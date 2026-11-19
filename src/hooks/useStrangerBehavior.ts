@@ -31,6 +31,11 @@ interface UseStrangerBehaviorProps {
 }
 
 const WALKABLE_BY_TYPE = new Map(TILE_TYPES.map(t => [t.type, t.walkable]));
+
+// Strangers are land-bound citizens: water is never walkable for them,
+// even if a tile's stored walkable flag says otherwise.
+const isStrangerWalkable = (tile: WorldMap['tiles'][number][number] | undefined): boolean =>
+  !!tile && tile.type !== 'water' && (WALKABLE_BY_TYPE.get(tile.type) ?? tile.walkable);
 const SOVEREIGNTY_CACHE_MS = 15000; // Re-scan the map for territory values at most this often
 
 export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovereignties }: UseStrangerBehaviorProps) => {
@@ -51,8 +56,8 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
         if (tile?.claimedBy && !tile.claimedBy.startsWith('npc-')) {
           const current = claimValues.get(tile.claimedBy) || { totalValue: 0, tileCount: 0, positions: [] };
           const tileValue = calculateTileValue(tile, resources);
-          // Keep a bounded sample of positions (enough for random teleport targets)
-          if (current.positions.length < 200) current.positions.push({ x, y });
+          // Keep a bounded sample of land positions (enough for random teleport targets)
+          if (current.positions.length < 200 && isStrangerWalkable(tile)) current.positions.push({ x, y });
           claimValues.set(tile.claimedBy, {
             totalValue: current.totalValue + tileValue,
             tileCount: current.tileCount + 1,
@@ -133,7 +138,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
       .filter(pos => {
         if (pos.x < 0 || pos.x >= map.width || pos.y < 0 || pos.y >= map.height) return false;
         const tile = map.tiles[pos.y][pos.x];
-        return WALKABLE_BY_TYPE.get(tile.type) ?? tile.walkable;
+        return isStrangerWalkable(tile);
       });
   }, []);
 
@@ -301,7 +306,8 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
         updatedStranger = { ...updatedStranger, allegiance: undefined };
       } else {
         const standing = currentMap.tiles[updatedStranger.position.y]?.[updatedStranger.position.x];
-        if (standing?.claimedBy !== own.userId && own.territoryPositions.length > 0) {
+        const strandedOnWater = standing?.type === 'water';
+        if ((standing?.claimedBy !== own.userId || strandedOnWater) && own.territoryPositions.length > 0) {
           const home = own.territoryPositions[Math.floor(Math.random() * own.territoryPositions.length)];
           updatedStranger = { ...updatedStranger, position: { ...home } };
         }

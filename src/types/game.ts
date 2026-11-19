@@ -1143,7 +1143,7 @@ export const generateStrangers = (
     const lastName = STRANGER_LAST_NAMES[Math.floor(Math.random() * STRANGER_LAST_NAMES.length)];
     const name = `${firstName} ${lastName}`;
     
-    // Find a walkable position
+    // Find a walkable position (strangers are land-bound: never water)
     let position = { x: 0, y: 0 };
     let attempts = 0;
     while (attempts < 100) {
@@ -1151,7 +1151,7 @@ export const generateStrangers = (
       const y = Math.floor(Math.random() * map.height);
       const key = `${x},${y}`;
       const tile = map.tiles[y]?.[x];
-      if (tile?.walkable && !usedPositions.has(key)) {
+      if (tile?.walkable && tile.type !== 'water' && !usedPositions.has(key)) {
         position = { x, y };
         usedPositions.add(key);
         break;
