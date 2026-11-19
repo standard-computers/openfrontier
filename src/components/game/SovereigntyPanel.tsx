@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Sovereignty, USER_COLORS, Area, AREA_COLORS } from '@/types/game';
-import { X, Flag, Crown, Palette, Coins, Info, Settings, Plus, MapPin, Trash2, RefreshCw } from 'lucide-react';
+import { X, Flag, Crown, Palette, Coins, Info, Settings, Plus, MapPin, Trash2, RefreshCw, Check } from 'lucide-react';
 import { generateRandomSovereigntyName } from '@/utils/nameGenerator';
 import { cn } from '@/lib/utils';
 
@@ -44,8 +44,22 @@ const SovereigntyPanel = ({
   const [newName, setNewName] = useState('');
   const [newFlag, setNewFlag] = useState('🏴');
   const [newMotto, setNewMotto] = useState('');
+  const [nameDraft, setNameDraft] = useState('');
+
+  useEffect(() => {
+    setNameDraft(sovereignty?.name ?? '');
+  }, [sovereignty?.name]);
 
   if (!isOpen) return null;
+
+  const trimmedName = nameDraft.trim();
+  const canSaveName = trimmedName.length > 0 && trimmedName !== sovereignty?.name;
+
+  const handleSaveName = () => {
+    if (!canSaveName) return;
+    onUpdateSovereignty({ name: trimmedName });
+    setNameDraft(trimmedName);
+  };
 
   const handleCreate = () => {
     if (newName.trim()) {
@@ -371,6 +385,48 @@ const SovereigntyPanel = ({
 
           {activeTab === 'controls' && (
             <div className="space-y-4">
+              {/* Name Editing */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Crown className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Sovereignty Name</span>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    value={nameDraft}
+                    onChange={(e) => setNameDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSaveName();
+                      }
+                    }}
+                    placeholder="Kingdom of..."
+                    className="input-field flex-1"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setNameDraft(generateRandomSovereigntyName())}
+                    className="btn btn-ghost p-2"
+                    title="Generate random name"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveName}
+                    disabled={!canSaveName}
+                    className="btn btn-primary p-2"
+                    title="Save name"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Your new name appears on the map and in the leaderboard.
+                </p>
+              </div>
+
               {/* Color Selection */}
               <div>
                 <div className="flex items-center gap-2 mb-3">
