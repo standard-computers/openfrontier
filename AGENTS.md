@@ -1,0 +1,1 @@
+- Inventory drag placement uses a typed slot payload and validates ownership and inventory in the page before calling the existing placement action; this keeps drag-and-drop within presentation code and preserves placement limits and persistence.

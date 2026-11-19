@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { GameWorld, Resource } from '@/types/game';
 import { Settings, Coins, ChevronRight, Hammer, ZoomIn, ZoomOut, Crown, Clock, Sparkles, BoxSelect, Trophy, Locate, Store, Hand } from 'lucide-react';
 import ResourceIcon from './ResourceIcon';
@@ -6,6 +6,8 @@ import InventoryItemModal from './InventoryItemModal';
 import { cn } from '@/lib/utils';
 import { WorldMember } from '@/hooks/useGameWorld';
 import { getTopPlayer } from './PlayerRankingPanel';
+import { Button } from '@/components/ui/button';
+import { INVENTORY_DRAG_TYPE } from '@/lib/inventoryDrag';
 
 interface GameTopBarProps {
   world: GameWorld;
@@ -195,6 +197,7 @@ const GameHUD = ({ world, resources, selectedSlot, cameraOffset, onSelectSlot, o
 
   const getResource = (id: string | null) => resources.find(r => r.id === id);
   const [selectedItem, setSelectedItem] = useState<{ resourceId: string; quantity: number; life?: number } | null>(null);
+  const suppressClickUntil = useRef(0);
 
   const claimedCount = world.map.tiles.flat().filter(t => t.claimedBy === world.userId).length;
 
@@ -250,14 +253,29 @@ const GameHUD = ({ world, resources, selectedSlot, cameraOffset, onSelectSlot, o
               const resource = getResource(slot.resourceId);
               const isSelected = selectedSlot === i;
               return (
-                <button
+                <Button
                   key={i}
-                  className={`w-11 h-11 rounded flex items-center justify-center relative text-lg transition-colors group ${
+                  variant="ghost"
+                  draggable={!!resource?.placeable && slot.quantity > 0}
+                  aria-label={`Inventory slot ${i < 9 ? i + 1 : 0}${resource ? `: ${resource.name}` : ': empty'}`}
+                  onDragStart={(event) => {
+                    if (!resource?.placeable || slot.quantity <= 0) {
+                      event.preventDefault();
+                      return;
+                    }
+                    event.dataTransfer.setData(INVENTORY_DRAG_TYPE, String(i));
+                    event.dataTransfer.effectAllowed = 'move';
+                    suppressClickUntil.current = Date.now() + 500;
+                    onSelectSlot(i);
+                  }}
+                  onDragEnd={() => { suppressClickUntil.current = Date.now() + 300; }}
+                  className={`w-11 h-11 p-0 shrink-0 rounded flex items-center justify-center relative text-lg transition-colors group ${resource?.placeable && slot.quantity > 0 ? 'cursor-grab active:cursor-grabbing' : ''} ${
                     isSelected 
                       ? 'bg-primary/30 ring-2 ring-primary' 
                       : 'bg-input hover:bg-muted'
                   } ${!slot.resourceId ? 'cursor-default' : ''}`}
                   onClick={() => {
+                    if (Date.now() < suppressClickUntil.current) return;
                     onSelectSlot(i);
                     if (slot.resourceId) {
                       setSelectedItem({ resourceId: slot.resourceId, quantity: slot.quantity, life: slot.life });
@@ -304,7 +322,7 @@ const GameHUD = ({ world, resources, selectedSlot, cameraOffset, onSelectSlot, o
                       )}
                     </>
                   )}
-                </button>
+                </Button>
               );
             })}
           </div>

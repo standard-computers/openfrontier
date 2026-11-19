@@ -5,6 +5,7 @@ import ResourceIcon from './ResourceIcon';
 import PixelCharacter from './PixelCharacter';
 import CanvasTileRenderer from './CanvasTileRenderer';
 import CanvasOverlayRenderer from './CanvasOverlayRenderer';
+import { INVENTORY_DRAG_TYPE } from '@/lib/inventoryDrag';
 
 type FacingDirection = 'north' | 'south' | 'east' | 'west';
 
@@ -36,6 +37,7 @@ interface GameMapProps {
   onMultiTileSelect: (tiles: Position[]) => void;
   onZoom: (delta: number) => void;
   onStrangerClick?: (stranger: Stranger) => void;
+  onInventoryDrop?: (slotIndex: number, position: Position) => void;
 }
 
 // Memoized overlay rendered only for tiles that actually have something on them
@@ -264,6 +266,7 @@ const GameMap = ({
   onMultiTileSelect,
   onZoom,
   onStrangerClick,
+  onInventoryDrop,
 }: GameMapProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewportSize, setViewportSize] = useState({ tilesX: 30, tilesY: 20 });
@@ -271,6 +274,7 @@ const GameMap = ({
   const [dragEnd, setDragEnd] = useState<Position | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [hoveredStranger, setHoveredStranger] = useState<Stranger | null>(null);
+  const [inventoryDropTile, setInventoryDropTile] = useState<Position | null>(null);
   
   // Calculate game hour based on world creation time
   const [gameHour, setGameHour] = useState(() => {
@@ -666,7 +670,7 @@ const GameMap = ({
   }, [isPanning, tileSize, onPan]);
 
   // --- Delegated pointer handling: one set of listeners for the whole map ---
-  const tileFromEvent = useCallback((e: React.MouseEvent): Position | null => {
+  const tileFromEvent = useCallback((e: { clientX: number; clientY: number }): Position | null => {
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return null;
     const x = viewportOffset.x + Math.floor((e.clientX - rect.left) / tileSize);
@@ -716,6 +720,29 @@ const GameMap = ({
         panMode ? (isPanning ? "cursor-grabbing" : "cursor-grab") : "cursor-pointer"
       )}
       tabIndex={0}
+      aria-label="World map"
+      onDragOver={(event) => {
+        if (!onInventoryDrop || !event.dataTransfer.types.includes(INVENTORY_DRAG_TYPE)) return;
+        event.preventDefault();
+        const position = tileFromEvent(event);
+        const owned = !!position && map.tiles[position.y]?.[position.x]?.claimedBy === userId;
+        event.dataTransfer.dropEffect = owned ? 'move' : 'none';
+        setInventoryDropTile(previous => {
+          const next = owned ? position : null;
+          return previous?.x === next?.x && previous?.y === next?.y ? previous : next;
+        });
+      }}
+      onDragLeave={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setInventoryDropTile(null);
+      }}
+      onDrop={(event) => {
+        if (!event.dataTransfer.types.includes(INVENTORY_DRAG_TYPE)) return;
+        event.preventDefault();
+        setInventoryDropTile(null);
+        const position = tileFromEvent(event);
+        const payload = event.dataTransfer.getData(INVENTORY_DRAG_TYPE);
+        if (position && /^\d+$/.test(payload)) onInventoryDrop?.(Number(payload), position);
+      }}
       onWheel={handleWheel}
       onMouseDown={handleContainerMouseDown}
       onMouseMove={handleContainerMouseMove}
@@ -737,7 +764,7 @@ const GameMap = ({
         userColor={userColor}
         npcs={npcs}
         areas={areas}
-        selectedTile={selectedTile}
+        selectedTile={inventoryDropTile ?? selectedTile}
         selectedTilesSet={selectedTilesSet}
         dragRect={dragRect}
       />

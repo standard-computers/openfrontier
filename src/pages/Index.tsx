@@ -24,6 +24,7 @@ import DemoOverlay from '@/components/game/DemoOverlay';
 import { useDemoWorld } from '@/hooks/useDemoWorld';
 import { Market, Position, TileType, calculateTileValue, Sovereignty, Stranger, TILE_TYPES } from '@/types/game';
 import { toast } from 'sonner';
+import { getInventoryDropResource } from '@/lib/inventoryDrag';
 
 const MIN_TILE_SIZE = 4;
 const MAX_TILE_SIZE = 64;
@@ -380,6 +381,20 @@ const Index = () => {
   }, [world.inventory, selectedSlot, facingDirection, selectedTile, placeItem, isDemoMode]);
 
   // Market on the currently selected tile
+  const handleInventoryDrop = useCallback((slotIndex: number, position: Position) => {
+    if (isDemoMode) return;
+    const resource = getInventoryDropResource(world, slotIndex, position);
+    if (!resource) {
+      toast.error('Place inventory items on tiles you own');
+      return;
+    }
+    setSelectedSlot(slotIndex);
+    const result = placeItem(resource.id, facingDirection, position);
+    if (result.success) toast.success(result.message);
+    else if (result.message) toast.error(result.message);
+  }, [world, isDemoMode, placeItem, facingDirection]);
+
+  // Market on the currently selected tile
   const getAdjacentMarket = useCallback((): Market | null => {
     if (!world.enableMarkets || !world.markets?.length || !selectedTile) return null;
     
@@ -635,6 +650,7 @@ const Index = () => {
           onMultiTileSelect={handleMultiTileSelect}
           onZoom={handleZoom}
           onStrangerClick={setSelectedStranger}
+          onInventoryDrop={isDemoMode ? undefined : handleInventoryDrop}
         />
         
         {/* Only show HUD in non-demo mode */}
