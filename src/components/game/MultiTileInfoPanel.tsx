@@ -3,6 +3,7 @@ import { MapTile, Resource, RARITY_COLORS, TILE_TYPES, TileType, calculateTileVa
 import { X, Flag, Package, Coins, ChevronDown, ChevronRight, ChevronUp, AlertTriangle, MapPin, Paintbrush } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ResourceIcon from './ResourceIcon';
+import { getSelectionGatherPlan } from '@/lib/selectionGather';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface TileWithPosition {
@@ -20,6 +21,7 @@ interface MultiTileInfoPanelProps {
   onClose: () => void;
   onClaimAll: () => void;
   onGather: (x: number, y: number, resourceId: string) => void;
+  onGatherAll?: () => void;
   onCreateArea?: (name: string, color: string, tiles: Position[]) => { success: boolean; message: string };
   onConvert?: (newType: TileType) => void;
 }
@@ -36,6 +38,7 @@ const MultiTileInfoPanel = ({
   onClose,
   onClaimAll,
   onGather,
+  onGatherAll,
   onCreateArea,
   onConvert,
 }: MultiTileInfoPanelProps) => {
@@ -84,6 +87,9 @@ const MultiTileInfoPanel = ({
       hasOutOfRange: outOfRangeTiles.length > 0,
     };
   }, [tiles, playerPosition, resources, userId]);
+
+  // Gather-all is only offered when no tile in the selection belongs to someone else.
+  const gatherPlan = useMemo(() => getSelectionGatherPlan(tiles, userId), [tiles, userId]);
 
   const canAfford = userCoins >= analysis.totalValue;
   const canClaim = analysis.claimableTiles.length > 0 && canAfford && !analysis.hasClaimedLand;
@@ -171,6 +177,17 @@ const MultiTileInfoPanel = ({
               ? `Claim ${analysis.claimableTiles.length} tiles for ${analysis.totalValue} coins`
               : getDisabledReason()
             }
+          </button>
+        )}
+
+        {/* Gather all - shown when every selected tile is unclaimed or yours */}
+        {onGatherAll && gatherPlan.canGatherAll && (
+          <button
+            onClick={onGatherAll}
+            className="btn btn-accent w-full flex items-center justify-center gap-2"
+          >
+            <Package className="w-4 h-4" />
+            Gather All ({gatherPlan.gatherable.length})
           </button>
         )}
 

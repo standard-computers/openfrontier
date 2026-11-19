@@ -25,6 +25,7 @@ import { useDemoWorld } from '@/hooks/useDemoWorld';
 import { Market, Position, TileType, calculateTileValue, Sovereignty, Stranger, TILE_TYPES } from '@/types/game';
 import { toast } from 'sonner';
 import { getInventoryDropResource } from '@/lib/inventoryDrag';
+import { getSelectionGatherPlan } from '@/lib/selectionGather';
 
 const MIN_TILE_SIZE = 4;
 const MAX_TILE_SIZE = 64;
@@ -82,6 +83,7 @@ const Index = () => {
     claimTile,
     claimMultipleTiles,
     gatherFromTile,
+    gatherManyFromTiles,
     addResource,
     addExistingResource,
     updateResource,
@@ -302,6 +304,42 @@ const Index = () => {
 
     toast.info('No more resources to gather in selection');
   }, [selectedTiles, world.map.tiles, world.userId, world.resources, gatherFromTile, isDemoMode]);
+
+  // Gather everything in the selection at once. Only offered when every
+  // selected tile is unclaimed or belongs to this player.
+  const handleMultiGatherAll = useCallback(() => {
+    if (isDemoMode) {
+      toast.error('Sign up to gather resources!');
+      return;
+    }
+    if (!selectedTiles.length) {
+      toast.info('No tiles selected');
+      return;
+    }
+
+    const plan = getSelectionGatherPlan(
+      selectedTiles
+        .map(pos => ({ tile: world.map.tiles[pos.y]?.[pos.x], position: pos }))
+        .filter((t): t is { tile: NonNullable<typeof t.tile>; position: Position } => !!t.tile),
+      world.userId
+    );
+
+    if (!plan.allMineOrUnclaimed) {
+      toast.error('Cannot gather from another player\'s tile');
+      return;
+    }
+    if (plan.gatherable.length === 0) {
+      toast.info('No resources to gather');
+      return;
+    }
+
+    const gatheredCount = gatherManyFromTiles(plan.gatherable);
+    if (gatheredCount === 0) {
+      toast.error('Inventory is full');
+      return;
+    }
+    toast.success(`Gathered ${gatheredCount} resource${gatheredCount > 1 ? 's' : ''}`);
+  }, [selectedTiles, world.map.tiles, world.userId, gatherManyFromTiles, isDemoMode]);
 
   const handleRenameTile = (name: string) => {
     if (isDemoMode) return;
@@ -730,6 +768,7 @@ const Index = () => {
           }}
           onClaimAll={handleClaimAll}
           onGather={handleMultiGather}
+          onGatherAll={handleMultiGatherAll}
           onCreateArea={createArea}
           onConvert={handleConvertTiles}
         />

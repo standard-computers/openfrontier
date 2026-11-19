@@ -77,6 +77,7 @@ export const useDemoWorld = () => {
   const claimTile = useCallback(() => noopResult, []);
   const claimMultipleTiles = useCallback(() => noopResultWithCount, []);
   const gatherFromTile = useCallback(() => {}, []);
+  const gatherManyFromTiles = useCallback(() => 0, []);
   const addResource = useCallback(async () => {}, []);
   const addExistingResource = useCallback(async () => {}, []);
   const updateResource = useCallback(async () => {}, []);
@@ -121,6 +122,7 @@ export const useDemoWorld = () => {
     claimTile,
     claimMultipleTiles,
     gatherFromTile,
+    gatherManyFromTiles,
     addResource,
     addExistingResource,
     updateResource,

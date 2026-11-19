@@ -570,6 +570,51 @@ export const useGameWorld = () => {
     setTimeout(() => saveMapData(newMapData), 500);
   }, [world, saveMapData]);
 
+  // Gather a batch of resources in one pass (used by "Gather All" on a selection).
+  // Doing it in a single update keeps sequential gathers from reverting each other.
+  const gatherManyFromTiles = useCallback((targets: { x: number; y: number; resourceId: string }[]) => {
+    const currentWorld = world;
+    const inventory = [...currentWorld.inventory];
+    const picked: { x: number; y: number; resourceId: string }[] = [];
+
+    for (const target of targets) {
+      const tile = currentWorld.map.tiles[target.y]?.[target.x];
+      if (!tile) continue;
+      if (!tile.resources.includes(target.resourceId)) continue;
+      if (tile.claimedBy && tile.claimedBy !== currentWorld.userId) continue;
+      // Player-placed items must be destroyed with a tool, not gathered.
+      if (tile.placedResources?.includes(target.resourceId)) continue;
+
+      let slotIndex = inventory.findIndex(s => s.resourceId === target.resourceId && s.quantity < 99);
+      if (slotIndex === -1) slotIndex = inventory.findIndex(s => !s.resourceId);
+      if (slotIndex === -1) break; // Inventory is full
+
+      if (inventory[slotIndex].resourceId === target.resourceId) {
+        inventory[slotIndex] = { ...inventory[slotIndex], quantity: inventory[slotIndex].quantity + 1 };
+      } else {
+        inventory[slotIndex] = { resourceId: target.resourceId, quantity: 1, life: 100 };
+      }
+      picked.push(target);
+    }
+
+    if (picked.length === 0) return 0;
+
+    const removeKeys = new Set(picked.map(t => `${t.x},${t.y},${t.resourceId}`));
+    const newTiles = currentWorld.map.tiles.map((row, ry) =>
+      row.map((t, rx) => {
+        if (t.resources.length === 0) return t;
+        const resources = t.resources.filter(rid => !removeKeys.has(`${rx},${ry},${rid}`));
+        return resources.length === t.resources.length ? t : { ...t, resources };
+      })
+    );
+    const newMapData: WorldMap = { ...currentWorld.map, tiles: newTiles };
+
+    setWorld(prev => ({ ...prev, inventory, map: newMapData }));
+    setTimeout(() => saveMapData(newMapData), 500);
+
+    return picked.length;
+  }, [world, saveMapData]);
+
   const addResource = useCallback(async (resource: Resource) => {
     if (!isOwner) return;
     
@@ -1473,6 +1518,7 @@ export const useGameWorld = () => {
     claimMultipleTiles,
     convertTiles,
     gatherFromTile,
+    gatherManyFromTiles,
     addResource,
     addExistingResource,
     updateResource,
