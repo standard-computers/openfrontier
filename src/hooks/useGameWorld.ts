@@ -38,6 +38,16 @@ export interface WorldMember {
   joinedAt: string;
 }
 
+export interface MemberSovereignty {
+  userId: string;
+  username: string;
+  name: string;
+  flag: string;
+  motto: string;
+  foundedAt: number;
+  color: string;
+}
+
 const MAP_SAVE_INTERVAL_MS = 3000;
 
 export const useGameWorld = () => {
@@ -45,6 +55,7 @@ export const useGameWorld = () => {
   const [selectedTile, setSelectedTile] = useState<{ x: number; y: number } | null>(null);
   const [isOwner, setIsOwner] = useState(false);
   const [members, setMembers] = useState<WorldMember[]>([]);
+  const [worldSovereignties, setWorldSovereignties] = useState<MemberSovereignty[]>([]);
   const [loading, setLoading] = useState(true);
   const [dbWorldId, setDbWorldId] = useState<string | null>(null);
   const tradeCoinsRef = useRef(0);
@@ -99,6 +110,22 @@ export const useGameWorld = () => {
           }));
 
           setMembers(membersWithNames);
+        }
+
+        // Fetch every member's sovereignty so the world view can list them
+        const { data: sovRows, error: sovError } = await supabase
+          .rpc('get_world_sovereignties', { _world_id: worldId });
+
+        if (!sovError && sovRows) {
+          setWorldSovereignties((sovRows as any[]).map((s: any) => ({
+            userId: s.user_id,
+            username: s.username || 'Unknown',
+            name: s.sovereignty_name,
+            flag: s.sovereignty_flag || '🏴',
+            motto: s.sovereignty_motto || '',
+            foundedAt: Number(s.sovereignty_founded_at) || 0,
+            color: s.user_color || '#888888',
+          })));
         }
 
         const playerData = membershipData.player_data as unknown as {
@@ -1500,6 +1527,7 @@ export const useGameWorld = () => {
     selectedTile,
     isOwner,
     members,
+    worldSovereignties,
     loading,
     movePlayer,
     selectTile,

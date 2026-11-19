@@ -80,6 +80,7 @@ const Index = () => {
     selectedTile,
     isOwner,
     members,
+    worldSovereignties,
     loading: worldLoading,
     movePlayer,
     selectTile,
@@ -859,6 +860,7 @@ const Index = () => {
             world={world}
             resources={world.resources}
             members={members}
+            worldSovereignties={worldSovereignties}
             onClose={() => setStatsOpen(false)}
             onViewUser={(member) => {
               setSelectedMember(member);

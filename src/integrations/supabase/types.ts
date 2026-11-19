@@ -440,6 +440,18 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_world_sovereignties: {
+        Args: { _world_id: string }
+        Returns: {
+          sovereignty_flag: string
+          sovereignty_founded_at: number
+          sovereignty_motto: string
+          sovereignty_name: string
+          user_color: string
+          user_id: string
+          username: string
+        }[]
+      }
       is_world_member: {
         Args: { _user_id: string; _world_id: string }
         Returns: boolean

@@ -43,6 +43,20 @@
       "when": 1795060997886,
       "tag": "0005_fix_contest_resolver_record_alias",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795126136646,
+      "tag": "0006_add_world_sovereignties_rpc",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795126160647,
+      "tag": "0007_add_sovereignty_color_to_lookup",
+      "breakpoints": true
     }
   ]
 }

@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react';
 import { X, Globe, Users, Map, Flag, Package, Coins, Crown, Bot, Heart, MapPin, Trophy } from 'lucide-react';
 import { RankingList } from './PlayerRankingPanel';
 import { GameWorld, Resource, TILE_TYPES, calculateTileValue, RARITY_COLORS, NPC, Position } from '@/types/game';
-import { WorldMember } from '@/hooks/useGameWorld';
+import { WorldMember, MemberSovereignty } from '@/hooks/useGameWorld';
+import { buildSovereigntyRows, SovereigntyRow } from '@/lib/sovereigntyRows';
 import { cn } from '@/lib/utils';
 import ResourceIcon from './ResourceIcon';
 
@@ -12,13 +13,14 @@ interface WorldStatsPanelProps {
   world: GameWorld;
   resources: Resource[];
   members: WorldMember[];
+  worldSovereignties: MemberSovereignty[];
   onViewUser: (member: WorldMember) => void;
   onNavigateToPosition: (position: Position) => void;
 }
 
-type TabType = 'overview' | 'players' | 'leaderboard' | 'terrain' | 'resources';
+type TabType = 'overview' | 'sovereignties' | 'players' | 'leaderboard' | 'terrain' | 'resources';
 
-const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUser, onNavigateToPosition }: WorldStatsPanelProps) => {
+const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, worldSovereignties, onViewUser, onNavigateToPosition }: WorldStatsPanelProps) => {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
 
   // Calculate claimed tiles per NPC - must be before any early returns
@@ -31,6 +33,23 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUse
     });
     return counts;
   }, [world.map.tiles]);
+
+  // One row per founded sovereignty: territory, value, pledged population and home tile
+  const sovereigntyRows = useMemo<SovereigntyRow[]>(
+    () =>
+      buildSovereigntyRows({
+        tiles: world.map.tiles,
+        strangers: world.strangers || [],
+        npcs: world.npcs || [],
+        worldSovereignties,
+        currentSovereignty: world.sovereignty,
+        userId: world.userId,
+        userColor: world.userColor,
+        currentUsername: members.find(m => m.userId === world.userId)?.username || 'You',
+        resources,
+      }),
+    [world.map.tiles, world.strangers, world.npcs, world.sovereignty, world.userId, world.userColor, resources, worldSovereignties, members]
+  );
 
   if (!isOpen) return null;
 
@@ -60,6 +79,7 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUse
 
   const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: 'Overview', icon: <Globe className="w-4 h-4" /> },
+    { id: 'sovereignties', label: `Sovereignties (${sovereigntyRows.length})`, icon: <Flag className="w-4 h-4" /> },
     { id: 'players', label: `Players (${totalPopulation})`, icon: <Users className="w-4 h-4" /> },
     { id: 'leaderboard', label: 'Leaderboard', icon: <Trophy className="w-4 h-4" /> },
     { id: 'terrain', label: 'Terrain', icon: <Map className="w-4 h-4" /> },
@@ -134,6 +154,72 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, onViewUse
                 </div>
                 <div className="text-2xl font-bold text-amber-400">{totalWorldValue.toLocaleString()}</div>
               </div>
+            </div>
+          )}
+
+          {/* Sovereignties Tab */}
+          {activeTab === 'sovereignties' && (
+            <div className="space-y-2">
+              {sovereigntyRows.length === 0 ? (
+                <div className="text-sm text-muted-foreground text-center py-8">
+                  No sovereignties founded yet
+                </div>
+              ) : (
+                sovereigntyRows.map(row => (
+                  <div key={row.id} className="bg-secondary/30 rounded-lg p-3">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div
+                        className="w-10 h-10 rounded-lg flex items-center justify-center text-xl shrink-0"
+                        style={{ backgroundColor: `${row.color}20` }}
+                      >
+                        <span>{row.flag}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">{row.name}</div>
+                        <div className="text-xs text-muted-foreground flex items-center gap-1">
+                          {row.isNPC ? <Bot className="w-3 h-3" /> : <Users className="w-3 h-3" />}
+                          <span className="truncate">{row.ruler}</span>
+                          {row.motto && <span className="truncate italic">"{row.motto}"</span>}
+                        </div>
+                      </div>
+                      <div
+                        className="w-3 h-3 rounded-full shrink-0"
+                        style={{ backgroundColor: row.color }}
+                        title="Territory color"
+                      />
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div className="bg-secondary/50 rounded px-2 py-1 flex items-center gap-1" title="Tiles claimed">
+                        <Flag className="w-3 h-3 text-primary" />
+                        <span>{row.tiles.toLocaleString()}</span>
+                      </div>
+                      <div className="bg-secondary/50 rounded px-2 py-1 flex items-center gap-1" title="Land value">
+                        <Coins className="w-3 h-3 text-amber-400" />
+                        <span>{row.value.toLocaleString()}</span>
+                      </div>
+                      <div className="bg-secondary/50 rounded px-2 py-1 flex items-center gap-1" title="Pledged population">
+                        <Users className="w-3 h-3" />
+                        <span>{row.population.toLocaleString()}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between mt-2 text-xs">
+                      <span className="text-muted-foreground">Home</span>
+                      {row.home ? (
+                        <button
+                          onClick={() => onNavigateToPosition(row.home!)}
+                          className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-0.5"
+                          title="Jump to home tile"
+                        >
+                          <MapPin className="w-3 h-3" />
+                          ({row.home.x}, {row.home.y})
+                        </button>
+                      ) : (
+                        <span className="text-muted-foreground">No claimed land</span>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           )}
 

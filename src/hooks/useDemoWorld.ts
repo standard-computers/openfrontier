@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { GameWorld, Resource, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, DEFAULT_RESOURCES, WorldMap, TILE_TYPES, generateStrangers, Position } from '@/types/game';
-import type { WorldMember } from '@/hooks/useGameWorld';
+import type { WorldMember, MemberSovereignty } from '@/hooks/useGameWorld';
 
 // Generate a demo world for unauthenticated users to explore
 const createDemoWorld = (): GameWorld => {
@@ -110,6 +110,7 @@ export const useDemoWorld = () => {
   const refreshTileNegotiations = useCallback(async () => {}, []);
 
   const members: WorldMember[] = [];
+  const worldSovereignties: MemberSovereignty[] = [];
   const isOwner = false;
 
   return {
@@ -118,6 +119,7 @@ export const useDemoWorld = () => {
     selectedTile,
     isOwner,
     members,
+    worldSovereignties,
     loading,
     movePlayer,
     selectTile,
