@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { GameWorld, Resource, Sovereignty, Market, NPC, Area, Position, TileType, generateMap, createEmptyInventory, USER_COLORS, STARTING_COINS, calculateTileValue, WorldMap, TILE_TYPES, generateNPCs, generateStrangers, calculateStrangerCount, Stranger, canAddResourceToTile, isLargeResource, isAdjacentToOwnedLand, ownsAnyTile } from '@/types/game';
+import { GameWorld, Resource, Sovereignty, Market, NPC, Area, Position, TileType, generateMap, createEmptyInventory, addToInventory, USER_COLORS, STARTING_COINS, calculateTileValue, WorldMap, TILE_TYPES, generateNPCs, generateStrangers, calculateStrangerCount, Stranger, canAddResourceToTile, isLargeResource, isAdjacentToOwnedLand, ownsAnyTile } from '@/types/game';
 import type { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import { fetchWorldResources, addResourceToRepository, updateResourceInRepository, deleteResourceFromRepository } from '@/utils/resourceConverter';
@@ -347,17 +347,7 @@ export const useGameWorld = () => {
     setWorld(prev => {
       let newInventory = [...prev.inventory];
       for (const resourceId of tileResources) {
-        let slotIndex = newInventory.findIndex(s => s.resourceId === resourceId && s.quantity < 99);
-        if (slotIndex === -1) {
-          slotIndex = newInventory.findIndex(s => !s.resourceId);
-        }
-        if (slotIndex !== -1) {
-          if (newInventory[slotIndex].resourceId === resourceId) {
-            newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
-          } else {
-            newInventory[slotIndex] = { resourceId, quantity: 1, life: 100 };
-          }
-        }
+        addToInventory(newInventory, resourceId);
       }
       return {
         ...prev,
@@ -441,17 +431,7 @@ export const useGameWorld = () => {
     setWorld(prev => {
       let newInventory = [...prev.inventory];
       for (const resourceId of allResources) {
-        let slotIndex = newInventory.findIndex(s => s.resourceId === resourceId && s.quantity < 99);
-        if (slotIndex === -1) {
-          slotIndex = newInventory.findIndex(s => !s.resourceId);
-        }
-        if (slotIndex !== -1) {
-          if (newInventory[slotIndex].resourceId === resourceId) {
-            newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
-          } else {
-            newInventory[slotIndex] = { resourceId, quantity: 1 };
-          }
-        }
+        addToInventory(newInventory, resourceId);
       }
       return {
         ...prev,
@@ -548,18 +528,8 @@ export const useGameWorld = () => {
     // Compute inventory inside setWorld for accurate prev state
     setWorld(prev => {
       const newInventory = [...prev.inventory];
-      let slotIndex = newInventory.findIndex(s => s.resourceId === resourceId && s.quantity < 99);
-      if (slotIndex === -1) {
-        slotIndex = newInventory.findIndex(s => !s.resourceId);
-      }
-      if (slotIndex === -1) return prev; // No empty slot, don't update
-      
-      if (newInventory[slotIndex].resourceId === resourceId) {
-        newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
-      } else {
-        newInventory[slotIndex] = { resourceId, quantity: 1, life: 100 };
-      }
-      
+      addToInventory(newInventory, resourceId);
+
       return {
         ...prev,
         inventory: newInventory,
@@ -585,15 +555,7 @@ export const useGameWorld = () => {
       // Player-placed items must be destroyed with a tool, not gathered.
       if (tile.placedResources?.includes(target.resourceId)) continue;
 
-      let slotIndex = inventory.findIndex(s => s.resourceId === target.resourceId && s.quantity < 99);
-      if (slotIndex === -1) slotIndex = inventory.findIndex(s => !s.resourceId);
-      if (slotIndex === -1) break; // Inventory is full
-
-      if (inventory[slotIndex].resourceId === target.resourceId) {
-        inventory[slotIndex] = { ...inventory[slotIndex], quantity: inventory[slotIndex].quantity + 1 };
-      } else {
-        inventory[slotIndex] = { resourceId: target.resourceId, quantity: 1, life: 100 };
-      }
+      addToInventory(inventory, target.resourceId);
       picked.push(target);
     }
 
@@ -843,21 +805,7 @@ export const useGameWorld = () => {
         }
       }
 
-      let outputRemaining = recipe.outputQuantity;
-      for (let i = 0; i < newInventory.length && outputRemaining > 0; i++) {
-        if (newInventory[i].resourceId === resourceId && newInventory[i].quantity < 99) {
-          const add = Math.min(99 - newInventory[i].quantity, outputRemaining);
-          newInventory[i] = { ...newInventory[i], quantity: newInventory[i].quantity + add };
-          outputRemaining -= add;
-        }
-      }
-      for (let i = 0; i < newInventory.length && outputRemaining > 0; i++) {
-        if (newInventory[i].resourceId === null) {
-          const add = Math.min(99, outputRemaining);
-          newInventory[i] = { resourceId, quantity: add, life: 100 };
-          outputRemaining -= add;
-        }
-      }
+      addToInventory(newInventory, resourceId, recipe.outputQuantity);
 
       result = { success: true, message: `Crafted ${recipe.outputQuantity}x ${resource.name}!` };
       return { ...prev, inventory: newInventory };
@@ -1252,35 +1200,12 @@ export const useGameWorld = () => {
         if (destructibleResource.recipes && destructibleResource.recipes.length > 0) {
           const recipe = destructibleResource.recipes[0];
           for (const ingredient of (recipe.ingredients || [])) {
-            for (let i = 0; i < ingredient.quantity; i++) {
-              // Add ingredient to inventory
-              let slotIndex = newInventory.findIndex(s => s.resourceId === ingredient.resourceId && s.quantity < 99);
-              if (slotIndex === -1) {
-                slotIndex = newInventory.findIndex(s => !s.resourceId);
-              }
-              if (slotIndex !== -1) {
-                if (newInventory[slotIndex].resourceId === ingredient.resourceId) {
-                  newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
-                } else {
-                  newInventory[slotIndex] = { resourceId: ingredient.resourceId, quantity: 1, life: 100 };
-                }
-              }
-            }
+            addToInventory(newInventory, ingredient.resourceId, ingredient.quantity);
           }
           destroyedMessage = ` Broke into components!`;
         } else {
           // No recipe - give the resource itself
-          let slotIndex = newInventory.findIndex(s => s.resourceId === destructibleResourceId && s.quantity < 99);
-          if (slotIndex === -1) {
-            slotIndex = newInventory.findIndex(s => !s.resourceId);
-          }
-          if (slotIndex !== -1) {
-            if (newInventory[slotIndex].resourceId === destructibleResourceId) {
-              newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
-            } else {
-              newInventory[slotIndex] = { resourceId: destructibleResourceId, quantity: 1, life: 100 };
-            }
-          }
+          addToInventory(newInventory, destructibleResourceId);
           destroyedMessage = ` Collected!`;
         }
         
@@ -1381,23 +1306,9 @@ export const useGameWorld = () => {
       const existingResource = prev.resources.find(r => r.name.toLowerCase() === resource.name.toLowerCase());
       const resourceIdToUse = existingResource ? existingResource.id : resource.id;
       
-      // Find empty slot or existing slot with same resource
+      // Unlimited inventory: stack onto an existing slot or append a new one
       const newInventory = [...prev.inventory];
-      let slotIndex = newInventory.findIndex(s => s.resourceId === resourceIdToUse && s.quantity < 99);
-      if (slotIndex === -1) {
-        slotIndex = newInventory.findIndex(s => !s.resourceId);
-      }
-      
-      if (slotIndex === -1) {
-        result = { success: false, message: 'Inventory full' };
-        return prev;
-      }
-      
-      if (newInventory[slotIndex].resourceId === resourceIdToUse) {
-        newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
-      } else {
-        newInventory[slotIndex] = { resourceId: resourceIdToUse, quantity: 1, life: 100 };
-      }
+      addToInventory(newInventory, resourceIdToUse);
       
       // Only add resource to world.resources if it doesn't exist by name
       let newResources = prev.resources;

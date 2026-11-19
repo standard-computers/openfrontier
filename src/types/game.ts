@@ -1009,6 +1009,22 @@ export const seedResources = (tiles: MapTile[][], resources: Resource[]) => {
 export const createEmptyInventory = (size: number = 30): InventorySlot[] =>
   Array.from({ length: size }, () => ({ resourceId: null, quantity: 0 }));
 
+// Unlimited inventory: stacks have no cap and new slots are appended as needed.
+export const addToInventory = (inventory: InventorySlot[], resourceId: string, quantity: number = 1): InventorySlot[] => {
+  const slotIndex = inventory.findIndex(s => s.resourceId === resourceId);
+  if (slotIndex !== -1) {
+    inventory[slotIndex] = { ...inventory[slotIndex], quantity: inventory[slotIndex].quantity + quantity };
+    return inventory;
+  }
+  const emptyIndex = inventory.findIndex(s => !s.resourceId);
+  if (emptyIndex !== -1) {
+    inventory[emptyIndex] = { resourceId, quantity, life: 100 };
+  } else {
+    inventory.push({ resourceId, quantity, life: 100 });
+  }
+  return inventory;
+};
+
 export const STARTING_COINS = 500;
 export const MAX_HEALTH = 100; // Used by strangers
 

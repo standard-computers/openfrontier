@@ -335,7 +335,7 @@ const Index = () => {
 
     const gatheredCount = gatherManyFromTiles(plan.gatherable);
     if (gatheredCount === 0) {
-      toast.error('Inventory is full');
+      toast.info('Nothing left to gather');
       return;
     }
     toast.success(`Gathered ${gatheredCount} resource${gatheredCount > 1 ? 's' : ''}`);
