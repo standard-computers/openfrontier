@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Resource, RARITY_COLORS } from '@/types/game';
 import { X, Plus, RefreshCw, Map, Package, Hammer, Copy, Lock, Database, LogOut, AlertTriangle, Search, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { normalizeNpcAggression, type NpcAggression } from '@/lib/npcAggression';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import ResourceEditorModal from './ResourceEditorModal';
@@ -23,6 +25,7 @@ interface WorldConfigProps {
   enableMarkets?: boolean;
   enableNpcs?: boolean;
   npcCount?: number;
+  npcAggression?: NpcAggression;
   enableStrangers?: boolean;
   strangerDensity?: number;
   mapWidth?: number;
@@ -36,6 +39,7 @@ interface WorldConfigProps {
   onToggleMarkets?: (enabled: boolean) => void;
   onToggleNpcs?: (enabled: boolean, count: number) => void;
   onUpdateNpcCount?: (count: number) => void;
+  onUpdateNpcAggression?: (aggression: NpcAggression) => void;
   onToggleStrangers?: (enabled: boolean, density: number) => void;
   onUpdateStrangerDensity?: (density: number) => void;
 }
@@ -51,6 +55,7 @@ const WorldConfig = ({
   enableMarkets,
   enableNpcs,
   npcCount,
+  npcAggression = 'low',
   enableStrangers,
   strangerDensity = 100,
   mapWidth = 100,
@@ -64,6 +69,7 @@ const WorldConfig = ({
   onToggleMarkets,
   onToggleNpcs,
   onUpdateNpcCount,
+  onUpdateNpcAggression,
   onToggleStrangers,
   onUpdateStrangerDensity,
 }: WorldConfigProps) => {
@@ -319,9 +325,8 @@ const WorldConfig = ({
                           <div className="flex items-center gap-3 pt-2 border-t border-border/50">
                             <label className="text-sm text-muted-foreground">Number of NPCs:</label>
                             <input
-                              type="number"
-                              min={1}
-                              max={12}
+                              type="text"
+                              inputMode="numeric"
                               value={npcCount || 4}
                               onChange={(e) => {
                                 const value = Math.min(Math.max(parseInt(e.target.value) || 1, 1), 12);
@@ -332,6 +337,19 @@ const WorldConfig = ({
                             <span className="text-xs text-muted-foreground">(max 12)</span>
                           </div>
                         )}
+                        <div className="space-y-2 pt-2 border-t border-border/50">
+                          <label htmlFor="npc-aggression" className="text-sm text-muted-foreground">NPC Aggression</label>
+                          <Select value={npcAggression} onValueChange={value => onUpdateNpcAggression?.(normalizeNpcAggression(value))}>
+                            <SelectTrigger id="npc-aggression" aria-label="NPC Aggression">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="low">Low</SelectItem>
+                              <SelectItem value="medium">Medium</SelectItem>
+                              <SelectItem value="high">High</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
 
                     </div>

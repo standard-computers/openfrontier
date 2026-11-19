@@ -212,6 +212,7 @@ export interface GameWorld {
   markets?: Market[];
   enableNpcs?: boolean;
   npcCount?: number;
+  npcAggression?: import('../lib/npcAggression').NpcAggression;
   npcs?: NPC[];
   enableStrangers?: boolean;
   strangerDensity?: number; // 0-1, where 1 = 1 stranger per tile

@@ -219,6 +219,7 @@ export type Database = {
           map_data: Json
           markets: Json
           name: string
+          npc_aggression: string
           npc_count: number
           resource_ids: string[]
           resources: Json
@@ -235,6 +236,7 @@ export type Database = {
           map_data: Json
           markets?: Json
           name: string
+          npc_aggression?: string
           npc_count?: number
           resource_ids?: string[]
           resources: Json
@@ -251,6 +253,7 @@ export type Database = {
           map_data?: Json
           markets?: Json
           name?: string
+          npc_aggression?: string
           npc_count?: number
           resource_ids?: string[]
           resources?: Json

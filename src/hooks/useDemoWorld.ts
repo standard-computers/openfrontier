@@ -103,6 +103,7 @@ export const useDemoWorld = () => {
   const sellToMarket = useCallback(() => noopResult, []);
   const toggleEnableNpcs = useCallback(() => {}, []);
   const updateNpcCount = useCallback(() => {}, []);
+  const updateNpcAggression = useCallback(() => {}, []);
   const toggleEnableStrangers = useCallback(() => {}, []);
   const updateStrangerDensity = useCallback(() => {}, []);
   const saveMapData = useCallback(async () => {}, []);
@@ -148,6 +149,7 @@ export const useDemoWorld = () => {
     sellToMarket,
     toggleEnableNpcs,
     updateNpcCount,
+    updateNpcAggression,
     toggleEnableStrangers,
     updateStrangerDensity,
     saveMapData,

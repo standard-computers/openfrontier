@@ -1,0 +1,1 @@
+ALTER TABLE public.worlds ADD COLUMN npc_aggression text NOT NULL DEFAULT 'low' CHECK (npc_aggression IN ('low', 'medium', 'high'));

@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { GameWorld, NPC, WorldMap, Resource, InventorySlot, calculateTileValue, TILE_TYPES, isAdjacentToOwnedLand, ownsAnyTile } from '@/types/game';
 
-const NPC_ACTION_INTERVAL = 2000; // NPCs act every 2 seconds
+import { getNpcActionInterval } from '@/lib/npcAggression';
 const NPC_CLAIM_CHANCE = 0.3; // 30% chance to claim a tile when possible
 const NPC_GATHER_CHANCE = 0.5; // 50% chance to gather resources
 const NPC_MOVE_CHANCE = 0.7; // 70% chance to move
@@ -18,6 +18,10 @@ interface UseNPCBehaviorProps {
 export const useNPCBehavior = ({ world, setWorld, saveMapData }: UseNPCBehaviorProps) => {
   const lastUpdateRef = useRef<number>(0);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestMapRef = useRef(world.map);
+  const saveMapDataRef = useRef(saveMapData);
+  latestMapRef.current = world.map;
+  saveMapDataRef.current = saveMapData;
 
   // Find adjacent walkable tiles
   const getAdjacentTiles = useCallback((x: number, y: number, map: WorldMap): { x: number; y: number }[] => {
@@ -233,14 +237,15 @@ export const useNPCBehavior = ({ world, setWorld, saveMapData }: UseNPCBehaviorP
   // Main NPC behavior loop
   useEffect(() => {
     if (!world.enableNpcs || !world.npcs || world.npcs.length === 0) return;
+    const actionInterval = getNpcActionInterval(world.npcAggression);
     
     const interval = setInterval(() => {
       const now = Date.now();
-      if (now - lastUpdateRef.current < NPC_ACTION_INTERVAL) return;
+      if (now - lastUpdateRef.current < actionInterval) return;
       lastUpdateRef.current = now;
       
       setWorld(prev => {
-        if (!prev.npcs || prev.npcs.length === 0) return prev;
+        if (!prev.enableNpcs || !prev.npcs || prev.npcs.length === 0) return prev;
         
         let currentMap = prev.map;
         const updatedNpcs: NPC[] = [];
@@ -258,12 +263,13 @@ export const useNPCBehavior = ({ world, setWorld, saveMapData }: UseNPCBehaviorP
         
         // Schedule a save if map changed
         if (mapChanged) {
-          if (saveTimeoutRef.current) {
-            clearTimeout(saveTimeoutRef.current);
+          // A trailing debounce would never flush at faster aggression levels.
+          if (!saveTimeoutRef.current) {
+            saveTimeoutRef.current = setTimeout(() => {
+              saveTimeoutRef.current = null;
+              void saveMapDataRef.current(latestMapRef.current);
+            }, 2000);
           }
-          saveTimeoutRef.current = setTimeout(() => {
-            saveMapData(currentMap);
-          }, 2000);
         }
         
         return {
@@ -272,15 +278,16 @@ export const useNPCBehavior = ({ world, setWorld, saveMapData }: UseNPCBehaviorP
           map: currentMap,
         };
       });
-    }, 500); // Check every 500ms, but only act every NPC_ACTION_INTERVAL
+    }, 500); // Poll at the fastest supported action interval.
     
     return () => {
       clearInterval(interval);
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
       }
     };
-  }, [world.enableNpcs, world.npcs?.length, processNPCTurn, setWorld, saveMapData]);
+  }, [world.enableNpcs, world.npcs?.length, world.npcAggression, processNPCTurn, setWorld]);
 
   return null;
 };

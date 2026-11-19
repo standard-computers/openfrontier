@@ -109,6 +109,7 @@ const Index = () => {
     sellToMarket,
     toggleEnableNpcs,
     updateNpcCount,
+    updateNpcAggression,
     toggleEnableStrangers,
     updateStrangerDensity,
     saveMapData,
@@ -805,6 +806,7 @@ const Index = () => {
             enableMarkets={world.enableMarkets}
             enableNpcs={world.enableNpcs}
             npcCount={world.npcCount}
+            npcAggression={world.npcAggression}
             enableStrangers={world.enableStrangers}
             strangerDensity={world.strangerDensity}
             mapWidth={world.map.width}
@@ -819,6 +821,7 @@ const Index = () => {
             onToggleMarkets={toggleEnableMarkets}
             onToggleNpcs={toggleEnableNpcs}
             onUpdateNpcCount={updateNpcCount}
+            onUpdateNpcAggression={updateNpcAggression}
             onToggleStrangers={toggleEnableStrangers}
             onUpdateStrangerDensity={updateStrangerDensity}
           />

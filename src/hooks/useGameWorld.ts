@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { GameWorld, Resource, Sovereignty, Market, NPC, Area, Position, TileType, generateMap, createEmptyInventory, addToInventory, USER_COLORS, STARTING_COINS, calculateTileValue, WorldMap, TILE_TYPES, generateNPCs, generateStrangers, calculateStrangerCount, Stranger, canAddResourceToTile, isLargeResource, isAdjacentToOwnedLand, ownsAnyTile } from '@/types/game';
 import type { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
+import { normalizeNpcAggression, type NpcAggression } from '@/lib/npcAggression';
 import { fetchWorldResources, addResourceToRepository, updateResourceInRepository, deleteResourceFromRepository } from '@/utils/resourceConverter';
 
 // Hook version marker for HMR compatibility
@@ -175,6 +176,7 @@ export const useGameWorld = () => {
           markets: (worldData.markets as unknown as Market[]) ?? [],
           enableNpcs,
           npcCount,
+          npcAggression: normalizeNpcAggression(worldData.npc_aggression),
           npcs,
           enableStrangers,
           strangerDensity,
@@ -1412,6 +1414,20 @@ export const useGameWorld = () => {
     // Strangers are always enabled and auto-sized to the world; nothing to toggle.
   }, []);
 
+  const updateNpcAggression = useCallback(async (aggression: NpcAggression) => {
+    if (!isOwner || !dbWorldId) return;
+    const value = normalizeNpcAggression(aggression);
+    const { error } = await supabase
+      .from('worlds')
+      .update({ npc_aggression: value })
+      .eq('id', dbWorldId);
+    if (error) {
+      toast.error('Could not save NPC aggression');
+      return;
+    }
+    setWorld(prev => ({ ...prev, npcAggression: value }));
+  }, [isOwner, dbWorldId]);
+
   const updateStrangerDensity = useCallback(async () => {
     // Population is auto-calculated from world size; nothing to update.
   }, []);
@@ -1453,6 +1469,7 @@ export const useGameWorld = () => {
     buyFromMarket,
     sellToMarket,
     toggleEnableNpcs,
+    updateNpcAggression,
     updateNpcCount,
     toggleEnableStrangers,
     updateStrangerDensity,
