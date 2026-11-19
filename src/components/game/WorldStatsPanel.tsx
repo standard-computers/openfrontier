@@ -88,7 +88,10 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, worldSove
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="game-panel w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
+      <div className={cn(
+        "game-panel w-full max-h-[85vh] overflow-hidden flex flex-col",
+        activeTab === 'sovereignties' ? "max-w-3xl" : "max-w-lg"
+      )}>
         {/* Header */}
         <div className="flex items-center justify-between px-3 py-2 border-b border-border">
           <div className="flex items-center gap-2">
@@ -101,13 +104,13 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, worldSove
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-border">
+        <div className="flex flex-wrap border-b border-border">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm transition-colors",
+                "flex-none flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm transition-colors",
                 activeTab === tab.id
                   ? "bg-primary/10 text-primary border-b-2 border-primary"
                   : "text-muted-foreground hover:bg-muted/50"
@@ -159,66 +162,71 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, worldSove
 
           {/* Sovereignties Tab */}
           {activeTab === 'sovereignties' && (
-            <div className="space-y-2">
+            <div>
               {sovereigntyRows.length === 0 ? (
                 <div className="text-sm text-muted-foreground text-center py-8">
                   No sovereignties founded yet
                 </div>
               ) : (
-                sovereigntyRows.map(row => (
-                  <div key={row.id} className="bg-secondary/30 rounded-lg p-3">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div
-                        className="w-10 h-10 rounded-lg flex items-center justify-center text-xl shrink-0"
-                        style={{ backgroundColor: `${row.color}20` }}
-                      >
-                        <span>{row.flag}</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate">{row.name}</div>
-                        <div className="text-xs text-muted-foreground flex items-center gap-1">
-                          {row.isNPC ? <Bot className="w-3 h-3" /> : <Users className="w-3 h-3" />}
-                          <span className="truncate">{row.ruler}</span>
-                          {row.motto && <span className="truncate italic">"{row.motto}"</span>}
-                        </div>
-                      </div>
-                      <div
-                        className="w-3 h-3 rounded-full shrink-0"
-                        style={{ backgroundColor: row.color }}
-                        title="Territory color"
-                      />
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 text-xs">
-                      <div className="bg-secondary/50 rounded px-2 py-1 flex items-center gap-1" title="Tiles claimed">
-                        <Flag className="w-3 h-3 text-primary" />
-                        <span>{row.tiles.toLocaleString()}</span>
-                      </div>
-                      <div className="bg-secondary/50 rounded px-2 py-1 flex items-center gap-1" title="Land value">
-                        <Coins className="w-3 h-3 text-amber-400" />
-                        <span>{row.value.toLocaleString()}</span>
-                      </div>
-                      <div className="bg-secondary/50 rounded px-2 py-1 flex items-center gap-1" title="Pledged population">
-                        <Users className="w-3 h-3" />
-                        <span>{row.population.toLocaleString()}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between mt-2 text-xs">
-                      <span className="text-muted-foreground">Home</span>
-                      {row.home ? (
-                        <button
-                          onClick={() => onNavigateToPosition(row.home!)}
-                          className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-0.5"
-                          title="Jump to home tile"
-                        >
-                          <MapPin className="w-3 h-3" />
-                          ({row.home.x}, {row.home.y})
-                        </button>
-                      ) : (
-                        <span className="text-muted-foreground">No claimed land</span>
-                      )}
-                    </div>
-                  </div>
-                ))
+                <table className="w-full text-xs border-collapse whitespace-nowrap">
+                  <thead>
+                    <tr className="text-muted-foreground border-b border-border">
+                      <th className="sticky top-0 bg-background/95 backdrop-blur text-left font-medium py-2 pr-2">Sovereignty</th>
+                      <th className="sticky top-0 bg-background/95 backdrop-blur text-left font-medium py-2 pr-2">Ruler</th>
+                      <th className="sticky top-0 bg-background/95 backdrop-blur text-right font-medium py-2 pr-2">Tiles</th>
+                      <th className="sticky top-0 bg-background/95 backdrop-blur text-right font-medium py-2 pr-2">Value</th>
+                      <th className="sticky top-0 bg-background/95 backdrop-blur text-right font-medium py-2 pr-2">Pop.</th>
+                      <th className="sticky top-0 bg-background/95 backdrop-blur text-right font-medium py-2">Home</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sovereigntyRows.map(row => (
+                      <tr key={row.id} className="border-b border-border/40 last:border-0 hover:bg-secondary/40">
+                        <td className="py-2 pr-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-base leading-none shrink-0">{row.flag}</span>
+                            <span
+                              className="w-2 h-2 rounded-full shrink-0"
+                              style={{ backgroundColor: row.color }}
+                              title="Territory color"
+                            />
+                            <div className="min-w-0">
+                              <div className="font-medium truncate max-w-[150px]">{row.name}</div>
+                              {row.motto && (
+                                <div className="text-[10px] italic text-muted-foreground truncate max-w-[150px]">
+                                  "{row.motto}"
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-2 pr-2 text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            {row.isNPC ? <Bot className="w-3 h-3 shrink-0" /> : <Users className="w-3 h-3 shrink-0" />}
+                            <span className="truncate max-w-[180px]">{row.ruler}</span>
+                          </div>
+                        </td>
+                        <td className="py-2 pr-2 text-right tabular-nums">{row.tiles.toLocaleString()}</td>
+                        <td className="py-2 pr-2 text-right tabular-nums text-amber-400">{row.value.toLocaleString()}</td>
+                        <td className="py-2 pr-2 text-right tabular-nums">{row.population.toLocaleString()}</td>
+                        <td className="py-2 text-right">
+                          {row.home ? (
+                            <button
+                              onClick={() => onNavigateToPosition(row.home!)}
+                              className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-0.5"
+                              title="Jump to home tile"
+                            >
+                              <MapPin className="w-3 h-3" />
+                              ({row.home.x}, {row.home.y})
+                            </button>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               )}
             </div>
           )}
