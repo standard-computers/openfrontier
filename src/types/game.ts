@@ -1,3 +1,5 @@
+import { generateCitizenName } from '../lib/citizenNames';
+
 export type TileType = 'grass' | 'water' | 'sand' | 'stone' | 'dirt' | 'forest' | 'snow' | 'swamp' | 'lava' | 'ice' | 'mountain' | 'jungle';
 
 // Tile type probabilities (must sum to 100)
@@ -1114,10 +1116,6 @@ export const generateNPCs = (
   return npcs;
 };
 
-// Stranger name components
-const STRANGER_FIRST_NAMES = ['Wandering', 'Lost', 'Curious', 'Quiet', 'Humble', 'Swift', 'Gentle', 'Clever', 'Weary', 'Bold', 'Shy', 'Eager'];
-const STRANGER_LAST_NAMES = ['Traveler', 'Nomad', 'Drifter', 'Seeker', 'Walker', 'Gatherer', 'Scout', 'Rover', 'Wanderer', 'Forager', 'Hunter', 'Pilgrim'];
-
 // Strangers are always enabled; their population is derived from world size.
 export const calculateStrangerCount = (width: number, height: number): number => {
   return Math.max(5, Math.min(2000, Math.round(width * height * 0.002)));
@@ -1130,8 +1128,8 @@ export const generateStrangers = (
 ): Stranger[] => {
   const strangerCount = Math.max(0, Math.round(populationCount));
   
-  // If we already have strangers with the right count, return them
-  if (existingStrangers && existingStrangers.length === strangerCount) {
+  // World-size population is only a seed, never a target for an existing population.
+  if (existingStrangers) {
     return existingStrangers;
   }
 
@@ -1139,9 +1137,7 @@ export const generateStrangers = (
   const usedPositions: Set<string> = new Set();
   
   for (let i = 0; i < strangerCount; i++) {
-    const firstName = STRANGER_FIRST_NAMES[Math.floor(Math.random() * STRANGER_FIRST_NAMES.length)];
-    const lastName = STRANGER_LAST_NAMES[Math.floor(Math.random() * STRANGER_LAST_NAMES.length)];
-    const name = `${firstName} ${lastName}`;
+    const name = generateCitizenName();
     
     // Find a walkable position (strangers are land-bound: never water)
     let position = { x: 0, y: 0 };

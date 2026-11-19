@@ -5,3 +5,5 @@
 - [x] Show missing tile negotiation actions and distinguish NPC-owned land; verify the tile view.
 - [x] Enable automatic NPC offers, counters, and contest responses based on aggression; verify settlement.
 - [x] Run Low/High server decision checks: passed against the live backend (Low accepts, Medium counters at 150%, High rejects below double value).
+- [x] Persist citizens and their complete state across world entry; prevent stale population overwrites.
+- [x] Give newly generated and newborn citizens natural names; test saving and re-entry.

@@ -144,11 +144,15 @@ const Index = () => {
     }
     members.forEach(member => {
       if (member.userId !== world.userId) {
-        map.set(member.userId, { username: member.username });
+        const saved = worldSovereignties.find(s => s.userId === member.userId);
+        map.set(member.userId, {
+          username: member.username,
+          sovereignty: saved ? { name: saved.name, flag: saved.flag, motto: saved.motto, foundedAt: saved.foundedAt } : undefined,
+        });
       }
     });
     return map;
-  }, [world.userId, world.sovereignty, username, members]);
+  }, [world.userId, world.sovereignty, username, members, worldSovereignties]);
 
   // Enable NPC behavior (only in non-demo mode)
   useNPCBehavior({ world, setWorld, saveMapData: isDemoMode ? async () => {} : saveMapData });

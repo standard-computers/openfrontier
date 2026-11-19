@@ -4,6 +4,8 @@ import { GameWorld, Resource, Sovereignty, Market, NPC, Area, Position, TileType
 import type { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import { normalizeNpcAggression, type NpcAggression } from '@/lib/npcAggression';
+import { readCitizenSnapshot } from '@/lib/citizenPersistence';
+import { useCitizenPersistence } from './useCitizenPersistence';
 import { fetchWorldResources, addResourceToRepository, updateResourceInRepository, deleteResourceFromRepository } from '@/utils/resourceConverter';
 
 // Hook version marker for HMR compatibility
@@ -58,6 +60,8 @@ export const useGameWorld = () => {
   const [worldSovereignties, setWorldSovereignties] = useState<MemberSovereignty[]>([]);
   const [loading, setLoading] = useState(true);
   const [dbWorldId, setDbWorldId] = useState<string | null>(null);
+  const [citizenRevision, setCitizenRevision] = useState<number | null>(null);
+  useCitizenPersistence(loading ? null : dbWorldId, world.strangers, citizenRevision, setWorld);
   const tradeCoinsRef = useRef(0);
   const npcTradeCoinsRef = useRef<Record<string, number>>({});
 
@@ -176,8 +180,21 @@ export const useGameWorld = () => {
         npcTradeCoinsRef.current = (worldData.npc_land_trade_coins ?? {}) as Record<string, number>;
         for (const npc of npcs) npc.coins += npcTradeCoinsRef.current[npc.id] ?? 0;
 
-        // Generate Strangers (always enabled)
-        const strangers = generateStrangers(strangerDensity, mapData);
+        // Load the complete population. Seed only a world that has never saved citizens.
+        const { data: citizenData, error: citizenError } = await supabase.rpc('get_world_citizens', { _world_id: worldId });
+        if (citizenError) throw citizenError;
+        let citizenSnapshot = readCitizenSnapshot(citizenData);
+        if (citizenSnapshot.strangers === null) {
+          const { data: seededData, error: seedError } = await supabase.rpc('save_world_citizens', {
+            _world_id: worldId,
+            _revision: citizenSnapshot.revision,
+            _strangers: JSON.parse(JSON.stringify(generateStrangers(strangerDensity, mapData))) as Json,
+          });
+          if (seedError) throw seedError;
+          citizenSnapshot = readCitizenSnapshot(seededData);
+        }
+        const strangers = citizenSnapshot.strangers ?? [];
+        setCitizenRevision(citizenSnapshot.revision);
 
         // Third-person mode: the player's spawn point is their claimed territory.
         // If the player has no claimed tiles yet, claim the spawn tile for free.

@@ -226,6 +226,32 @@ export type Database = {
           },
         ]
       }
+      world_citizens: {
+        Row: {
+          revision: number
+          strangers: Json | null
+          world_id: string
+        }
+        Insert: {
+          revision?: number
+          strangers?: Json | null
+          world_id: string
+        }
+        Update: {
+          revision?: number
+          strangers?: Json | null
+          world_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "world_citizens_world_id_fkey"
+            columns: ["world_id"]
+            isOneToOne: true
+            referencedRelation: "worlds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       world_members: {
         Row: {
           id: string
@@ -375,6 +401,7 @@ export type Database = {
           name: string
         }[]
       }
+      get_world_citizens: { Args: { _world_id: string }; Returns: Json }
       get_world_members: {
         Args: { _world_id: string }
         Returns: {
@@ -481,6 +508,10 @@ export type Database = {
       respond_tile_request: {
         Args: { _action: string; _amount?: number; _id: string }
         Returns: undefined
+      }
+      save_world_citizens: {
+        Args: { _revision: number; _strangers: Json; _world_id: string }
+        Returns: Json
       }
       settle_npc_tile_request: { Args: { _id: string }; Returns: undefined }
       tile_land_value: {

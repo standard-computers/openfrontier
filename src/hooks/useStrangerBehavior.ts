@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { GameWorld, Stranger, WorldMap, Resource, TILE_TYPES, MAX_HEALTH, calculateTileValue, StrangerAllegiance, Sovereignty } from '@/types/game';
+import { generateCitizenName } from '@/lib/citizenNames';
 
 const STRANGER_ACTION_INTERVAL = 3000; // Strangers act every 3 seconds (slower than NPCs)
 const STRANGER_GATHER_CHANCE = 0.4; // 40% chance to gather resources
@@ -225,7 +226,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
       const currentTile = map.tiles[stranger.position.y]?.[stranger.position.x];
       const insideTerritory = currentTile?.claimedBy === stranger.allegiance.userId;
       const territoryTiles = adjacentTiles.filter(
-        pos => map.tiles[pos.y][pos.x].claimedBy === stranger.allegiance!.userId
+        pos => map.tiles[pos.y][pos.x].claimedBy === stranger.allegiance?.userId
       );
       if (insideTerritory) {
         // Never step outside: move within territory or stay put
@@ -301,10 +302,10 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     // Hard rule: pledged strangers must live inside their sovereignty's territory.
     // If the sovereignty no longer qualifies (too small / dissolved), the pledge lapses.
     if (updatedStranger.allegiance) {
-      const own = sovereignties.find(s => s.userId === updatedStranger.allegiance!.userId);
+      const own = sovereignties.find(s => s.userId === updatedStranger.allegiance?.userId);
       if ((!own || own.tileCount < ALLEGIANCE_MIN_TILES) && sovereignties.length > 0) {
         updatedStranger = { ...updatedStranger, allegiance: undefined };
-      } else {
+      } else if (own) {
         const standing = currentMap.tiles[updatedStranger.position.y]?.[updatedStranger.position.x];
         const strandedOnWater = standing?.type === 'water';
         if ((standing?.claimedBy !== own.userId || strandedOnWater) && own.territoryPositions.length > 0) {
@@ -376,13 +377,14 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     const singlesByTile = new Map<string, Stranger>();
     for (const s of result) {
       if (s.partnerId || !isEligible(s)) continue;
-      const key = `${s.allegiance!.userId}:${s.position.x},${s.position.y}`;
+      const ownerId = s.allegiance?.userId;
+      const key = `${ownerId}:${s.position.x},${s.position.y}`;
       const neighbourKeys = [
         key,
-        `${s.allegiance!.userId}:${s.position.x + 1},${s.position.y}`,
-        `${s.allegiance!.userId}:${s.position.x - 1},${s.position.y}`,
-        `${s.allegiance!.userId}:${s.position.x},${s.position.y + 1}`,
-        `${s.allegiance!.userId}:${s.position.x},${s.position.y - 1}`,
+        `${ownerId}:${s.position.x + 1},${s.position.y}`,
+        `${ownerId}:${s.position.x - 1},${s.position.y}`,
+        `${ownerId}:${s.position.x},${s.position.y + 1}`,
+        `${ownerId}:${s.position.x},${s.position.y - 1}`,
       ];
       let matched: Stranger | undefined;
       for (const nk of neighbourKeys) {
@@ -419,19 +421,19 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
 
       // Born on the parents' land
       const tile = map.tiles[s.position.y]?.[s.position.x];
-      if (!tile || tile.claimedBy !== s.allegiance!.userId) continue;
+      if (!s.allegiance || !isStrangerWalkable(tile) || tile?.claimedBy !== s.allegiance.userId) continue;
 
       s.lastBirthTime = now;
       partner.lastBirthTime = now;
       babies.push({
         id: `stranger-born-${now}-${Math.floor(Math.random() * 100000)}`,
-        name: `Young ${s.name.split(' ').slice(-1)[0]}`,
+        name: generateCitizenName(s.name.split(' ').slice(-1)[0]),
         color: s.color,
         position: { ...s.position },
         inventory: Array.from({ length: 5 }, () => ({ resourceId: null, quantity: 0 })),
         health: 60,
         happiness: 60,
-        allegiance: { ...s.allegiance! },
+        allegiance: { ...s.allegiance },
       });
     }
 
