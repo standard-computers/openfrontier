@@ -1,3 +1,4 @@
-- [ ] Persist offers, counters, contests, and secure tile transfers with a game-day deadline.
-- [ ] Add tile actions and an inbox for receiving and responding to requests.
-- [ ] Test rules and verify signed-in request flows.
+- [x] Persist offers, counters, contests, and secure tile transfers with a game-day deadline.
+- [x] Add tile actions and an inbox for receiving and responding to requests.
+- [x] Test minimum prices, recipient responses, game-day expiry, and conflict blocking; verify the signed-in inbox.
+- [ ] Verify a two-player settlement end to end: no other player in the available world, and temporary player creation failed.

@@ -15,6 +15,13 @@
       "when": 1795060202283,
       "tag": "0001_tile_offers_and_contests",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795060502953,
+      "tag": "0002_protect_trade_balance_on_join",
+      "breakpoints": true
     }
   ]
 }

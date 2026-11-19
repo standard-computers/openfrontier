@@ -205,6 +205,7 @@ export const useGameWorld = () => {
   // Save player data to database when it changes
   useEffect(() => {
     if (!dbWorldId || loading) return;
+    const tradeCoinsAtSnapshot = tradeCoinsRef.current;
 
     const savePlayerData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -213,7 +214,7 @@ export const useGameWorld = () => {
       const playerData = {
         position: world.playerPosition,
         inventory: world.inventory,
-        coins: world.coins - tradeCoinsRef.current,
+        coins: world.coins - tradeCoinsAtSnapshot,
         userColor: world.userColor,
         sovereignty: world.sovereignty,
         areas: world.areas,

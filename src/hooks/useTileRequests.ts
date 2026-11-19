@@ -10,7 +10,7 @@ export const useTileRequests = (world: GameWorld, enabled: boolean, refresh: () 
   const load = useCallback(async () => {
     if (!enabled) return;
     const { error: resolveError } = await supabase.rpc('resolve_tile_contests', { _world: world.id });
-    if (resolveError) return;
+    if (resolveError) { console.error('Could not resolve land contests', resolveError.message); return; }
     const { data, error } = await supabase.from('tile_requests').select('*').eq('world_id', world.id).order('created_at', { ascending: false });
     if (!error) setRequests((data ?? []) as TileRequest[]);
     await refresh();
