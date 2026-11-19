@@ -38,6 +38,8 @@ export interface WorldMember {
   joinedAt: string;
 }
 
+const MAP_SAVE_INTERVAL_MS = 3000;
+
 export const useGameWorld = () => {
   const [world, setWorld] = useState<GameWorld>(getDefaultWorld);
   const [selectedTile, setSelectedTile] = useState<{ x: number; y: number } | null>(null);
@@ -211,7 +213,7 @@ export const useGameWorld = () => {
     const tradeCoinsAtSnapshot = tradeCoinsRef.current;
 
     const savePlayerData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = (await supabase.auth.getSession()).data.session?.user;
       if (!user) return;
 
       const playerData = {
@@ -231,7 +233,7 @@ export const useGameWorld = () => {
         .eq('user_id', user.id);
     };
 
-    const timeoutId = setTimeout(savePlayerData, 1000);
+    const timeoutId = setTimeout(savePlayerData, 2000);
     return () => clearTimeout(timeoutId);
   }, [dbWorldId, world.playerPosition, world.inventory, world.coins, world.userColor, world.sovereignty, world.areas, world.xp, loading]);
 
@@ -261,15 +263,18 @@ export const useGameWorld = () => {
   // Save world map data - all members can save map changes (for tile claiming)
   const refreshTileNegotiations = useCallback(async () => {
     if (!dbWorldId) return;
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
     if (!user) return;
-    const { data } = await supabase.from('world_members').select('land_trade_coins').eq('world_id', dbWorldId).eq('user_id', user.id).single();
+    const [{ data }, { data: worldData }] = await Promise.all([
+      supabase.from('world_members').select('land_trade_coins').eq('world_id', dbWorldId).eq('user_id', user.id).single(),
+      supabase.from('worlds').select('npc_land_trade_coins').eq('id', dbWorldId).single(),
+    ]);
     if (data) {
       const delta = data.land_trade_coins - tradeCoinsRef.current;
       tradeCoinsRef.current = data.land_trade_coins;
       if (delta) setWorld(prev => ({ ...prev, coins: prev.coins + delta }));
     }
-    const { data: worldData } = await supabase.from('worlds').select('npc_land_trade_coins').eq('id', dbWorldId).single();
     if (worldData) {
       const balances = (worldData.npc_land_trade_coins ?? {}) as Record<string, number>;
       const previous = npcTradeCoinsRef.current;
@@ -278,17 +283,49 @@ export const useGameWorld = () => {
     }
   }, [dbWorldId]);
 
+  // Map saves are coalesced: many callers (player, NPCs, strangers) request saves,
+  // but at most one full map write is sent per MAP_SAVE_INTERVAL_MS, always with the latest map.
+  const pendingMapRef = useRef<WorldMap | null>(null);
+  const mapSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mapSaveInFlightRef = useRef(false);
+  const flushMapSave = useCallback(async () => {
+    mapSaveTimerRef.current = null;
+    if (!dbWorldId || !pendingMapRef.current) return;
+    if (mapSaveInFlightRef.current) {
+      mapSaveTimerRef.current = setTimeout(() => void flushMapSave(), MAP_SAVE_INTERVAL_MS);
+      return;
+    }
+    const map = pendingMapRef.current;
+    pendingMapRef.current = null;
+    mapSaveInFlightRef.current = true;
+    try {
+      await supabase.from('worlds').update({ map_data: JSON.parse(JSON.stringify(map)) as Json }).eq('id', dbWorldId);
+    } finally {
+      mapSaveInFlightRef.current = false;
+    }
+  }, [dbWorldId]);
+  useEffect(() => {
+    const onHide = () => {
+      if (document.visibilityState === 'hidden' && pendingMapRef.current) {
+        if (mapSaveTimerRef.current) clearTimeout(mapSaveTimerRef.current);
+        void flushMapSave();
+      }
+    };
+    document.addEventListener('visibilitychange', onHide);
+    return () => {
+      document.removeEventListener('visibilitychange', onHide);
+      if (mapSaveTimerRef.current) clearTimeout(mapSaveTimerRef.current);
+      if (pendingMapRef.current) void flushMapSave();
+    };
+  }, [flushMapSave]);
+
   const saveMapData = useCallback(async (mapData?: WorldMap) => {
     if (!dbWorldId) return;
-    const dataToSave = mapData || world.map;
-
-    await supabase
-      .from('worlds')
-      .update({
-        map_data: JSON.parse(JSON.stringify(dataToSave)) as Json,
-      })
-      .eq('id', dbWorldId);
-  }, [dbWorldId, world.map]);
+    pendingMapRef.current = mapData || world.map;
+    if (!mapSaveTimerRef.current) {
+      mapSaveTimerRef.current = setTimeout(() => void flushMapSave(), MAP_SAVE_INTERVAL_MS);
+    }
+  }, [dbWorldId, world.map, flushMapSave]);
 
   // Save world data (name, resource_ids) - only for owners
   const saveWorldData = useCallback(async (overrideName?: string) => {

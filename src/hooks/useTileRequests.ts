@@ -18,8 +18,11 @@ export const useTileRequests = (world: GameWorld, enabled: boolean, refresh: () 
   useEffect(() => {
     if (!enabled) { setRequests([]); return; }
     void load();
-    const timer = setInterval(() => void load(), 15000);
-    return () => clearInterval(timer);
+    // Poll only while the tab is visible; refresh immediately on return.
+    const timer = setInterval(() => { if (document.visibilityState === 'visible') void load(); }, 30000);
+    const onVisible = () => { if (document.visibilityState === 'visible') void load(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', onVisible); };
   }, [enabled, load]);
 
   const create = async (x: number, y: number, kind: 'offer' | 'contest', amount?: number) => {
