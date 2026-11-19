@@ -1,3 +1,5 @@
+// @refresh reset
+// World hooks share this page's hook chain; remount after hot updates to avoid stale queues.
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameWorld, WorldMember } from '@/hooks/useGameWorld';
