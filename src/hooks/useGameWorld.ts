@@ -50,6 +50,8 @@ export interface MemberSovereignty {
   foundedAt: number;
   color: string;
   home?: Position;
+  openBorders?: boolean;
+  allowOutsiderGathering?: boolean;
 }
 
 const MAP_SAVE_INTERVAL_MS = 3000;
@@ -132,6 +134,8 @@ export const useGameWorld = () => {
             foundedAt: Number(s.sovereignty_founded_at) || 0,
             color: s.user_color || '#888888',
             home: s.home,
+            openBorders: !!s.open_borders,
+            allowOutsiderGathering: !!s.allow_outsider_gathering,
           })));
         }
 
@@ -614,12 +618,17 @@ export const useGameWorld = () => {
     };
   }, [world, saveMapData]);
 
+  // Sovereignty policy: owners may open their land to outside gatherers.
+  const isOutsiderGatheringAllowed = useCallback((ownerId: string) =>
+    worldSovereignties.find(s => s.userId === ownerId)?.allowOutsiderGathering ?? false
+  , [worldSovereignties]);
+
   const gatherFromTile = useCallback((x: number, y: number, resourceId: string) => {
     const currentWorld = world;
     const tile = currentWorld.map.tiles[y][x];
-    
+
     if (!tile.resources.includes(resourceId)) return;
-    if (tile.claimedBy && tile.claimedBy !== currentWorld.userId) return;
+    if (tile.claimedBy && tile.claimedBy !== currentWorld.userId && !isOutsiderGatheringAllowed(tile.claimedBy)) return;
     
     // Placed resources can only be recovered from owned land.
     if (tile.placedResources?.includes(resourceId) && tile.claimedBy !== currentWorld.userId) {
@@ -654,7 +663,7 @@ export const useGameWorld = () => {
     });
 
     setTimeout(() => saveMapData(newMapData), 500);
-  }, [world, saveMapData]);
+  }, [world, saveMapData, isOutsiderGatheringAllowed]);
 
   // Gather a batch of resources in one pass (used by "Gather All" on a selection).
   // Doing it in a single update keeps sequential gathers from reverting each other.
@@ -667,7 +676,7 @@ export const useGameWorld = () => {
       const tile = currentWorld.map.tiles[target.y]?.[target.x];
       if (!tile) continue;
       if (!tile.resources.includes(target.resourceId)) continue;
-      if (tile.claimedBy && tile.claimedBy !== currentWorld.userId) continue;
+      if (tile.claimedBy && tile.claimedBy !== currentWorld.userId && !isOutsiderGatheringAllowed(tile.claimedBy)) continue;
       if (tile.placedResources?.includes(target.resourceId) && tile.claimedBy !== currentWorld.userId) continue;
 
       addToInventory(inventory, target.resourceId);
@@ -695,7 +704,7 @@ export const useGameWorld = () => {
     setTimeout(() => saveMapData(newMapData), 500);
 
     return picked.length;
-  }, [world, saveMapData]);
+  }, [world, saveMapData, isOutsiderGatheringAllowed]);
 
   const addResource = useCallback(async (resource: Resource) => {
     if (!isOwner) return;
@@ -1572,6 +1581,7 @@ export const useGameWorld = () => {
     convertTiles,
     gatherFromTile,
     gatherManyFromTiles,
+    isOutsiderGatheringAllowed,
     addResource,
     addExistingResource,
     updateResource,

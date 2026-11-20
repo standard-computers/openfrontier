@@ -83,3 +83,36 @@ describe('multi-tile gather all', () => {
     assert.equal(getSelectionGatherPlan([at(0, 0)], 'owner').canGatherAll, false);
   });
 });
+
+describe('sovereignty outsider-gathering policy', () => {
+  test('allows gathering from a tile whose owner permits outsider gathering', () => {
+    const plan = getSelectionGatherPlan(
+      [at(0, 0, { claimedBy: 'neighbor', resources: ['apple'] })],
+      'owner',
+      (ownerId) => ownerId === 'neighbor'
+    );
+    assert.equal(plan.allMineOrUnclaimed, true);
+    assert.equal(plan.canGatherAll, true);
+    assert.deepEqual(plan.gatherable, [{ x: 0, y: 0, resourceId: 'apple' }]);
+  });
+
+  test('still blocks tiles whose owner does not permit outsider gathering', () => {
+    const plan = getSelectionGatherPlan(
+      [at(0, 0, { claimedBy: 'neighbor', resources: ['apple'] })],
+      'owner',
+      () => false
+    );
+    assert.equal(plan.allMineOrUnclaimed, false);
+    assert.equal(plan.canGatherAll, false);
+    assert.equal(plan.gatherable.length, 0);
+  });
+
+  test('placed resources stay owner-only even when outsider gathering is allowed', () => {
+    const plan = getSelectionGatherPlan(
+      [at(0, 0, { claimedBy: 'neighbor', resources: ['apple', 'fence'], placedResources: ['fence'] })],
+      'owner',
+      () => true
+    );
+    assert.deepEqual(plan.gatherable, [{ x: 0, y: 0, resourceId: 'apple' }]);
+  });
+});

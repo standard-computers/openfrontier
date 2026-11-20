@@ -127,6 +127,7 @@ export const useDemoWorld = () => {
     claimMultipleTiles,
     gatherFromTile,
     gatherManyFromTiles,
+    isOutsiderGatheringAllowed: () => false,
     addResource,
     addExistingResource,
     updateResource,

@@ -243,8 +243,13 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
         if (adjacentTiles.length === 0) return stranger;
       }
     } else {
-      // Unpledged strangers cannot enter anyone's claimed territory
-      adjacentTiles = adjacentTiles.filter(pos => !map.tiles[pos.y][pos.x].claimedBy);
+      // Unpledged strangers cannot enter claimed territory unless that
+      // sovereignty has an open-borders policy.
+      adjacentTiles = adjacentTiles.filter(pos => {
+        const owner = map.tiles[pos.y][pos.x].claimedBy;
+        if (!owner) return true;
+        return memberSovereignties?.get(owner)?.sovereignty?.openBorders ?? false;
+      });
       if (adjacentTiles.length === 0) return stranger;
     }
     
@@ -261,7 +266,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     const newPos = targetTiles[Math.floor(Math.random() * targetTiles.length)];
     
     return moveCitizenIntoBuilding(stranger, newPos, buildings, occupants) ?? stranger;
-  }, [getAdjacentTiles]);
+  }, [getAdjacentTiles, memberSovereignties]);
 
   // Update the stranger's happy index based on their conditions
   const updateHappiness = useCallback((stranger: Stranger, map: WorldMap, resources: Resource[]): Stranger => {

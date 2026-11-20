@@ -91,6 +91,7 @@ const Index = () => {
     claimMultipleTiles,
     gatherFromTile,
     gatherManyFromTiles,
+    isOutsiderGatheringAllowed,
     addResource,
     addExistingResource,
     updateResource,
@@ -150,7 +151,7 @@ const Index = () => {
         const saved = worldSovereignties.find(s => s.userId === member.userId);
         map.set(member.userId, {
           username: member.username,
-          sovereignty: saved ? { name: saved.name, flag: saved.flag, motto: saved.motto, foundedAt: saved.foundedAt } : undefined,
+          sovereignty: saved ? { name: saved.name, flag: saved.flag, motto: saved.motto, foundedAt: saved.foundedAt, openBorders: saved.openBorders, allowOutsiderGathering: saved.allowOutsiderGathering } : undefined,
         });
       }
     });
@@ -277,21 +278,21 @@ const Index = () => {
     const tile = world.map.tiles[selectedTile.y]?.[selectedTile.x];
     if (!tile) return;
     
-    if (tile.claimedBy && tile.claimedBy !== world.userId) {
+    if (tile.claimedBy && tile.claimedBy !== world.userId && !isOutsiderGatheringAllowed(tile.claimedBy)) {
       toast.error('Cannot gather from another player\'s tile');
       return;
     }
-    
+
     if (tile.resources.length === 0) {
       toast.info('No resources to gather');
       return;
     }
-    
-    const plan = getSelectionGatherPlan([{ tile, position: selectedTile }], world.userId);
+
+    const plan = getSelectionGatherPlan([{ tile, position: selectedTile }], world.userId, isOutsiderGatheringAllowed);
     const gatheredCount = gatherManyFromTiles(plan.gatherable);
-    
+
     toast.success(`Gathered ${gatheredCount} resource${gatheredCount > 1 ? 's' : ''}`);
-  }, [selectedTile, world.map.tiles, world.userId, gatherManyFromTiles, isDemoMode]);
+  }, [selectedTile, world.map.tiles, world.userId, gatherManyFromTiles, isOutsiderGatheringAllowed, isDemoMode]);
 
   // Gather one resource at a time across the multi-tile selection.
   // Each press of G grabs the next available gatherable resource, cycling
@@ -310,7 +311,7 @@ const Index = () => {
     for (const pos of selectedTiles) {
       const tile = world.map.tiles[pos.y]?.[pos.x];
       if (!tile) continue;
-      if (tile.claimedBy && tile.claimedBy !== world.userId) continue;
+      if (tile.claimedBy && tile.claimedBy !== world.userId && !isOutsiderGatheringAllowed(tile.claimedBy)) continue;
       // Recover placed resources only on owned tiles.
       const gatherable = tile.resources.find(
         rid => !tile.placedResources?.includes(rid) || tile.claimedBy === world.userId
@@ -329,7 +330,7 @@ const Index = () => {
     }
 
     toast.info('No more resources to gather in selection');
-  }, [selectedTiles, world.map.tiles, world.userId, world.resources, gatherFromTile, isDemoMode]);
+  }, [selectedTiles, world.map.tiles, world.userId, world.resources, gatherFromTile, isOutsiderGatheringAllowed, isDemoMode]);
 
   // Gather everything in the selection at once. Only offered when every
   // selected tile is unclaimed or belongs to this player.
@@ -347,7 +348,8 @@ const Index = () => {
       selectedTiles
         .map(pos => ({ tile: world.map.tiles[pos.y]?.[pos.x], position: pos }))
         .filter((t): t is { tile: NonNullable<typeof t.tile>; position: Position } => !!t.tile),
-      world.userId
+      world.userId,
+      isOutsiderGatheringAllowed
     );
 
     if (!plan.allMineOrUnclaimed) {
@@ -812,6 +814,7 @@ const Index = () => {
           onGatherAll={handleMultiGatherAll}
           onCreateArea={createArea}
           onConvert={handleConvertTiles}
+          allowGatherFromOwner={isOutsiderGatheringAllowed}
         />
         </div>
       )}

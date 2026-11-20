@@ -118,6 +118,11 @@ export interface Sovereignty {
   foundedAt: number;
   capitalAreaId?: string;
   home?: Position;
+  policies?: string[];
+  /** Unpledged strangers may enter this sovereignty's territory. */
+  openBorders?: boolean;
+  /** Other players may gather natural resources from this sovereignty's tiles. */
+  allowOutsiderGathering?: boolean;
 }
 
 export interface Area {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Sovereignty, USER_COLORS, Area, AREA_COLORS } from '@/types/game';
-import { X, Flag, Crown, Palette, Coins, Info, Settings, Plus, MapPin, Trash2, RefreshCw, Check } from 'lucide-react';
+import { X, Flag, Crown, Palette, Coins, Info, Settings, Plus, MapPin, Trash2, RefreshCw, Check, ScrollText } from 'lucide-react';
 import { generateRandomSovereigntyName } from '@/utils/nameGenerator';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -42,7 +42,8 @@ const SovereigntyPanel = ({
   onUpdateArea,
   onSetCapitalArea,
 }: SovereigntyPanelProps) => {
-  const [activeTab, setActiveTab] = useState<'general' | 'areas' | 'controls'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'areas' | 'policies' | 'controls'>('general');
+  const [newPolicy, setNewPolicy] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [newName, setNewName] = useState('');
   const [newFlag, setNewFlag] = useState('🏴');
@@ -276,6 +277,20 @@ const SovereigntyPanel = ({
             )}
           </button>
           <button
+            onClick={() => setActiveTab('policies')}
+            className={cn(
+              'flex-1 px-3 py-2 text-sm font-medium transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap',
+              activeTab === 'policies'
+                ? 'bg-secondary text-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <ScrollText className="w-4 h-4" /> Policies
+            {(sovereignty.policies?.length ?? 0) > 0 && (
+              <span className="text-xs bg-primary/20 text-primary px-1.5 rounded-full">{sovereignty.policies!.length}</span>
+            )}
+          </button>
+          <button
             onClick={() => setActiveTab('controls')}
             className={cn(
               'flex-1 px-3 py-2 text-sm font-medium transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap',
@@ -399,6 +414,107 @@ const SovereigntyPanel = ({
                     )}
                   </div>
                 ))
+              )}
+            </div>
+          )}
+
+          {activeTab === 'policies' && (
+            <div className="space-y-3">
+              {/* Gameplay policy toggles */}
+              <div className="bg-secondary/30 rounded-lg p-3 space-y-3">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={sovereignty.openBorders ?? false}
+                    onChange={(e) => onUpdateSovereignty({ openBorders: e.target.checked })}
+                    className="mt-0.5 accent-primary"
+                  />
+                  <span>
+                    <span className="text-sm font-medium block">Open Borders</span>
+                    <span className="text-xs text-muted-foreground">
+                      Unpledged strangers may wander into your territory
+                    </span>
+                  </span>
+                </label>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={sovereignty.allowOutsiderGathering ?? false}
+                    onChange={(e) => onUpdateSovereignty({ allowOutsiderGathering: e.target.checked })}
+                    className="mt-0.5 accent-primary"
+                  />
+                  <span>
+                    <span className="text-sm font-medium block">Outsider Gathering</span>
+                    <span className="text-xs text-muted-foreground">
+                      Other players may gather natural resources from your tiles
+                    </span>
+                  </span>
+                </label>
+              </div>
+
+              <div className="flex gap-2">
+                <input
+                  value={newPolicy}
+                  onChange={(e) => setNewPolicy(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const text = newPolicy.trim();
+                      if (!text) return;
+                      onUpdateSovereignty({ policies: [...(sovereignty.policies ?? []), text] });
+                      setNewPolicy('');
+                    }
+                  }}
+                  placeholder="Decree a new policy..."
+                  className="input-field flex-1"
+                />
+                <button
+                  type="button"
+                  disabled={!newPolicy.trim()}
+                  onClick={() => {
+                    const text = newPolicy.trim();
+                    if (!text) return;
+                    onUpdateSovereignty({ policies: [...(sovereignty.policies ?? []), text] });
+                    setNewPolicy('');
+                  }}
+                  className="btn btn-primary p-2"
+                  title="Add policy"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+
+              {(sovereignty.policies?.length ?? 0) === 0 ? (
+                <div className="text-center py-6">
+                  <ScrollText className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">No policies decreed yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Set the laws and edicts of your sovereignty
+                  </p>
+                </div>
+              ) : (
+                <ol className="space-y-2">
+                  {sovereignty.policies!.map((policy, index) => (
+                    <li
+                      key={index}
+                      className="bg-secondary/30 rounded-lg p-3 flex items-start gap-2"
+                    >
+                      <span className="text-xs text-muted-foreground mt-0.5 font-mono">{index + 1}.</span>
+                      <span className="text-sm flex-1">{policy}</span>
+                      <button
+                        onClick={() =>
+                          onUpdateSovereignty({
+                            policies: sovereignty.policies!.filter((_, i) => i !== index),
+                          })
+                        }
+                        className="btn btn-ghost p-1 text-destructive hover:text-destructive"
+                        title="Repeal policy"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </li>
+                  ))}
+                </ol>
               )}
             </div>
           )}

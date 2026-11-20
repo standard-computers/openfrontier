@@ -92,6 +92,13 @@
       "when": 1795135782097,
       "tag": "0012_resource_people_capacity",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1795137148114,
+      "tag": "0013_sovereignty_policy_flags_in_lookup",
+      "breakpoints": true
     }
   ]
 }

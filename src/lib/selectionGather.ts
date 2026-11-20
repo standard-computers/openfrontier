@@ -23,13 +23,14 @@ export interface SelectionGatherPlan {
 // Decides whether a multi-tile selection may be gathered in one go.
 export function getSelectionGatherPlan(
   tiles: SelectionTileInput[],
-  userId: string
+  userId: string,
+  allowOwner?: (ownerId: string) => boolean
 ): SelectionGatherPlan {
   const gatherable: GatherTarget[] = [];
   let allMineOrUnclaimed = true;
 
   for (const { tile, position } of tiles) {
-    if (tile.claimedBy && tile.claimedBy !== userId) {
+    if (tile.claimedBy && tile.claimedBy !== userId && !allowOwner?.(tile.claimedBy)) {
       allMineOrUnclaimed = false;
       continue;
     }

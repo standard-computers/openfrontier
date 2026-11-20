@@ -509,7 +509,9 @@ export type Database = {
       get_world_sovereignties_with_home: {
         Args: { _world_id: string }
         Returns: {
+          allow_outsider_gathering: boolean
           home: Json
+          open_borders: boolean
           sovereignty_flag: string
           sovereignty_founded_at: number
           sovereignty_motto: string

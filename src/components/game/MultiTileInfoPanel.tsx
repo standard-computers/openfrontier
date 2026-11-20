@@ -24,6 +24,7 @@ interface MultiTileInfoPanelProps {
   onGatherAll?: () => void;
   onCreateArea?: (name: string, color: string, tiles: Position[]) => { success: boolean; message: string };
   onConvert?: (newType: TileType) => void;
+  allowGatherFromOwner?: (ownerId: string) => boolean;
 }
 
 const CLAIM_RADIUS = 6;
@@ -41,6 +42,7 @@ const MultiTileInfoPanel = ({
   onGatherAll,
   onCreateArea,
   onConvert,
+  allowGatherFromOwner,
 }: MultiTileInfoPanelProps) => {
   const [showAreaForm, setShowAreaForm] = useState(false);
   const [showConvert, setShowConvert] = useState(false);
@@ -89,7 +91,7 @@ const MultiTileInfoPanel = ({
   }, [tiles, playerPosition, resources, userId]);
 
   // Gather-all is only offered when no tile in the selection belongs to someone else.
-  const gatherPlan = useMemo(() => getSelectionGatherPlan(tiles, userId), [tiles, userId]);
+  const gatherPlan = useMemo(() => getSelectionGatherPlan(tiles, userId, allowGatherFromOwner), [tiles, userId, allowGatherFromOwner]);
 
   const canAfford = userCoins >= analysis.totalValue;
   const canClaim = analysis.claimableTiles.length > 0 && canAfford && !analysis.hasClaimedLand;
