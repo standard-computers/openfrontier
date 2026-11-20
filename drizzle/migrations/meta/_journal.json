@@ -85,6 +85,13 @@
       "when": 1795131234278,
       "tag": "0011_add_resource_editor_access",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1795135782097,
+      "tag": "0012_resource_people_capacity",
+      "breakpoints": true
     }
   ]
 }

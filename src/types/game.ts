@@ -61,6 +61,8 @@ export interface Resource {
   isFloating?: boolean; // Hovers above tile (like dropped items)
   canFloatOnWater?: boolean; // Can be placed on water tiles
   holdsPlayer?: boolean; // Player can enter/ride this resource (vehicles, boats)
+  holdsPeople?: boolean;
+  peopleCapacity?: number;
   display?: boolean; // Always display on tile visually (even if not floating)
   placeable?: boolean; // Can be placed on a tile
   passable?: boolean; // If placeable, can players walk through it
@@ -194,6 +196,7 @@ export interface Stranger {
   happiness?: number; // 0-100 happy index
   partnerId?: string; // Stranger they fell in love with
   lastBirthTime?: number;
+  buildingKey?: string; // Building anchor/resource occupied by this citizen
 }
 
 export interface GameWorld {

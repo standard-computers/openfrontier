@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { GameWorld, Stranger, WorldMap, Resource, TILE_TYPES, MAX_HEALTH, calculateTileValue, StrangerAllegiance, Sovereignty } from '@/types/game';
 import { generateCitizenName } from '@/lib/citizenNames';
+import { buildCitizenBuildingIndex, countBuildingOccupants, moveCitizenIntoBuilding, reconcileCitizenBuildings, type CitizenBuildingIndex } from '@/lib/citizenBuildings';
 
 const STRANGER_ACTION_INTERVAL = 3000; // Strangers act every 3 seconds (slower than NPCs)
 const STRANGER_GATHER_CHANCE = 0.4; // 40% chance to gather resources
@@ -43,6 +44,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
   const lastUpdateRef = useRef<number>(0);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sovereigntyCacheRef = useRef<{ at: number; data: SovereigntyInfo[] } | null>(null);
+  const buildingCacheRef = useRef<{ tiles: WorldMap['tiles']; resources: Resource[]; index: CitizenBuildingIndex } | null>(null);
 
   // Calculate sovereignty values from map claims
   const calculateSovereigntyValues = useCallback((map: WorldMap, resources: Resource[]): SovereigntyInfo[] => {
@@ -217,7 +219,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
   }, []);
 
   // Stranger moves to an adjacent tile (wanders around)
-  const strangerMove = useCallback((stranger: Stranger, map: WorldMap): Stranger => {
+  const strangerMove = useCallback((stranger: Stranger, map: WorldMap, buildings: CitizenBuildingIndex, occupants: Map<string, number>): Stranger => {
     let adjacentTiles = getAdjacentTiles(stranger.position.x, stranger.position.y, map);
     if (adjacentTiles.length === 0) return stranger;
     
@@ -252,10 +254,13 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
       return tile.resources.length > 0;
     });
     
-    const targetTiles = preferredTiles.length > 0 ? preferredTiles : adjacentTiles;
+    adjacentTiles = adjacentTiles.filter(pos => moveCitizenIntoBuilding(stranger, pos, buildings, occupants) !== null);
+    const availablePreferred = preferredTiles.filter(pos => adjacentTiles.some(p => p.x === pos.x && p.y === pos.y));
+    const targetTiles = availablePreferred.length > 0 ? availablePreferred : adjacentTiles;
+    if (!targetTiles.length) return stranger;
     const newPos = targetTiles[Math.floor(Math.random() * targetTiles.length)];
     
-    return { ...stranger, position: newPos };
+    return moveCitizenIntoBuilding(stranger, newPos, buildings, occupants) ?? stranger;
   }, [getAdjacentTiles]);
 
   // Update the stranger's happy index based on their conditions
@@ -292,7 +297,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
   }, []);
 
   // Process one stranger's turn
-  const processStrangerTurn = useCallback((stranger: Stranger, currentMap: WorldMap, resources: Resource[], sovereignties: SovereigntyInfo[]): {
+  const processStrangerTurn = useCallback((stranger: Stranger, currentMap: WorldMap, resources: Resource[], sovereignties: SovereigntyInfo[], buildings: CitizenBuildingIndex, occupants: Map<string, number>): {
     stranger: Stranger;
     mapTiles?: WorldMap['tiles'];
   } => {
@@ -344,7 +349,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     
     // Priority 3: Move around (wander)
     if (Math.random() < STRANGER_MOVE_CHANCE) {
-      updatedStranger = strangerMove(updatedStranger, currentMap);
+      updatedStranger = strangerMove(updatedStranger, currentMap, buildings, occupants);
     }
     
     // Priority 4: Evaluate allegiance to sovereignties
@@ -453,6 +458,12 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
         if (!prev.strangers || prev.strangers.length === 0) return prev;
         
         let currentMap = prev.map;
+        const buildingCache = buildingCacheRef.current;
+        const buildings = buildingCache?.tiles === prev.map.tiles && buildingCache.resources === prev.resources
+          ? buildingCache.index : buildCitizenBuildingIndex(prev.map, prev.resources);
+        buildingCacheRef.current = { tiles: prev.map.tiles, resources: prev.resources, index: buildings };
+        const citizens = reconcileCitizenBuildings(prev.strangers, currentMap, buildings);
+        const occupants = countBuildingOccupants(citizens);
         const updatedStrangers: Stranger[] = [];
         let mapChanged = false;
         
@@ -471,11 +482,13 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
         const startIndex = Math.floor(Math.random() * Math.max(1, prev.strangers.length - maxStrangersPerTick));
         
         for (let i = 0; i < prev.strangers.length; i++) {
-          const stranger = prev.strangers[i];
+          const stranger = citizens[i];
           
           // Only process a subset each tick
           if (i >= startIndex && i < startIndex + maxStrangersPerTick) {
-            const result = processStrangerTurn(stranger, currentMap, prev.resources, sovereignties);
+            const result = processStrangerTurn(stranger, currentMap, prev.resources, sovereignties, buildings, occupants);
+            if (stranger.buildingKey) occupants.set(stranger.buildingKey, Math.max(0, (occupants.get(stranger.buildingKey) ?? 0) - 1));
+            if (result.stranger.buildingKey) occupants.set(result.stranger.buildingKey, (occupants.get(result.stranger.buildingKey) ?? 0) + 1);
             updatedStrangers.push(result.stranger);
             
             if (result.mapTiles) {
@@ -499,7 +512,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
         
         return {
           ...prev,
-          strangers: processRomance(updatedStrangers, currentMap),
+          strangers: reconcileCitizenBuildings(processRomance(updatedStrangers, currentMap), currentMap, buildings),
           map: currentMap,
         };
       });

@@ -30,6 +30,7 @@ import { getInventoryDropResource } from '@/lib/inventoryDrag';
 import { getSelectionGatherPlan } from '@/lib/selectionGather';
 import { useTileRequests } from '@/hooks/useTileRequests';
 import TileRequestsPanel from '@/components/game/TileRequestsPanel';
+import { buildCitizenBuildingIndex, countBuildingOccupants, moveCitizenIntoBuilding } from '@/lib/citizenBuildings';
 
 const MIN_TILE_SIZE = 4;
 const MAX_TILE_SIZE = 64;
@@ -493,6 +494,8 @@ const Index = () => {
       if (strangerIndex === -1) return prev;
       
       const stranger = prev.strangers[strangerIndex];
+      const buildings = buildCitizenBuildingIndex(prev.map, prev.resources);
+      const occupants = countBuildingOccupants(prev.strangers);
       const { x, y } = stranger.position;
       
       const directions = [
@@ -506,7 +509,9 @@ const Index = () => {
           if (pos.x < 0 || pos.x >= prev.map.width || pos.y < 0 || pos.y >= prev.map.height) return false;
           const tile = prev.map.tiles[pos.y][pos.x];
           const tileInfo = TILE_TYPES.find(t => t.type === tile.type);
-          return tileInfo?.walkable ?? tile.walkable;
+          const onOwnLand = stranger.allegiance ? tile.claimedBy === stranger.allegiance.userId : !tile.claimedBy;
+          return tile.type !== 'water' && (tileInfo?.walkable ?? tile.walkable) && onOwnLand &&
+            moveCitizenIntoBuilding(stranger, pos, buildings, occupants) !== null;
         });
       
       if (adjacentTiles.length === 0) {
@@ -515,7 +520,8 @@ const Index = () => {
       }
       
       const newPos = adjacentTiles[Math.floor(Math.random() * adjacentTiles.length)];
-      const updatedStranger = { ...stranger, position: newPos };
+      const updatedStranger = moveCitizenIntoBuilding(stranger, newPos, buildings, occupants);
+      if (!updatedStranger) return prev;
       
       const newStrangers = [...prev.strangers];
       newStrangers[strangerIndex] = updatedStranger;
@@ -767,6 +773,8 @@ const Index = () => {
             userColor={world.userColor}
             userCoins={world.coins}
             members={members}
+            citizens={world.strangers}
+            onViewCitizen={setSelectedStranger}
             onClose={() => selectTile(selectedTile.x, selectedTile.y)}
             onOffer={!isDemoMode ? amount => void tileRequests.create(selectedTile.x, selectedTile.y, 'offer', amount) : undefined}
             onContest={!isDemoMode ? () => void tileRequests.create(selectedTile.x, selectedTile.y, 'contest') : undefined}
@@ -914,7 +922,7 @@ const Index = () => {
 
           {selectedStranger && (
             <StrangerInfoPanel
-              stranger={selectedStranger}
+              stranger={world.strangers?.find(s => s.id === selectedStranger.id) ?? selectedStranger}
               onClose={() => setSelectedStranger(null)}
               onRequestMove={handleRequestStrangerMove}
               canRename={selectedStranger.allegiance?.userId === world.userId}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MapTile, Resource, RARITY_COLORS, TILE_TYPES, TileType, calculateTileValue } from '@/types/game';
+import { MapTile, Resource, Stranger, RARITY_COLORS, TILE_TYPES, TileType, calculateTileValue } from '@/types/game';
 import { X, Flag, Package, Coins, Pencil, Check, Paintbrush, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ResourceIcon from './ResourceIcon';
@@ -27,6 +27,8 @@ interface TileInfoPanelProps {
   onContest?: () => void;
   activeRequest?: TileRequest;
   requestBusy?: boolean;
+  citizens?: Stranger[];
+  onViewCitizen?: (citizen: Stranger) => void;
 }
 
 const CLAIM_RADIUS = 6;
@@ -50,6 +52,8 @@ const TileInfoPanel = ({
   onContest,
   activeRequest,
   requestBusy,
+  citizens = [],
+  onViewCitizen,
 }: TileInfoPanelProps) => {
   const tileInfo = TILE_TYPES.find(t => t.type === tile.type);
   const tileResources = tile.resources.map(id => resources.find(r => r.id === id)).filter(Boolean) as Resource[];
@@ -268,6 +272,14 @@ const TileInfoPanel = ({
                           <span className="text-xs text-muted-foreground">(placed)</span>
                         )}
                       </div>
+                      {resource.holdsPeople && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          People: {citizens.filter(s => s.buildingKey === `${position.x},${position.y}:${resource.id}`).length} / {resource.peopleCapacity ?? 1}
+                          {citizens.filter(s => s.buildingKey === `${position.x},${position.y}:${resource.id}`).map(s => (
+                            <Button key={s.id} variant="ghost" size="sm" className="h-auto px-0 py-1 text-xs block" onClick={() => onViewCitizen?.(s)}>{s.name}</Button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                   {canGather && (!isPlaced || isOwnClaim) ? (

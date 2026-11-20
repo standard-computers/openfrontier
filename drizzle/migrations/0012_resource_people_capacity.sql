@@ -1,0 +1,1 @@
+ALTER TABLE public.resource_marketplace ADD COLUMN holds_people boolean NOT NULL DEFAULT false, ADD COLUMN people_capacity integer NOT NULL DEFAULT 1 CHECK (people_capacity >= 1);

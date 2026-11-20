@@ -8,6 +8,8 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import ResourceIcon from './ResourceIcon';
 import { normalizeRecipes } from '@/utils/resourceConverter';
+import { Checkbox } from '@/components/ui/checkbox';
+import { normalizePeopleCapacity } from '@/lib/citizenBuildings';
 
 interface ResourceEditorModalProps {
   resource: Resource;
@@ -92,6 +94,8 @@ const ResourceEditorModal = ({
         isFloating: data.is_floating || false,
         canFloatOnWater: data.can_float_on_water || false,
         holdsPlayer: data.holds_player || false,
+        holdsPeople: data.holds_people || false,
+        peopleCapacity: normalizePeopleCapacity(data.people_capacity),
         display: data.display || false,
         placeable: data.placeable || false,
         passable: data.passable || false,
@@ -663,6 +667,21 @@ const ResourceEditorModal = ({
               </div>
 
               {/* Optional Properties */}
+              <div className="border-t border-border pt-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Checkbox id="holds-people" checked={form.holdsPeople ?? false}
+                    onCheckedChange={checked => setForm({ ...form, holdsPeople: checked === true, peopleCapacity: normalizePeopleCapacity(form.peopleCapacity) })} />
+                  <label htmlFor="holds-people" className="text-sm font-medium">Holds People</label>
+                </div>
+                {form.holdsPeople && (
+                  <div>
+                    <label htmlFor="people-capacity" className="text-xs text-muted-foreground mb-1 block">People Capacity</label>
+                    <input id="people-capacity" type="text" inputMode="numeric" value={form.peopleCapacity ?? 1}
+                      onChange={event => setForm({ ...form, peopleCapacity: normalizePeopleCapacity(Number(event.target.value)) })}
+                      className="input-field w-full" />
+                  </div>
+                )}
+              </div>
               <div className="border-t border-border pt-4">
                 <h4 className="text-sm font-medium mb-3">Optional Properties</h4>
                 

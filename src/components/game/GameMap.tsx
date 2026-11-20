@@ -342,6 +342,7 @@ const GameMap = ({
   const strangerPositionMap = useMemo(() => {
     const map = new Map<string, Stranger>();
     for (const s of strangers) {
+      if (s.buildingKey) continue;
       map.set(`${s.position.x}-${s.position.y}`, s);
     }
     return map;

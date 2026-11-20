@@ -1,6 +1,7 @@
 import { Resource, TileType } from '@/types/game';
 import { supabase } from '@/integrations/supabase/client';
 import { withoutResourceCreator } from '@/lib/resourcePermissions';
+import { normalizePeopleCapacity } from '@/lib/citizenBuildings';
 
 // Type for the database resource_marketplace row
 export interface RepositoryResource {
@@ -21,6 +22,8 @@ export interface RepositoryResource {
   is_floating: boolean;
   can_float_on_water: boolean;
   holds_player: boolean;
+  holds_people: boolean;
+  people_capacity: number;
   display: boolean;
   placeable: boolean;
   passable: boolean;
@@ -111,6 +114,8 @@ export const repositoryToGameResource = (repoResource: RepositoryResource): Reso
     isFloating: repoResource.is_floating || false,
     canFloatOnWater: repoResource.can_float_on_water || false,
     holdsPlayer: repoResource.holds_player || false,
+    holdsPeople: repoResource.holds_people || false,
+    peopleCapacity: normalizePeopleCapacity(repoResource.people_capacity),
     display: repoResource.display || false,
     placeable: repoResource.placeable || false,
     passable: repoResource.passable || false,
@@ -158,6 +163,8 @@ export const gameResourceToRepository = (resource: Resource, userId?: string) =>
     is_floating: resource.isFloating || false,
     can_float_on_water: resource.canFloatOnWater || false,
     holds_player: resource.holdsPlayer || false,
+    holds_people: resource.holdsPeople || false,
+    people_capacity: normalizePeopleCapacity(resource.peopleCapacity),
     display: resource.display || false,
     placeable: resource.placeable || false,
     passable: resource.passable || false,

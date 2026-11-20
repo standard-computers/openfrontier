@@ -9,3 +9,4 @@
 - [x] Give newly generated and newborn citizens natural names; test saving and re-entry.
 - [x] Add capital selection to sovereignty areas, persist home coordinates, and verify selection, reload, and world table.
 - [x] Grant Stg shared-resource editor access; verified creating, editing another creator's resource, reload persistence, and preserved attribution.
+- [x] Add saved Holds People controls and territory-bound per-building capacity; verified saved controls, live occupancy details, and capacity/territory tests.

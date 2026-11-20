@@ -54,6 +54,7 @@ export type Database = {
           gives_xp: boolean
           has_limited_lifetime: boolean
           health_gain: number
+          holds_people: boolean
           holds_player: boolean
           icon: string
           id: string
@@ -64,6 +65,7 @@ export type Database = {
           max_life: number
           name: string
           passable: boolean
+          people_capacity: number
           placeable: boolean
           produce_tile: boolean
           produce_tile_type: string | null
@@ -100,6 +102,7 @@ export type Database = {
           gives_xp?: boolean
           has_limited_lifetime?: boolean
           health_gain?: number
+          holds_people?: boolean
           holds_player?: boolean
           icon?: string
           id?: string
@@ -110,6 +113,7 @@ export type Database = {
           max_life?: number
           name: string
           passable?: boolean
+          people_capacity?: number
           placeable?: boolean
           produce_tile?: boolean
           produce_tile_type?: string | null
@@ -146,6 +150,7 @@ export type Database = {
           gives_xp?: boolean
           has_limited_lifetime?: boolean
           health_gain?: number
+          holds_people?: boolean
           holds_player?: boolean
           icon?: string
           id?: string
@@ -156,6 +161,7 @@ export type Database = {
           max_life?: number
           name?: string
           passable?: boolean
+          people_capacity?: number
           placeable?: boolean
           produce_tile?: boolean
           produce_tile_type?: string | null
@@ -454,6 +460,7 @@ export type Database = {
           gives_xp: boolean
           has_limited_lifetime: boolean
           health_gain: number
+          holds_people: boolean
           holds_player: boolean
           icon: string
           id: string
@@ -464,6 +471,7 @@ export type Database = {
           max_life: number
           name: string
           passable: boolean
+          people_capacity: number
           placeable: boolean
           produce_tile: boolean
           produce_tile_type: string | null
