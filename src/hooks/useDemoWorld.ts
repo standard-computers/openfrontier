@@ -93,6 +93,7 @@ export const useDemoWorld = () => {
   const deleteArea = useCallback(() => {}, []);
   const updateArea = useCallback(() => {}, []);
   const renameTile = useCallback(() => {}, []);
+  const rotateResource = useCallback((_x: number, _y: number, _id: string) => {}, []);
   const convertTiles = useCallback(() => ({ success: false, message: 'Sign up to convert tiles!', convertedCount: 0, totalCost: 0 }), []);
   const placeItem = useCallback(() => noopResult, []);
   const useItemOnFacingTile = useCallback(() => noopResult, []);
@@ -143,6 +144,7 @@ export const useDemoWorld = () => {
     deleteArea,
     updateArea,
     renameTile,
+    rotateResource,
     convertTiles,
     placeItem,
     useItemOnFacingTile,

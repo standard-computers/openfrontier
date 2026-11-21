@@ -23,6 +23,7 @@ export interface RepositoryResource {
   can_float_on_water: boolean;
   holds_player: boolean;
   holds_people: boolean;
+  rotatable?: boolean;
   people_capacity: number;
   display: boolean;
   placeable: boolean;
@@ -115,6 +116,7 @@ export const repositoryToGameResource = (repoResource: RepositoryResource): Reso
     canFloatOnWater: repoResource.can_float_on_water || false,
     holdsPlayer: repoResource.holds_player || false,
     holdsPeople: repoResource.holds_people || false,
+    rotatable: repoResource.rotatable || false,
     peopleCapacity: normalizePeopleCapacity(repoResource.people_capacity),
     display: repoResource.display || false,
     placeable: repoResource.placeable || false,
@@ -164,6 +166,7 @@ export const gameResourceToRepository = (resource: Resource, userId?: string) =>
     can_float_on_water: resource.canFloatOnWater || false,
     holds_player: resource.holdsPlayer || false,
     holds_people: resource.holdsPeople || false,
+    rotatable: resource.rotatable || false,
     people_capacity: normalizePeopleCapacity(resource.peopleCapacity),
     display: resource.display || false,
     placeable: resource.placeable || false,

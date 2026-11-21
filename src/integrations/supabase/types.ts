@@ -74,6 +74,7 @@ export type Database = {
           produces_resource: string | null
           rarity: string
           recipe: Json | null
+          rotatable: boolean
           spawn_chance: number
           spawn_tiles: string[]
           tile_height: number
@@ -122,6 +123,7 @@ export type Database = {
           produces_resource?: string | null
           rarity?: string
           recipe?: Json | null
+          rotatable?: boolean
           spawn_chance?: number
           spawn_tiles?: string[]
           tile_height?: number
@@ -170,6 +172,7 @@ export type Database = {
           produces_resource?: string | null
           rarity?: string
           recipe?: Json | null
+          rotatable?: boolean
           spawn_chance?: number
           spawn_tiles?: string[]
           tile_height?: number
@@ -480,6 +483,7 @@ export type Database = {
           produces_resource: string | null
           rarity: string
           recipe: Json | null
+          rotatable: boolean
           spawn_chance: number
           spawn_tiles: string[]
           tile_height: number

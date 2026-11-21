@@ -95,6 +95,7 @@ const ResourceEditorModal = ({
         canFloatOnWater: data.can_float_on_water || false,
         holdsPlayer: data.holds_player || false,
         holdsPeople: data.holds_people || false,
+        rotatable: data.rotatable || false,
         peopleCapacity: normalizePeopleCapacity(data.people_capacity),
         display: data.display || false,
         placeable: data.placeable || false,
@@ -668,6 +669,11 @@ const ResourceEditorModal = ({
 
               {/* Optional Properties */}
               <div className="border-t border-border pt-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Checkbox id="rotatable" checked={form.rotatable ?? false}
+                    onCheckedChange={checked => setForm({ ...form, rotatable: checked === true })} />
+                  <label htmlFor="rotatable" className="text-sm font-medium">Rotatable</label>
+                </div>
                 <div className="flex items-center gap-2">
                   <Checkbox id="holds-people" checked={form.holdsPeople ?? false}
                     onCheckedChange={checked => setForm({ ...form, holdsPeople: checked === true, peopleCapacity: normalizePeopleCapacity(form.peopleCapacity) })} />

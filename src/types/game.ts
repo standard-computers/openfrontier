@@ -62,6 +62,7 @@ export interface Resource {
   canFloatOnWater?: boolean; // Can be placed on water tiles
   holdsPlayer?: boolean; // Player can enter/ride this resource (vehicles, boats)
   holdsPeople?: boolean;
+  rotatable?: boolean;
   peopleCapacity?: number;
   display?: boolean; // Always display on tile visually (even if not floating)
   placeable?: boolean; // Can be placed on a tile
@@ -90,6 +91,7 @@ export interface MapTile {
   type: TileType;
   resources: string[];
   placedResources?: string[]; // Resources placed by players (cannot be gathered, must be destroyed)
+  resourceRotation?: Record<string, number>; // Rotation in degrees (0/90/180/270) per resourceId
   resourceLife?: Record<string, number>; // Track current life of each resource on tile by resourceId
   walkable: boolean;
   claimedBy?: string;

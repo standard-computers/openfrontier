@@ -53,6 +53,7 @@ const TileOverlay = memo(({
   playerBehindResource,
   isDamaged,
   lifePercent,
+  resourceRotation = 0,
   hasLightEmitter,
   isNighttime,
   npcOnTile,
@@ -72,6 +73,7 @@ const TileOverlay = memo(({
   playerBehindResource: boolean;
   isDamaged: boolean;
   lifePercent: number;
+  resourceRotation?: number;
   hasLightEmitter: boolean;
   isNighttime: boolean;
   npcOnTile: NPC | undefined;
@@ -152,7 +154,7 @@ const TileOverlay = memo(({
               />
             </div>
           )}
-          <div className="flex items-end justify-start w-full h-full">
+          <div className="flex items-end justify-start w-full h-full" style={resourceRotation ? { transform: `rotate(${resourceRotation}deg)` } : undefined}>
             <ResourceIcon 
               icon={displayableResource.icon} 
               iconType={displayableResource.icon.startsWith('http') ? 'image' : 'emoji'}
@@ -534,6 +536,7 @@ const GameMap = ({
       playerBehindResource: boolean;
       isDamaged: boolean;
       lifePercent: number;
+      resourceRotation: number;
       hasLightEmitter: boolean;
       npcOnTile: NPC | undefined;
       strangerOnTile: Stranger | undefined;
@@ -605,6 +608,7 @@ const GameMap = ({
           playerBehindResource,
           isDamaged,
           lifePercent,
+          resourceRotation: displayableResource ? tile.resourceRotation?.[displayableResource.id] ?? 0 : 0,
           hasLightEmitter,
           npcOnTile,
           strangerOnTile,
@@ -783,6 +787,7 @@ const GameMap = ({
             playerBehindResource={data.playerBehindResource}
             isDamaged={data.isDamaged}
             lifePercent={data.lifePercent}
+            resourceRotation={data.resourceRotation}
             hasLightEmitter={data.hasLightEmitter}
             isNighttime={isNighttime}
             npcOnTile={data.npcOnTile}

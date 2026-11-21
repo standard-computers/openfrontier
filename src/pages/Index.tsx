@@ -785,6 +785,7 @@ const Index = () => {
             onClaim={handleClaim}
             onGather={handleGather}
             onRename={handleRenameTile}
+            onRotate={!isDemoMode ? (resourceId) => gameWorld.rotateResource(selectedTile.x, selectedTile.y, resourceId) : undefined}
             onConvert={handleConvertTile}
             onViewUser={(member) => {
               setSelectedMember(member);

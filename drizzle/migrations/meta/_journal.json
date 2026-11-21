@@ -99,6 +99,13 @@
       "when": 1795137148114,
       "tag": "0013_sovereignty_policy_flags_in_lookup",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1795275818287,
+      "tag": "0014_resource_rotatable",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { MapTile, Resource, Stranger, RARITY_COLORS, TILE_TYPES, TileType, calculateTileValue } from '@/types/game';
-import { X, Flag, Package, Coins, Pencil, Check, Paintbrush, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, Flag, Package, Coins, Pencil, Check, RotateCw, Paintbrush, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ResourceIcon from './ResourceIcon';
 import { WorldMember } from '@/hooks/useGameWorld';
@@ -21,6 +21,7 @@ interface TileInfoPanelProps {
   onClaim: () => void;
   onGather: (resourceId: string) => void;
   onRename: (name: string) => void;
+  onRotate?: (resourceId: string) => void;
   onViewUser: (member: WorldMember) => void;
   onConvert?: (newType: TileType) => void;
   onOffer?: (amount: number) => void;
@@ -46,6 +47,7 @@ const TileInfoPanel = ({
   onClaim,
   onGather,
   onRename,
+  onRotate,
   onViewUser,
   onConvert,
   onOffer,
@@ -260,7 +262,7 @@ const TileInfoPanel = ({
                   className="flex items-center justify-between p-2 bg-secondary/50 rounded"
                 >
                   <div className="flex items-center gap-2">
-                    <ResourceIcon icon={resource.icon} iconType={resource.iconType} size="lg" />
+                    <ResourceIcon icon={resource.icon} iconType={resource.iconType} size="lg" style={tile.resourceRotation?.[resource.id] ? { transform: `rotate(${tile.resourceRotation[resource.id]}deg)` } : undefined} />
                     <div>
                       <p className="text-sm font-medium">{resource.name}</p>
                       <div className="flex items-center gap-2">
@@ -282,6 +284,12 @@ const TileInfoPanel = ({
                       )}
                     </div>
                   </div>
+                  <div className="flex items-center gap-1">
+                  {resource.rotatable && onRotate && canGather && (
+                    <Button variant="outline" size="sm" className="text-xs" onClick={() => onRotate(resource.id)}>
+                      <RotateCw className="w-3 h-3" />Rotate
+                    </Button>
+                  )}
                   {canGather && (!isPlaced || isOwnClaim) ? (
                     <Button
                       onClick={() => onGather(resource.id)}
@@ -293,6 +301,7 @@ const TileInfoPanel = ({
                   ) : (
                     <span className="text-xs text-muted-foreground">{isPlaced && !isClaimed ? 'Claim to gather' : 'Not yours'}</span>
                   )}
+                  </div>
                 </div>
               );
             })}

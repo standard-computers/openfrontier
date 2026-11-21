@@ -1,0 +1,1 @@
+ALTER TABLE public.resource_marketplace ADD COLUMN IF NOT EXISTS rotatable boolean NOT NULL DEFAULT false;

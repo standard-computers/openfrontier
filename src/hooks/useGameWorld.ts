@@ -822,6 +822,21 @@ export const useGameWorld = () => {
     });
   }, [saveMapData]);
 
+  const rotateResource = useCallback((x: number, y: number, resourceId: string) => {
+    setWorld(prev => {
+      const tile = prev.map.tiles[y]?.[x];
+      const resource = prev.resources.find(r => r.id === resourceId);
+      if (!tile || !resource?.rotatable || !tile.resources.includes(resourceId)) return prev;
+      if (tile.claimedBy && tile.claimedBy !== prev.userId) return prev;
+      const next = ((tile.resourceRotation?.[resourceId] ?? 0) + 90) % 360;
+      const newTiles = prev.map.tiles.map((row, ry) => ry !== y ? row : row.map((t, rx) =>
+        rx === x ? { ...t, resourceRotation: { ...(t.resourceRotation || {}), [resourceId]: next } } : t));
+      const newMapData = { ...prev.map, tiles: newTiles };
+      setTimeout(() => saveMapData(newMapData), 500);
+      return { ...prev, map: newMapData };
+    });
+  }, [saveMapData]);
+
   const setUserColor = useCallback((color: string) => {
     setWorld(prev => ({ ...prev, userColor: color }));
   }, []);
@@ -1597,6 +1612,7 @@ export const useGameWorld = () => {
     updateArea,
     setCapitalArea,
     renameTile,
+    rotateResource,
     consumeResource,
     placeItem,
     useItemOnFacingTile,
