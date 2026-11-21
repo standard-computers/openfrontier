@@ -547,6 +547,8 @@ const ResourceEditorModal = ({
             <div>
               {propertyNumber('tile-width', 'Tile Width', form.tileWidth ?? 1, value => setForm({ ...form, tileWidth: Math.max(0, Math.min(form.isFloating ? 1 : 99, value)) }), true)}
               {propertyNumber('tile-height', 'Tile Height', form.tileHeight ?? 1, value => setForm({ ...form, tileHeight: Math.max(0, Math.min(form.isFloating ? 1 : 99, value)) }), true)}
+              {propertyNumber('gather-time', 'Gather Time (seconds)', form.gatherTime, value => setForm({ ...form, gatherTime: Math.max(0, Math.round(value)) }), true)}
+              {propertyNumber('spawn-chance', 'Spawn Chance (%)', Math.round(form.spawnChance * 10000) / 100, value => setForm({ ...form, spawnChance: Math.round(Math.min(100, Math.max(0, value)) * 100) / 10000 }))}
               {propertyToggle('rotatable', 'Rotatable', form.rotatable, rotatable => setForm({ ...form, rotatable }))}
               {propertyToggle('holds-people', 'Holds People', form.holdsPeople, holdsPeople => setForm({ ...form, holdsPeople, peopleCapacity: normalizePeopleCapacity(form.peopleCapacity) }))}
               {form.holdsPeople && propertyNumber('people-capacity', 'People Capacity', form.peopleCapacity ?? 1, value => setForm({ ...form, peopleCapacity: normalizePeopleCapacity(value) }), true)}
@@ -562,10 +564,10 @@ const ResourceEditorModal = ({
               {propertyToggle('useLife', 'Use Life', form.useLife, useLife => setForm({ ...form, useLife, lifeDecreasePerUse: useLife ? (form.lifeDecreasePerUse || 100) : undefined }))}
               {form.useLife && propertyNumber('life-per-use', 'Life Decrease Per Use', form.lifeDecreasePerUse || 100, value => setForm({ ...form, lifeDecreasePerUse: Math.max(0.01, Math.round(value * 100) / 100) }))}
               {propertyToggle('consumable', 'Consumable', form.consumable, consumable => setForm({ ...form, consumable, healthGain: consumable ? (form.healthGain || 0) : 0 }))}
-              {form.consumable && propertyNumber('health-gain', 'Health Gain', form.healthGain || 0, value => setForm({ ...form, healthGain: Math.max(0, Math.round(value * 100) / 100) }))}
+              {form.consumable && propertyNumber('health-gain', 'Health Gain', form.healthGain || 0, value => setForm({ ...form, healthGain: Math.max(0, Math.round(value)) }), true)}
               {propertyToggle('canInflictDamage', 'Inflict Damage', form.canInflictDamage, canInflictDamage => setForm({ ...form, canInflictDamage, damage: canInflictDamage ? (form.damage || 1) : 0 }))}
               {form.canInflictDamage && <>
-                {propertyNumber('damage-amount', 'Damage Amount', form.damage || 0, value => setForm({ ...form, damage: Math.max(0, Math.round(value * 100) / 100) }))}
+                {propertyNumber('damage-amount', 'Damage Amount', form.damage || 0, value => setForm({ ...form, damage: Math.max(0, Math.round(value)) }), true)}
                 {propertyToggle('projectile', 'Projectile', form.projectile, projectile => setForm({ ...form, projectile }))}
                 {form.projectile && propertyNumber('projectile-distance', 'Projectile Distance (tiles)', form.projectileDistance ?? 5, value => setForm({ ...form, projectileDistance: Math.max(1, value) }), true)}
               </>}
@@ -576,43 +578,10 @@ const ResourceEditorModal = ({
 
           {activeTab === 'controls' && (
             <div className="space-y-4">
-              {/* Gather Time */}
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Gather Time (seconds)</label>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  step="0.01"
-                  min="0"
-                  value={form.gatherTime}
-                  onChange={(e) => {
-                    const val = parseFloat(e.target.value) || 0;
-                    setForm({ ...form, gatherTime: Math.max(0, Math.round(val * 100) / 100) });
-                  }}
-                  className="input-field w-full"
-                />
-              </div>
-
               {/* Spawn Settings */}
               <div className="border-t border-border pt-4">
                 <h4 className="text-sm font-medium mb-3">Spawn Settings</h4>
                 <div className="space-y-3">
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Spawn Chance (%)</label>
-                    <input
-                      type="number"
-                      min={0}
-                      max={100}
-                      step={0.01}
-                      value={Math.round(form.spawnChance * 10000) / 100}
-                      onChange={(e) => {
-                        const val = Math.min(100, Math.max(0, parseFloat(e.target.value) || 0));
-                        setForm({ ...form, spawnChance: Math.round(val * 100) / 10000 });
-                      }}
-                      className="input-field w-full"
-                    />
-                  </div>
-
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Spawns On Tiles</label>
                     <div className="flex flex-wrap gap-1">
