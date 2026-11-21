@@ -142,6 +142,8 @@ const Index = () => {
   }, [tileRequests.requests, setWorld]);
 
   // Build member sovereignty map for stranger allegiance
+  // NPC movement must not rebuild allegiance callbacks and reset the citizen action timer.
+  const npcSovereigntyKey = JSON.stringify(world.npcs?.map(npc => [npc.id, npc.name, npc.sovereignty]));
   const memberSovereignties = useMemo(() => {
     const map = new Map<string, { username: string; sovereignty?: Sovereignty }>();
     if (world.userId && world.sovereignty) {
@@ -152,12 +154,13 @@ const Index = () => {
         const saved = worldSovereignties.find(s => s.userId === member.userId);
         map.set(member.userId, {
           username: member.username,
-          sovereignty: saved ? { name: saved.name, flag: saved.flag, motto: saved.motto, foundedAt: saved.foundedAt, openBorders: saved.openBorders, allowOutsiderGathering: saved.allowOutsiderGathering } : undefined,
+          sovereignty: saved ? { name: saved.name, flag: saved.flag, motto: saved.motto, foundedAt: saved.foundedAt, openBorders: saved.openBorders, allowOutsiderGathering: saved.allowOutsiderGathering, taxRate: gameWorld.taxPolicies[member.userId] ?? 0 } : undefined,
         });
       }
     });
+    world.npcs?.forEach(npc => map.set(npc.id, { username: npc.name, sovereignty: { ...npc.sovereignty, taxRate: gameWorld.taxPolicies[npc.id] ?? npc.sovereignty.taxRate ?? 10 } }));
     return map;
-  }, [world.userId, world.sovereignty, username, members, worldSovereignties]);
+  }, [world.userId, world.sovereignty, npcSovereigntyKey, username, members, worldSovereignties, gameWorld.taxPolicies]);
 
   // Enable NPC behavior (only in non-demo mode)
   useNPCBehavior({ world, setWorld, saveMapData: isDemoMode ? async () => {} : saveMapData });
@@ -847,6 +850,8 @@ const Index = () => {
             onDeleteArea={deleteArea}
             onUpdateArea={updateArea}
             onSetCapitalArea={gameWorld.setCapitalArea}
+            npcs={world.npcs}
+            onUpdateNpcTaxRate={isOwner ? gameWorld.updateNpcTaxRate : undefined}
           />
 
           <WorldConfig

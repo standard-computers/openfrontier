@@ -337,6 +337,7 @@ export type Database = {
           npc_aggression: string
           npc_count: number
           npc_land_trade_coins: Json
+          npc_tax_rates: Json
           resource_ids: string[]
           resources: Json
           stranger_density: number
@@ -355,6 +356,7 @@ export type Database = {
           npc_aggression?: string
           npc_count?: number
           npc_land_trade_coins?: Json
+          npc_tax_rates?: Json
           resource_ids?: string[]
           resources: Json
           stranger_density?: number
@@ -373,6 +375,7 @@ export type Database = {
           npc_aggression?: string
           npc_count?: number
           npc_land_trade_coins?: Json
+          npc_tax_rates?: Json
           resource_ids?: string[]
           resources?: Json
           stranger_density?: number
@@ -385,6 +388,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assess_citizen_tax: {
+        Args: { _citizen: Json; _day: number; _prior: Json; _rate: number }
+        Returns: Json
+      }
       can_edit_all_resources: { Args: never; Returns: boolean }
       create_player_tile_request: {
         Args: {
@@ -533,6 +540,7 @@ export type Database = {
           username: string
         }[]
       }
+      get_world_tax_policies: { Args: { _world_id: string }; Returns: Json }
       is_world_member: {
         Args: { _user_id: string; _world_id: string }
         Returns: boolean

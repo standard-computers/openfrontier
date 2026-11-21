@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Sovereignty, USER_COLORS, Area, AREA_COLORS } from '@/types/game';
+import { Sovereignty, USER_COLORS, Area, AREA_COLORS, NPC } from '@/types/game';
 import { X, Flag, Crown, Palette, Coins, Info, Settings, Plus, MapPin, Trash2, RefreshCw, Check, ScrollText } from 'lucide-react';
 import { generateRandomSovereigntyName } from '@/utils/nameGenerator';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import TaxRateControl from './TaxRateControl';
 
 const FLAG_OPTIONS = ['🏴', '🏳️', '🚩', '⚔️', '🛡️', '👑', '🦁', '🦅', '🐉', '🌟', '⭐', '🔱', '🏰', '⚜️', '🗡️', '🎭'];
 
@@ -23,6 +24,8 @@ interface SovereigntyPanelProps {
   onDeleteArea?: (areaId: string) => void;
   onSetCapitalArea?: (areaId: string) => void;
   onUpdateArea?: (areaId: string, updates: Partial<Omit<Area, 'id' | 'createdAt'>>) => void;
+  npcs?: NPC[];
+  onUpdateNpcTaxRate?: (npcId: string, rate: number) => void;
 }
 
 const SovereigntyPanel = ({
@@ -41,6 +44,8 @@ const SovereigntyPanel = ({
   onDeleteArea,
   onUpdateArea,
   onSetCapitalArea,
+  npcs,
+  onUpdateNpcTaxRate,
 }: SovereigntyPanelProps) => {
   const [activeTab, setActiveTab] = useState<'general' | 'areas' | 'policies' | 'controls'>('general');
   const [newPolicy, setNewPolicy] = useState('');
@@ -420,6 +425,16 @@ const SovereigntyPanel = ({
 
           {activeTab === 'policies' && (
             <div className="space-y-3">
+              <div className="border-b border-border pb-3 space-y-2">
+                <TaxRateControl label="Citizen tax rate" rate={sovereignty.taxRate} onSave={taxRate => onUpdateSovereignty({ taxRate })} />
+                <p className="text-xs text-muted-foreground">Savings tax · collected every 28 game days</p>
+              </div>
+              {onUpdateNpcTaxRate && !!npcs?.length && (
+                <div className="border-b border-border pb-3 space-y-3">
+                  <h3 className="text-sm font-semibold">NPC taxes</h3>
+                  {npcs.map(npc => <TaxRateControl key={npc.id} label={`${npc.sovereignty.name} tax rate`} rate={npc.sovereignty.taxRate ?? 10} onSave={rate => onUpdateNpcTaxRate(npc.id, rate)} />)}
+                </div>
+              )}
               {/* Gameplay policy toggles */}
               <div className="bg-secondary/30 rounded-lg p-3 space-y-3">
                 <label className="flex items-start gap-3 cursor-pointer">

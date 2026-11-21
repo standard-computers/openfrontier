@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { GameWorld, Stranger, WorldMap, Resource, TILE_TYPES, MAX_HEALTH, calculateTileValue, StrangerAllegiance, Sovereignty } from '@/types/game';
 import { generateCitizenName } from '@/lib/citizenNames';
+import { getCitizenGatherEarnings, getCitizenTerritoryAttraction, returnUnpledgedToUnclaimed } from '@/lib/citizenEconomy';
 import { buildCitizenBuildingIndex, countBuildingOccupants, moveCitizenIntoBuilding, reconcileCitizenBuildings, type CitizenBuildingIndex } from '@/lib/citizenBuildings';
 
 const STRANGER_ACTION_INTERVAL = 3000; // Strangers act every 3 seconds (slower than NPCs)
@@ -23,6 +24,7 @@ interface SovereigntyInfo {
   tileCount: number;
   /** Sample of claimed tile positions (used to return pledged strangers home) */
   territoryPositions: { x: number; y: number }[];
+  resourceTiles: number;
 }
 
 interface UseStrangerBehaviorProps {
@@ -51,19 +53,20 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     if (!memberSovereignties || memberSovereignties.size === 0) return [];
     
     // Calculate total value for each claimant
-    const claimValues = new Map<string, { totalValue: number; tileCount: number; positions: { x: number; y: number }[] }>();
+    const claimValues = new Map<string, { totalValue: number; tileCount: number; resourceTiles: number; positions: { x: number; y: number }[] }>();
     
     for (let y = 0; y < map.height; y++) {
       for (let x = 0; x < map.width; x++) {
         const tile = map.tiles[y]?.[x];
-        if (tile?.claimedBy && !tile.claimedBy.startsWith('npc-')) {
-          const current = claimValues.get(tile.claimedBy) || { totalValue: 0, tileCount: 0, positions: [] };
+        if (tile?.claimedBy) {
+          const current = claimValues.get(tile.claimedBy) || { totalValue: 0, tileCount: 0, resourceTiles: 0, positions: [] };
           const tileValue = calculateTileValue(tile, resources);
           // Keep a bounded sample of land positions (enough for random teleport targets)
           if (current.positions.length < 200 && isStrangerWalkable(tile)) current.positions.push({ x, y });
           claimValues.set(tile.claimedBy, {
             totalValue: current.totalValue + tileValue,
             tileCount: current.tileCount + 1,
+            resourceTiles: current.resourceTiles + (tile.resources.some(id => !tile.placedResources?.includes(id)) ? 1 : 0),
             positions: current.positions,
           });
         }
@@ -82,6 +85,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
           totalValue: value.totalValue,
           tileCount: value.tileCount,
           territoryPositions: value.positions,
+          resourceTiles: value.resourceTiles,
         });
       }
     });
@@ -90,14 +94,18 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
   }, [memberSovereignties]);
 
   // Evaluate if stranger should pledge allegiance
-  const evaluateAllegiance = useCallback((stranger: Stranger, sovereignties: SovereigntyInfo[]): Stranger => {
+  const evaluateAllegiance = useCallback((stranger: Stranger, sovereignties: SovereigntyInfo[], gameDay: number): Stranger => {
+    if ((stranger.taxExileUntilDay ?? 0) > gameDay) return stranger;
     // Only evaluate sometimes
     if (Math.random() > STRANGER_ALLEGIANCE_CHANCE) return stranger;
     
     if (sovereignties.length === 0) return stranger;
     
     // Find the most valuable sovereignty that meets threshold
-    const topSovereignty = sovereignties[0];
+    const topSovereignty = [...sovereignties].sort((a, b) => {
+      const score = (s: SovereigntyInfo) => getCitizenTerritoryAttraction(s.totalValue, s.resourceTiles, s.tileCount);
+      return score(b) - score(a);
+    })[0];
     if (topSovereignty.totalValue < ALLEGIANCE_VALUE_THRESHOLD || topSovereignty.tileCount < ALLEGIANCE_MIN_TILES) {
       // No sovereignty is valuable enough, possibly remove allegiance
       if (stranger.allegiance && Math.random() < 0.1) {
@@ -112,7 +120,8 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     }
     
     // Weight by value - higher value = more likely to attract allegiance
-    const attractionChance = Math.min(0.8, topSovereignty.totalValue / 1000);
+    const abundance = topSovereignty.resourceTiles / Math.max(1, topSovereignty.tileCount);
+    const attractionChance = Math.min(0.8, topSovereignty.totalValue / 1000) * (0.1 + 0.9 * abundance);
     if (Math.random() < attractionChance) {
       const newAllegiance: StrangerAllegiance = {
         userId: topSovereignty.userId,
@@ -121,7 +130,8 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
         sovereigntyFlag: topSovereignty.sovereignty.flag,
         pledgedAt: Date.now(),
       };
-      return { ...stranger, allegiance: newAllegiance };
+      const home = topSovereignty.territoryPositions[0];
+      return { ...stranger, allegiance: newAllegiance, ...(home ? { position: { ...home }, buildingKey: undefined } : {}) };
     }
     
     return stranger;
@@ -146,7 +156,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
   }, []);
 
   // Stranger gathers from any tile with resources (not just owned tiles)
-  const strangerGatherFromTile = useCallback((stranger: Stranger, map: WorldMap): {
+  const strangerGatherFromTile = useCallback((stranger: Stranger, map: WorldMap, resources: Resource[]): {
     newStranger: Stranger;
     newTiles: WorldMap['tiles'];
   } | null => {
@@ -155,6 +165,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     const currentTile = map.tiles[y]?.[x];
     
     if (!currentTile || currentTile.resources.length === 0) return null;
+    if (currentTile.claimedBy && currentTile.claimedBy !== stranger.allegiance?.userId) return null;
     
     // Filter out placed resources - strangers cannot gather them
     const gatherableResources = currentTile.resources.filter(
@@ -186,7 +197,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     }
     
     return {
-      newStranger: { ...stranger, inventory: newInventory },
+      newStranger: { ...stranger, inventory: newInventory, coins: (stranger.coins ?? 0) + getCitizenGatherEarnings(resources.find(r => r.id === resourceToGather)?.coinValue ?? 0) },
       newTiles,
     };
   }, []);
@@ -298,11 +309,11 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     // Companionship
     if (stranger.partnerId) happiness += 1;
 
-    return { ...stranger, happiness: Math.max(0, Math.min(100, happiness)) };
+    return { ...stranger, happiness: Math.max(0, Math.min(stranger.taxMoraleCeiling ?? 100, happiness)) };
   }, []);
 
   // Process one stranger's turn
-  const processStrangerTurn = useCallback((stranger: Stranger, currentMap: WorldMap, resources: Resource[], sovereignties: SovereigntyInfo[], buildings: CitizenBuildingIndex, occupants: Map<string, number>): {
+  const processStrangerTurn = useCallback((stranger: Stranger, currentMap: WorldMap, resources: Resource[], sovereignties: SovereigntyInfo[], buildings: CitizenBuildingIndex, occupants: Map<string, number>, gameDay: number): {
     stranger: Stranger;
     mapTiles?: WorldMap['tiles'];
   } => {
@@ -344,7 +355,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     
     // Priority 2: Gather from current tile (strangers don't claim, just gather)
     if (Math.random() < STRANGER_GATHER_CHANCE) {
-      const gatherResult = strangerGatherFromTile(updatedStranger, currentMap);
+      const gatherResult = strangerGatherFromTile(updatedStranger, currentMap, resources);
       if (gatherResult) {
         updatedStranger = gatherResult.newStranger;
         newMapTiles = gatherResult.newTiles;
@@ -358,7 +369,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     }
     
     // Priority 4: Evaluate allegiance to sovereignties
-    updatedStranger = evaluateAllegiance(updatedStranger, sovereignties);
+    updatedStranger = evaluateAllegiance(updatedStranger, sovereignties, gameDay);
 
     // Finally: recompute the happy index
     updatedStranger = updateHappiness(updatedStranger, currentMap, resources);
@@ -467,7 +478,8 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
         const buildings = buildingCache?.tiles === prev.map.tiles && buildingCache.resources === prev.resources
           ? buildingCache.index : buildCitizenBuildingIndex(prev.map, prev.resources);
         buildingCacheRef.current = { tiles: prev.map.tiles, resources: prev.resources, index: buildings };
-        const citizens = reconcileCitizenBuildings(prev.strangers, currentMap, buildings);
+        const citizens = reconcileCitizenBuildings(returnUnpledgedToUnclaimed(prev.strangers, currentMap), currentMap, buildings);
+        const gameDay = Math.max(0, Math.floor((now - new Date(prev.createdAt).getTime()) / 3600000));
         const occupants = countBuildingOccupants(citizens);
         const updatedStrangers: Stranger[] = [];
         let mapChanged = false;
@@ -491,7 +503,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
           
           // Only process a subset each tick
           if (i >= startIndex && i < startIndex + maxStrangersPerTick) {
-            const result = processStrangerTurn(stranger, currentMap, prev.resources, sovereignties, buildings, occupants);
+            const result = processStrangerTurn(stranger, currentMap, prev.resources, sovereignties, buildings, occupants, gameDay);
             if (stranger.buildingKey) occupants.set(stranger.buildingKey, Math.max(0, (occupants.get(stranger.buildingKey) ?? 0) - 1));
             if (result.stranger.buildingKey) occupants.set(result.stranger.buildingKey, (occupants.get(result.stranger.buildingKey) ?? 0) + 1);
             updatedStrangers.push(result.stranger);

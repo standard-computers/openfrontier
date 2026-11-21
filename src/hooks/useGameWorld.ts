@@ -54,6 +54,7 @@ export interface MemberSovereignty {
   home?: Position;
   openBorders?: boolean;
   allowOutsiderGathering?: boolean;
+  taxRate?: number;
 }
 
 const MAP_SAVE_INTERVAL_MS = 3000;
@@ -68,7 +69,7 @@ export const useGameWorld = () => {
   const [loading, setLoading] = useState(true);
   const [dbWorldId, setDbWorldId] = useState<string | null>(null);
   const [citizenRevision, setCitizenRevision] = useState<number | null>(null);
-  useCitizenPersistence(loading ? null : dbWorldId, world.strangers, citizenRevision, setWorld);
+  const [taxPolicies, setTaxPolicies] = useState<Record<string, number>>({});
   const tradeCoinsRef = useRef(0);
   const npcTradeCoinsRef = useRef<Record<string, number>>({});
 
@@ -189,6 +190,10 @@ export const useGameWorld = () => {
           : [];
         npcTradeCoinsRef.current = (worldData.npc_land_trade_coins ?? {}) as Record<string, number>;
         for (const npc of npcs) npc.coins += npcTradeCoinsRef.current[npc.id] ?? 0;
+        const { data: taxData } = await supabase.rpc('get_world_tax_policies', { _world_id: worldId });
+        const rates = (taxData ?? {}) as Record<string, number>;
+        setTaxPolicies(rates);
+        for (const npc of npcs) npc.sovereignty.taxRate = rates[npc.id] ?? 10;
 
         // Load the complete population. Seed only a world that has never saved citizens.
         const { data: citizenData, error: citizenError } = await supabase.rpc('get_world_citizens', { _world_id: worldId });
@@ -320,10 +325,12 @@ export const useGameWorld = () => {
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
     if (!user) return;
-    const [{ data }, { data: worldData }] = await Promise.all([
+    const [{ data }, { data: worldData }, { data: taxData }] = await Promise.all([
       supabase.from('world_members').select('land_trade_coins').eq('world_id', dbWorldId).eq('user_id', user.id).single(),
       supabase.from('worlds').select('npc_land_trade_coins').eq('id', dbWorldId).single(),
+      supabase.rpc('get_world_tax_policies', { _world_id: dbWorldId }),
     ]);
+    if (taxData) setTaxPolicies(taxData as Record<string, number>);
     if (data) {
       const delta = data.land_trade_coins - tradeCoinsRef.current;
       tradeCoinsRef.current = data.land_trade_coins;
@@ -336,6 +343,19 @@ export const useGameWorld = () => {
       setWorld(prev => ({ ...prev, npcs: prev.npcs.map(npc => ({ ...npc, coins: npc.coins + (balances[npc.id] ?? 0) - (previous[npc.id] ?? 0) })) }));
     }
   }, [dbWorldId]);
+
+  useCitizenPersistence(loading ? null : dbWorldId, world.strangers, citizenRevision, setWorld, refreshTileNegotiations);
+
+  const updateNpcTaxRate = useCallback(async (npcId: string, taxRate: number) => {
+    if (!isOwner || !dbWorldId || !/^npc-\d+$/.test(npcId) || !Number.isFinite(taxRate) || taxRate < 0 || taxRate > 100) return;
+    const { data, error: readError } = await supabase.from('worlds').select('npc_tax_rates').eq('id', dbWorldId).single();
+    if (readError) { toast.error('Could not save NPC tax rate'); return; }
+    const rates = { ...(data.npc_tax_rates as Record<string, number>), [npcId]: taxRate };
+    const { error } = await supabase.from('worlds').update({ npc_tax_rates: rates }).eq('id', dbWorldId);
+    if (error) { toast.error('Could not save NPC tax rate'); return; }
+    setTaxPolicies(prev => ({ ...prev, [npcId]: taxRate }));
+    setWorld(prev => ({ ...prev, npcs: prev.npcs?.map(npc => npc.id === npcId ? { ...npc, sovereignty: { ...npc.sovereignty, taxRate } } : npc) }));
+  }, [isOwner, dbWorldId]);
 
   // Map saves are coalesced: many callers (player, NPCs, strangers) request saves,
   // but at most one full map write is sent per MAP_SAVE_INTERVAL_MS, always with the latest map.
@@ -1651,6 +1671,8 @@ export const useGameWorld = () => {
     isOwner,
     members,
     worldSovereignties,
+    taxPolicies,
+    updateNpcTaxRate,
     loading,
     movePlayer,
     selectTile,

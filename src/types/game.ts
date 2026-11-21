@@ -128,6 +128,7 @@ export interface Sovereignty {
   openBorders?: boolean;
   /** Other players may gather natural resources from this sovereignty's tiles. */
   allowOutsiderGathering?: boolean;
+  taxRate?: number;
 }
 
 export interface Area {
@@ -207,6 +208,13 @@ export interface Stranger {
   partnerId?: string; // Stranger they fell in love with
   lastBirthTime?: number;
   buildingKey?: string; // Building anchor/resource occupied by this citizen
+  coins?: number;
+  lastTaxDay?: number;
+  taxMoodDay?: number;
+  taxUnhappyDays?: number;
+  lastTaxPaid?: number;
+  taxExileUntilDay?: number;
+  taxMoraleCeiling?: number;
 }
 
 export interface GameWorld {

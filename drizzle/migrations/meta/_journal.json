@@ -113,6 +113,20 @@
       "when": 1795277317845,
       "tag": "0015_resource_projectiles",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1795301988462,
+      "tag": "0016_citizen_money_and_taxation",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1795302111201,
+      "tag": "0017_citizen_tax_morale_guard",
+      "breakpoints": true
     }
   ]
 }

@@ -18,6 +18,7 @@ test('complete citizen state survives serialization and re-entry', () => {
     name: 'Clara Bennett', health: 76, happiness: 91, partnerId: 'partner-1', lastBirthTime: 1234,
     allegiance: { userId: 'owner-1', username: 'Ruler', sovereigntyName: 'Home', sovereigntyFlag: 'flag', pledgedAt: 1200 },
     inventory: [{ resourceId: 'food', quantity: 12 }],
+    coins: 240, lastTaxDay: 28, taxMoodDay: 30, taxUnhappyDays: 2, lastTaxPaid: 24,
   });
   const loaded = readCitizenSnapshot(JSON.parse(JSON.stringify({ strangers: citizens, revision: 4 })));
   assert.deepEqual(generateStrangers(500, map, loaded.strangers ?? undefined), citizens);

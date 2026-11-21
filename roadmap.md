@@ -17,3 +17,7 @@
 - [x] Support both manual Fire and saved per-item automatic firing switches.
 - [x] Add an arrow after slot 0, full square-slot inventory, and saved drag rearrangement between inventory and tray; verified signed-in dragging, reload persistence, and mobile opening.
 - [x] Add icon-only quantity purchasing beside Buy with live cost totals; verified 3 Apples cost 36 coins, inventory increased by 3 after reload, and mobile layout.
+- [x] Add persistent citizen money and 28-game-day taxes for human and NPC sovereignties.
+- [x] Earn citizen money from gathered resource value (no daily income); make resource-rich territory attract pledges.
+- [x] Add Policies tax rate and citizen money display; apply happiness pressure and excessive-tax departures.
+- [x] Test cycle timing, transfers, NPC taxes, departure and persistence; verified signed-in rate/reload and isolated human/NPC payments, stale-save protection, and unpledging; removed temporary world.

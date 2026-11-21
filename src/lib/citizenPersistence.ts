@@ -4,6 +4,8 @@ export interface CitizenSnapshot {
   strangers: Stranger[] | null;
   revision: number;
   saved?: boolean;
+  economyChanged?: boolean;
+  treasuryChanged?: boolean;
 }
 
 export function readCitizenSnapshot(value: unknown): CitizenSnapshot {

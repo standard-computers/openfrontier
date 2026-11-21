@@ -4,6 +4,7 @@ import type { Json } from '@/integrations/supabase/types';
 import type { GameWorld, Stranger } from '@/types/game';
 import { readCitizenSnapshot } from '@/lib/citizenPersistence';
 import { toast } from 'sonner';
+import { mergeCitizenEconomy } from '@/lib/citizenEconomy';
 
 // Fixed cadence (not a debounce): citizen simulation changes every three seconds.
 export function useCitizenPersistence(
@@ -11,9 +12,12 @@ export function useCitizenPersistence(
   citizens: Stranger[] | undefined,
   initialRevision: number | null,
   setWorld: React.Dispatch<React.SetStateAction<GameWorld>>,
+  onTreasuryChanged?: () => Promise<void>,
 ) {
   const latest = useRef(citizens);
   latest.current = citizens;
+  const treasuryCallback = useRef(onTreasuryChanged);
+  treasuryCallback.current = onTreasuryChanged;
 
   useEffect(() => {
     if (!worldId || initialRevision === null) return;
@@ -38,6 +42,11 @@ export function useCitizenPersistence(
         revision = result.revision;
         if (result.saved) {
           lastSaved = snapshot;
+          if (result.economyChanged && result.strangers && !stopped) {
+            const saved = result.strangers;
+            setWorld(prev => prev.id === worldId ? { ...prev, strangers: mergeCitizenEconomy(prev.strangers ?? [], snapshot, saved) } : prev);
+          }
+          if (result.treasuryChanged && !stopped) void treasuryCallback.current?.();
         } else if (result.strangers) {
           // A newer session won: read back its canonical population instead of overwriting it.
           lastSaved = result.strangers;

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, User, Flag, Heart, Package, ArrowRightLeft, Pencil, Check , Smile } from 'lucide-react';
+import { X, User, Flag, Heart, Package, ArrowRightLeft, Pencil, Check , Smile, Coins } from 'lucide-react';
 import { Stranger } from '@/types/game';
 import PixelCharacter from './PixelCharacter';
 import { Button } from '@/components/ui/button';
@@ -113,7 +113,14 @@ const StrangerInfoPanel = ({ stranger, onClose, onRequestMove, canRename, onRena
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-secondary/50 rounded-lg p-3 text-center">
+              <div className="flex items-center justify-center gap-1 text-primary">
+                <Coins className="w-4 h-4 shrink-0" />
+                <span className="font-bold break-all">{(stranger.coins ?? 0).toLocaleString()}</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Coins</p>
+            </div>
             <div className="bg-secondary/50 rounded-lg p-3 text-center">
               <div className="flex items-center justify-center gap-1 text-red-400">
                 <Heart className="w-4 h-4" />
