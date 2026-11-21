@@ -134,6 +134,13 @@
       "when": 1795302452720,
       "tag": "0018_npc_tax_from_aggression",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1795302787982,
+      "tag": "0019_linear_citizen_snapshot_saves",
+      "breakpoints": true
     }
   ]
 }
