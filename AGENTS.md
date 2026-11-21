@@ -2,6 +2,7 @@
 - World resource reference changes use a serialized read/merge/save writer; bulk additions await persistence before updating the UI, and name saves never write resource IDs, preventing stale-render overwrites.
 - Inventory drag placement uses a typed slot payload and validates ownership and inventory in the page before calling the existing placement action; this keeps drag-and-drop within presentation code and preserves placement limits and persistence.
 - Inventory tray and expanded grid share slot controls; rearranging swaps complete stacks through the existing player snapshot save so quantities and durability stay intact.
+- Marketplace quantity purchases validate whole quantities and calculate totals with a shared helper, then add the complete quantity in one player-state update.
 - NPC aggression uses the shared action-interval helper and a persisted world setting; changing cadence preserves action probabilities and existing claim rules.
 - Citizens use a dedicated world snapshot with membership-checked, revision-guarded saves and fixed-cadence exit flushing; world-size generation seeds only unsaved worlds, preventing population resets and stale session overwrites.
 - Tile negotiations use authenticated transactional database functions and game-hour deadlines; append-only trade coin adjustments and ownership guards prevent stale client saves from undoing settlements. NPC requests retain human participant IDs and a separate NPC owner key, decide server-side from world aggression, and keep NPC sale proceeds in protected append-only balances.

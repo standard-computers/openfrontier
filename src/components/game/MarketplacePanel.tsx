@@ -1,10 +1,13 @@
-import { X, Store, Search, ShoppingCart } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { X, Store, Search, ShoppingCart, ListPlus } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 import { Resource, RARITY_COLORS } from '@/types/game';
 import { supabase } from '@/integrations/supabase/client';
 import ResourceIcon from './ResourceIcon';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { getMarketPurchaseTotal } from '@/lib/marketPurchase';
 
 interface MarketplaceItem {
   id: string;
@@ -23,7 +26,7 @@ interface MarketplacePanelProps {
   playerCoins: number;
   inventory: { resourceId: string | null; quantity: number }[];
   resources: Resource[];
-  onBuyResource: (resource: Resource, cost: number) => { success: boolean; message: string };
+  onBuyResource: (resource: Resource, cost: number, quantity?: number) => { success: boolean; message: string };
   onSellResource: (resourceId: string, value: number, quantity?: number) => { success: boolean; message: string; soldCount?: number };
 }
 
@@ -41,9 +44,15 @@ const MarketplacePanel = ({
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'buy' | 'sell'>('buy');
+  const [quantityItemId, setQuantityItemId] = useState<string | null>(null);
+  const [quantityText, setQuantityText] = useState('1');
+  const [buying, setBuying] = useState(false);
+  const purchaseInFlight = useRef(false);
 
   useEffect(() => {
     if (isOpen) {
+      setQuantityItemId(null);
+      setQuantityText('1');
       loadMarketplaceItems();
     }
   }, [isOpen]);
@@ -75,15 +84,21 @@ const MarketplacePanel = ({
     }
   };
 
-  const handleBuy = async (item: MarketplaceItem) => {
+  const handleBuy = async (item: MarketplaceItem, enteredQuantity = '1') => {
+    if (purchaseInFlight.current) return;
     // Market sells at 2x the base value
-    const cost = item.baseValue * 2;
+    const purchase = getMarketPurchaseTotal(item.baseValue, enteredQuantity);
+    if (!purchase) { toast.error('Enter a positive whole quantity'); return; }
+    const { total: cost, quantity } = purchase;
     
     if (playerCoins < cost) {
       toast.error(`Not enough coins! Need ${cost} coins`);
       return;
     }
 
+    purchaseInFlight.current = true;
+    setBuying(true);
+    try {
     // Fetch full resource data from marketplace
     const { data, error } = await supabase
       .from('resource_marketplace')
@@ -133,11 +148,15 @@ const MarketplacePanel = ({
       producesIntervalHours: data.produces_interval_hours ?? 24,
     };
 
-    const result = onBuyResource(resource, cost);
+    const result = onBuyResource(resource, cost, quantity);
     if (result.success) {
-      toast.success(`Purchased ${item.name} for ${cost} coins!`);
+      toast.success(`Purchased ${quantity} × ${item.name} for ${cost} coins!`);
     } else {
       toast.error(result.message);
+    }
+    } finally {
+      purchaseInFlight.current = false;
+      setBuying(false);
     }
   };
 
@@ -265,11 +284,13 @@ const MarketplacePanel = ({
                   {filteredItems.map((item) => {
                     const cost = item.baseValue * 2;
                     const canAfford = playerCoins >= cost;
+                    const quantityOpen = quantityItemId === item.id;
+                    const purchase = getMarketPurchaseTotal(item.baseValue, quantityText);
                     
                     return (
                       <div
                         key={item.id}
-                        className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30"
+                        className="flex items-center flex-wrap gap-3 p-3 rounded-lg bg-secondary/30"
                       >
                         <ResourceIcon 
                           icon={item.icon} 
@@ -286,16 +307,27 @@ const MarketplacePanel = ({
                             <span>{cost} coins</span>
                           </div>
                         </div>
-                        <button
-                          onClick={() => handleBuy(item)}
-                          disabled={!canAfford}
-                          className={cn(
-                            'btn btn-primary text-xs',
-                            !canAfford && 'opacity-50 cursor-not-allowed'
-                          )}
-                        >
-                          Buy
-                        </button>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button size="sm" onClick={() => handleBuy(item)} disabled={!canAfford || buying}>Buy</Button>
+                          <Button variant="outline" size="icon" className="h-8 w-8" aria-label={`Buy ${item.name} with quantity`} title="Buy with quantity" aria-expanded={quantityOpen} onClick={() => { setQuantityItemId(quantityOpen ? null : item.id); setQuantityText('1'); }}>
+                            <ListPlus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        {quantityOpen && (
+                          <form className="basis-full flex items-end flex-wrap gap-2 border-t border-border pt-3" onSubmit={event => { event.preventDefault(); void handleBuy(item, quantityText); }}>
+                            <label className="text-xs text-muted-foreground" htmlFor={`buy-quantity-${item.id}`}>
+                              Quantity
+                              <Input id={`buy-quantity-${item.id}`} type="text" inputMode="numeric" autoFocus value={quantityText} onChange={event => setQuantityText(event.target.value)} className="mt-1 w-24 h-9" aria-invalid={!purchase} />
+                            </label>
+                            <div className="flex-1 min-w-24 text-sm py-2" role="status" aria-live="polite">
+                              {purchase ? `${cost.toLocaleString()} × ${purchase.quantity.toLocaleString()} = ${purchase.total.toLocaleString()} coins` : 'Enter a whole quantity'}
+                            </div>
+                            <Button type="submit" size="sm" disabled={!purchase || purchase.total > playerCoins || buying}>
+                              <ShoppingCart className="h-4 w-4 mr-1" />Buy
+                            </Button>
+                            {purchase && purchase.total > playerCoins && <p className="basis-full text-xs text-destructive">Not enough coins</p>}
+                          </form>
+                        )}
                       </div>
                     );
                   })}

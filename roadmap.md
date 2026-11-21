@@ -16,3 +16,4 @@
 - [x] Test direction, range, damage, and saved controls; verified signed-in manual/automatic fire, rotation, and reload persistence in a temporary world; removed test data.
 - [x] Support both manual Fire and saved per-item automatic firing switches.
 - [x] Add an arrow after slot 0, full square-slot inventory, and saved drag rearrangement between inventory and tray; verified signed-in dragging, reload persistence, and mobile opening.
+- [x] Add icon-only quantity purchasing beside Buy with live cost totals; verified 3 Apples cost 36 coins, inventory increased by 3 after reload, and mobile layout.

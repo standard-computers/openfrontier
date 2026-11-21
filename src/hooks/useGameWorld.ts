@@ -1504,7 +1504,10 @@ export const useGameWorld = () => {
     });
   }, [isOwner, dbWorldId]);
 
-  const buyFromMarket = useCallback((resource: Resource, cost: number): { success: boolean; message: string } => {
+  const buyFromMarket = useCallback((resource: Resource, cost: number, quantity: number = 1): { success: boolean; message: string } => {
+    if (!Number.isSafeInteger(quantity) || quantity < 1 || !Number.isFinite(cost) || cost < 0) {
+      return { success: false, message: 'Enter a valid quantity' };
+    }
     let result = { success: false, message: '' };
     
     setWorld(prev => {
@@ -1519,7 +1522,7 @@ export const useGameWorld = () => {
       
       // Unlimited inventory: stack onto an existing slot or append a new one
       const newInventory = [...prev.inventory];
-      addToInventory(newInventory, resourceIdToUse);
+      addToInventory(newInventory, resourceIdToUse, quantity);
       
       // Only add resource to world.resources if it doesn't exist by name
       let newResources = prev.resources;
