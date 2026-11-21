@@ -26,7 +26,7 @@ import DemoOverlay from '@/components/game/DemoOverlay';
 import { useDemoWorld } from '@/hooks/useDemoWorld';
 import { Market, Position, TileType, calculateTileValue, Sovereignty, Stranger, TILE_TYPES } from '@/types/game';
 import { toast } from 'sonner';
-import { getInventoryDropResource } from '@/lib/inventoryDrag';
+import { getInventoryDropResource, rearrangeInventory } from '@/lib/inventoryDrag';
 import { getSelectionGatherPlan } from '@/lib/selectionGather';
 import { useTileRequests } from '@/hooks/useTileRequests';
 import TileRequestsPanel from '@/components/game/TileRequestsPanel';
@@ -736,6 +736,10 @@ const Index = () => {
             selectedSlot={selectedSlot}
             cameraOffset={cameraPosition !== null}
             onSelectSlot={setSelectedSlot}
+            onMoveSlot={(source, destination) => {
+              setWorld(prev => ({ ...prev, inventory: rearrangeInventory(prev.inventory, source, destination) }));
+              setSelectedSlot(destination);
+            }}
             onOpenClaimedTiles={() => setClaimedTilesOpen(true)}
             onConsumeResource={consumeResource}
             onReturnToPlayer={handleReturnToPlayer}

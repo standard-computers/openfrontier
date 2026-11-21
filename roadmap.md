@@ -15,3 +15,4 @@
 - [x] Fire rotated placed resources, apply damage along their range, and display shots.
 - [x] Test direction, range, damage, and saved controls; verified signed-in manual/automatic fire, rotation, and reload persistence in a temporary world; removed test data.
 - [x] Support both manual Fire and saved per-item automatic firing switches.
+- [x] Add an arrow after slot 0, full square-slot inventory, and saved drag rearrangement between inventory and tray; verified signed-in dragging, reload persistence, and mobile opening.

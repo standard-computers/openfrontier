@@ -1,13 +1,12 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { GameWorld, Resource } from '@/types/game';
-import { Settings, Coins, ChevronRight, Hammer, ZoomIn, ZoomOut, Crown, Clock, Sparkles, BoxSelect, Trophy, Locate, Store, Hand } from 'lucide-react';
-import ResourceIcon from './ResourceIcon';
+import { Settings, Coins, ChevronRight, ChevronUp, ChevronDown, Hammer, ZoomIn, ZoomOut, Crown, Clock, Sparkles, BoxSelect, Trophy, Locate, Store, Hand } from 'lucide-react';
+import InventorySlots from './InventorySlots';
 import InventoryItemModal from './InventoryItemModal';
 import { cn } from '@/lib/utils';
 import { WorldMember } from '@/hooks/useGameWorld';
 import { getTopPlayer } from './PlayerRankingPanel';
 import { Button } from '@/components/ui/button';
-import { INVENTORY_DRAG_TYPE } from '@/lib/inventoryDrag';
 import { Mail } from 'lucide-react';
 
 interface GameTopBarProps {
@@ -192,16 +191,17 @@ interface GameHUDProps {
   selectedSlot: number;
   cameraOffset: boolean;
   onSelectSlot: (slot: number) => void;
+  onMoveSlot: (source: number, destination: number) => void;
   onOpenClaimedTiles: () => void;
   onConsumeResource: (resourceId: string) => { success: boolean; message: string };
   onReturnToPlayer: () => void;
 }
 
-const GameHUD = ({ world, resources, selectedSlot, cameraOffset, onSelectSlot, onOpenClaimedTiles, onConsumeResource, onReturnToPlayer }: GameHUDProps) => {
+const GameHUD = ({ world, resources, selectedSlot, cameraOffset, onSelectSlot, onMoveSlot, onOpenClaimedTiles, onConsumeResource, onReturnToPlayer }: GameHUDProps) => {
 
   const getResource = (id: string | null) => resources.find(r => r.id === id);
   const [selectedItem, setSelectedItem] = useState<{ resourceId: string; quantity: number; life?: number } | null>(null);
-  const suppressClickUntil = useRef(0);
+  const [inventoryOpen, setInventoryOpen] = useState(false);
 
   const claimedCount = world.map.tiles.flat().filter(t => t.claimedBy === world.userId).length;
 
@@ -221,8 +221,16 @@ const GameHUD = ({ world, resources, selectedSlot, cameraOffset, onSelectSlot, o
       )}
 
       {/* Inventory bar with tiles, xp, coins */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 game-panel p-2 pointer-events-auto z-50 overflow-visible">
-        <div className="flex items-center gap-2 overflow-visible">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 game-panel p-2 pointer-events-auto z-50 w-max max-w-[calc(100%-16px)]">
+        {inventoryOpen && (
+          <section aria-label="Full inventory" className="mb-2 border-b border-border pb-3">
+            <h2 className="text-sm font-semibold px-1 pb-2">Inventory</h2>
+            <div className="max-h-[min(45vh,360px)] overflow-y-auto p-1">
+              <InventorySlots inventory={world.inventory} resources={resources} selectedSlot={selectedSlot} expanded onSelect={onSelectSlot} onInspect={slot => slot.resourceId && setSelectedItem({ ...slot, resourceId: slot.resourceId })} onMove={onMoveSlot} />
+            </div>
+          </section>
+        )}
+        <div className="flex items-center gap-2 flex-wrap justify-center">
           {/* Claimed tiles indicator */}
           <button 
             onClick={onOpenClaimedTiles}
@@ -251,84 +259,14 @@ const GameHUD = ({ world, resources, selectedSlot, cameraOffset, onSelectSlot, o
           
           <div className="w-px h-8 bg-border" />
           
-          {/* Inventory slots */}
-          <div className="flex gap-1 overflow-visible">
-            {world.inventory.slice(0, 10).map((slot, i) => {
-              const resource = getResource(slot.resourceId);
-              const isSelected = selectedSlot === i;
-              return (
-                <Button
-                  key={i}
-                  variant="ghost"
-                  draggable={!!resource?.placeable && slot.quantity > 0}
-                  aria-label={`Inventory slot ${i < 9 ? i + 1 : 0}${resource ? `: ${resource.name}` : ': empty'}`}
-                  onDragStart={(event) => {
-                    if (!resource?.placeable || slot.quantity <= 0) {
-                      event.preventDefault();
-                      return;
-                    }
-                    event.dataTransfer.setData(INVENTORY_DRAG_TYPE, String(i));
-                    event.dataTransfer.effectAllowed = 'move';
-                    suppressClickUntil.current = Date.now() + 500;
-                    onSelectSlot(i);
-                  }}
-                  onDragEnd={() => { suppressClickUntil.current = Date.now() + 300; }}
-                  className={`w-11 h-11 p-0 shrink-0 rounded flex items-center justify-center relative text-lg transition-colors group ${resource?.placeable && slot.quantity > 0 ? 'cursor-grab active:cursor-grabbing' : ''} ${
-                    isSelected 
-                      ? 'bg-primary/30 ring-2 ring-primary' 
-                      : 'bg-input hover:bg-muted'
-                  } ${!slot.resourceId ? 'cursor-default' : ''}`}
-                  onClick={() => {
-                    if (Date.now() < suppressClickUntil.current) return;
-                    onSelectSlot(i);
-                    if (slot.resourceId) {
-                      setSelectedItem({ resourceId: slot.resourceId, quantity: slot.quantity, life: slot.life });
-                    }
-                  }}
-                >
-                  {/* Hover tooltip */}
-                  {resource && (
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-card border border-border rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 whitespace-nowrap text-xs">
-                      <div className="font-medium text-foreground">{resource.name}</div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <span className="text-amber-400">{resource.coinValue}g</span>
-                        {(resource.useLife || resource.canInflictDamage) && slot.life !== undefined && (
-                          <span className={slot.life > 50 ? 'text-blue-400' : slot.life > 25 ? 'text-amber-400' : 'text-red-400'}>
-                            {slot.life}%
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  {/* Slot number indicator */}
-                  <span className="absolute top-0 left-0.5 text-[8px] text-muted-foreground font-medium">
-                    {i < 9 ? i + 1 : '0'}
-                  </span>
-                  {resource && (
-                    <>
-                      <ResourceIcon icon={resource.icon} iconType={resource.iconType} size="md" />
-                      {slot.quantity > 1 && (
-                        <span className="absolute bottom-0 right-0.5 text-[10px] font-medium bg-card px-0.5 rounded">
-                          {slot.quantity}
-                        </span>
-                      )}
-                      {/* Durability bar for items with useLife or damage-dealing items */}
-                      {(resource.useLife || resource.canInflictDamage) && slot.life !== undefined && slot.life < 100 && (
-                        <div className="absolute bottom-0 left-0.5 right-0.5 h-1 bg-muted/50 rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full transition-all duration-300 ${
-                              slot.life > 50 ? 'bg-blue-400' : 
-                              slot.life > 25 ? 'bg-amber-400' : 'bg-red-400'
-                            }`}
-                            style={{ width: `${slot.life}%` }}
-                          />
-                        </div>
-                      )}
-                    </>
-                  )}
-                </Button>
-              );
-            })}
+          {/* Inventory slots and full inventory toggle */}
+          <div className="flex items-center gap-1 max-w-full min-w-0 p-1">
+            <div className="min-w-0 overflow-x-auto p-0.5">
+              <InventorySlots inventory={world.inventory} resources={resources} selectedSlot={selectedSlot} onSelect={onSelectSlot} onInspect={slot => slot.resourceId && setSelectedItem({ ...slot, resourceId: slot.resourceId })} onMove={onMoveSlot} />
+            </div>
+            <Button variant="ghost" size="icon" className="w-11 h-11 shrink-0 rounded bg-input hover:bg-muted" aria-label={inventoryOpen ? 'Close full inventory' : 'Open full inventory'} title={inventoryOpen ? 'Close full inventory' : 'Open full inventory'} aria-expanded={inventoryOpen} onClick={() => setInventoryOpen(open => !open)}>
+              {inventoryOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
+            </Button>
           </div>
         </div>
       </div>
