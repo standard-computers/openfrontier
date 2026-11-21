@@ -11,3 +11,13 @@ export const normalizeNpcAggression = (value: unknown): NpcAggression =>
 
 export const getNpcActionInterval = (value?: NpcAggression): number =>
   ACTION_INTERVALS[normalizeNpcAggression(value)];
+
+// NPC tax rates are controlled by NPC logic (their aggression), not by players.
+const NPC_TAX_RATES: Record<NpcAggression, number> = {
+  low: 10,
+  medium: 20,
+  high: 35,
+};
+
+export const getNpcTaxRate = (value?: NpcAggression): number =>
+  NPC_TAX_RATES[normalizeNpcAggression(value)];

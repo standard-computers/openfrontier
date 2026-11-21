@@ -851,7 +851,6 @@ const Index = () => {
             onUpdateArea={updateArea}
             onSetCapitalArea={gameWorld.setCapitalArea}
             npcs={world.npcs}
-            onUpdateNpcTaxRate={isOwner ? gameWorld.updateNpcTaxRate : undefined}
           />
 
           <WorldConfig

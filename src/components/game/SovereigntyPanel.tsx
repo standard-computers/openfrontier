@@ -25,7 +25,6 @@ interface SovereigntyPanelProps {
   onSetCapitalArea?: (areaId: string) => void;
   onUpdateArea?: (areaId: string, updates: Partial<Omit<Area, 'id' | 'createdAt'>>) => void;
   npcs?: NPC[];
-  onUpdateNpcTaxRate?: (npcId: string, rate: number) => void;
 }
 
 const SovereigntyPanel = ({
@@ -45,7 +44,6 @@ const SovereigntyPanel = ({
   onUpdateArea,
   onSetCapitalArea,
   npcs,
-  onUpdateNpcTaxRate,
 }: SovereigntyPanelProps) => {
   const [activeTab, setActiveTab] = useState<'general' | 'areas' | 'policies' | 'controls'>('general');
   const [newPolicy, setNewPolicy] = useState('');
@@ -429,10 +427,16 @@ const SovereigntyPanel = ({
                 <TaxRateControl label="Citizen tax rate" rate={sovereignty.taxRate} onSave={taxRate => onUpdateSovereignty({ taxRate })} />
                 <p className="text-xs text-muted-foreground">Savings tax · collected every 28 game days</p>
               </div>
-              {onUpdateNpcTaxRate && !!npcs?.length && (
-                <div className="border-b border-border pb-3 space-y-3">
+              {!!npcs?.length && (
+                <div className="border-b border-border pb-3 space-y-1">
                   <h3 className="text-sm font-semibold">NPC taxes</h3>
-                  {npcs.map(npc => <TaxRateControl key={npc.id} label={`${npc.sovereignty.name} tax rate`} rate={npc.sovereignty.taxRate ?? 10} onSave={rate => onUpdateNpcTaxRate(npc.id, rate)} />)}
+                  {npcs.map(npc => (
+                    <div key={npc.id} className="flex items-center justify-between text-sm">
+                      <span>{npc.sovereignty.name}</span>
+                      <span className="text-muted-foreground">{npc.sovereignty.taxRate ?? 10}%</span>
+                    </div>
+                  ))}
+                  <p className="text-xs text-muted-foreground">Set by each NPC's aggression, not by players</p>
                 </div>
               )}
               {/* Gameplay policy toggles */}

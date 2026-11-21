@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { GameWorld, Resource, Sovereignty, Market, NPC, Area, Position, TileType, generateMap, createEmptyInventory, addToInventory, USER_COLORS, STARTING_COINS, calculateTileValue, WorldMap, TILE_TYPES, generateNPCs, generateStrangers, calculateStrangerCount, Stranger, canAddResourceToTile, isLargeResource, isAdjacentToOwnedLand, ownsAnyTile } from '@/types/game';
 import type { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
-import { normalizeNpcAggression, type NpcAggression } from '@/lib/npcAggression';
+import { getNpcTaxRate, normalizeNpcAggression, type NpcAggression } from '@/lib/npcAggression';
 import { readCitizenSnapshot } from '@/lib/citizenPersistence';
 import { makeAreaCapital } from '@/lib/sovereigntyCapital';
 import { useCitizenPersistence } from './useCitizenPersistence';
@@ -345,17 +345,6 @@ export const useGameWorld = () => {
   }, [dbWorldId]);
 
   useCitizenPersistence(loading ? null : dbWorldId, world.strangers, citizenRevision, setWorld, refreshTileNegotiations);
-
-  const updateNpcTaxRate = useCallback(async (npcId: string, taxRate: number) => {
-    if (!isOwner || !dbWorldId || !/^npc-\d+$/.test(npcId) || !Number.isFinite(taxRate) || taxRate < 0 || taxRate > 100) return;
-    const { data, error: readError } = await supabase.from('worlds').select('npc_tax_rates').eq('id', dbWorldId).single();
-    if (readError) { toast.error('Could not save NPC tax rate'); return; }
-    const rates = { ...(data.npc_tax_rates as Record<string, number>), [npcId]: taxRate };
-    const { error } = await supabase.from('worlds').update({ npc_tax_rates: rates }).eq('id', dbWorldId);
-    if (error) { toast.error('Could not save NPC tax rate'); return; }
-    setTaxPolicies(prev => ({ ...prev, [npcId]: taxRate }));
-    setWorld(prev => ({ ...prev, npcs: prev.npcs?.map(npc => npc.id === npcId ? { ...npc, sovereignty: { ...npc.sovereignty, taxRate } } : npc) }));
-  }, [isOwner, dbWorldId]);
 
   // Map saves are coalesced: many callers (player, NPCs, strangers) request saves,
   // but at most one full map write is sent per MAP_SAVE_INTERVAL_MS, always with the latest map.
@@ -1658,7 +1647,14 @@ export const useGameWorld = () => {
       return;
     }
     setWorld(prev => ({ ...prev, npcAggression: value }));
-  }, [isOwner, dbWorldId]);
+    // NPC tax rates follow aggression; refresh the cached policies immediately.
+    const npcRate = getNpcTaxRate(value);
+    setTaxPolicies(prev => {
+      const next = { ...prev };
+      (world.npcs ?? []).forEach(npc => { next[npc.id] = npcRate; });
+      return next;
+    });
+  }, [isOwner, dbWorldId, world.npcs]);
 
   const updateStrangerDensity = useCallback(async () => {
     // Population is auto-calculated from world size; nothing to update.
@@ -1672,7 +1668,6 @@ export const useGameWorld = () => {
     members,
     worldSovereignties,
     taxPolicies,
-    updateNpcTaxRate,
     loading,
     movePlayer,
     selectTile,

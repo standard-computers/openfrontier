@@ -127,6 +127,13 @@
       "when": 1795302111201,
       "tag": "0017_citizen_tax_morale_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1795302452720,
+      "tag": "0018_npc_tax_from_aggression",
+      "breakpoints": true
     }
   ]
 }
