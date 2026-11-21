@@ -6,6 +6,8 @@ import PixelCharacter from './PixelCharacter';
 import CanvasTileRenderer from './CanvasTileRenderer';
 import CanvasOverlayRenderer from './CanvasOverlayRenderer';
 import { INVENTORY_DRAG_TYPE } from '@/lib/inventoryDrag';
+import ProjectileCanvas from './ProjectileCanvas';
+import type { ProjectileShot } from '@/lib/projectiles';
 
 type FacingDirection = 'north' | 'south' | 'east' | 'west';
 
@@ -38,6 +40,7 @@ interface GameMapProps {
   onZoom: (delta: number) => void;
   onStrangerClick?: (stranger: Stranger) => void;
   onInventoryDrop?: (slotIndex: number, position: Position) => void;
+  projectileShot?: ProjectileShot | null;
 }
 
 // Memoized overlay rendered only for tiles that actually have something on them
@@ -269,6 +272,7 @@ const GameMap = ({
   onZoom,
   onStrangerClick,
   onInventoryDrop,
+  projectileShot = null,
 }: GameMapProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewportSize, setViewportSize] = useState({ tilesX: 30, tilesY: 20 });
@@ -773,6 +777,7 @@ const GameMap = ({
         selectedTilesSet={selectedTilesSet}
         dragRect={dragRect}
       />
+      <ProjectileCanvas shot={projectileShot} offset={viewportOffset} width={viewportSize.tilesX * tileSize} height={viewportSize.tilesY * tileSize} tileSize={tileSize} />
       <div className="absolute inset-0 pointer-events-none">
         {visibleTilesData.map((data) => (
           <TileOverlay

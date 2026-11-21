@@ -72,6 +72,8 @@ export type Database = {
           produces_amount: number
           produces_interval_hours: number
           produces_resource: string | null
+          projectile: boolean
+          projectile_distance: number
           rarity: string
           recipe: Json | null
           rotatable: boolean
@@ -121,6 +123,8 @@ export type Database = {
           produces_amount?: number
           produces_interval_hours?: number
           produces_resource?: string | null
+          projectile?: boolean
+          projectile_distance?: number
           rarity?: string
           recipe?: Json | null
           rotatable?: boolean
@@ -170,6 +174,8 @@ export type Database = {
           produces_amount?: number
           produces_interval_hours?: number
           produces_resource?: string | null
+          projectile?: boolean
+          projectile_distance?: number
           rarity?: string
           recipe?: Json | null
           rotatable?: boolean
@@ -481,6 +487,8 @@ export type Database = {
           produces_amount: number
           produces_interval_hours: number
           produces_resource: string | null
+          projectile: boolean
+          projectile_distance: number
           rarity: string
           recipe: Json | null
           rotatable: boolean

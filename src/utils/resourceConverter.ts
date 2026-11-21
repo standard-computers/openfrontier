@@ -2,6 +2,7 @@ import { Resource, TileType } from '@/types/game';
 import { supabase } from '@/integrations/supabase/client';
 import { withoutResourceCreator } from '@/lib/resourcePermissions';
 import { normalizePeopleCapacity } from '@/lib/citizenBuildings';
+import { normalizeProjectileDistance } from '@/lib/projectiles';
 
 // Type for the database resource_marketplace row
 export interface RepositoryResource {
@@ -32,6 +33,8 @@ export interface RepositoryResource {
   health_gain: number;
   can_inflict_damage: boolean;
   damage: number;
+  projectile?: boolean;
+  projectile_distance?: number;
   category: string | null;
   gather_time: number;
   has_limited_lifetime: boolean;
@@ -107,6 +110,8 @@ export const repositoryToGameResource = (repoResource: RepositoryResource): Reso
     healthGain: repoResource.health_gain || 0,
     canInflictDamage: repoResource.can_inflict_damage || false,
     damage: repoResource.damage || 0,
+    projectile: repoResource.projectile ?? false,
+    projectileDistance: normalizeProjectileDistance(repoResource.projectile_distance),
     recipes: normalizeRecipes(repoResource.recipe),
     isContainer: repoResource.is_container || false,
     containerSpawnsResources: repoResource.container_spawns_resources || false,
@@ -175,6 +180,8 @@ export const gameResourceToRepository = (resource: Resource, userId?: string) =>
     health_gain: resource.healthGain || 0,
     can_inflict_damage: resource.canInflictDamage || false,
     damage: resource.damage || 0,
+    projectile: resource.canInflictDamage && resource.projectile || false,
+    projectile_distance: normalizeProjectileDistance(resource.projectileDistance),
     category: resource.category || null,
     gather_time: resource.gatherTime || 1,
     has_limited_lifetime: resource.hasLimitedLifetime || false,

@@ -698,6 +698,7 @@ const Index = () => {
       <div className="flex-1 relative min-h-0">
         <GameMap
           map={world.map}
+          projectileShot={isDemoMode ? null : gameWorld.projectileShot}
           playerPosition={world.playerPosition}
           cameraPosition={cameraPosition}
           resources={world.resources}
@@ -787,6 +788,8 @@ const Index = () => {
             onGather={handleGather}
             onRename={handleRenameTile}
             onRotate={!isDemoMode ? (resourceId) => gameWorld.rotateResource(selectedTile.x, selectedTile.y, resourceId) : undefined}
+            onShoot={!isDemoMode ? (resourceId) => gameWorld.shootResource(selectedTile.x, selectedTile.y, resourceId) : undefined}
+            onToggleAutoFire={!isDemoMode ? (resourceId) => gameWorld.toggleResourceAutoFire(selectedTile.x, selectedTile.y, resourceId) : undefined}
             onConvert={handleConvertTile}
             onViewUser={(member) => {
               setSelectedMember(member);

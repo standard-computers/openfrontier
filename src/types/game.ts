@@ -54,6 +54,8 @@ export interface Resource {
   healthGain?: number;
   canInflictDamage?: boolean;
   damage?: number;
+  projectile?: boolean;
+  projectileDistance?: number;
   isContainer?: boolean; // Can hold inventory
   containerSpawnsResources?: boolean; // If true, container will have resources spawned inside
   containerSpawnRandom?: boolean; // If true, spawn random resources; if false, use selected resources
@@ -92,6 +94,7 @@ export interface MapTile {
   resources: string[];
   placedResources?: string[]; // Resources placed by players (cannot be gathered, must be destroyed)
   resourceRotation?: Record<string, number>; // Rotation in degrees (0/90/180/270) per resourceId
+  resourceAutoFire?: Record<string, boolean>;
   resourceLife?: Record<string, number>; // Track current life of each resource on tile by resourceId
   walkable: boolean;
   claimedBy?: string;

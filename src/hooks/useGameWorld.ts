@@ -8,6 +8,7 @@ import { readCitizenSnapshot } from '@/lib/citizenPersistence';
 import { makeAreaCapital } from '@/lib/sovereigntyCapital';
 import { useCitizenPersistence } from './useCitizenPersistence';
 import { createWorldResourceWriter } from '@/lib/worldResourcePersistence';
+import { fireProjectile, type ProjectileShot } from '@/lib/projectiles';
 import { fetchWorldResources, addResourceToRepository, updateResourceInRepository, deleteResourceFromRepository } from '@/utils/resourceConverter';
 
 // Hook version marker for HMR compatibility
@@ -60,6 +61,7 @@ const MAP_SAVE_INTERVAL_MS = 3000;
 export const useGameWorld = () => {
   const [world, setWorld] = useState<GameWorld>(getDefaultWorld);
   const [selectedTile, setSelectedTile] = useState<{ x: number; y: number } | null>(null);
+  const [projectileShot, setProjectileShot] = useState<ProjectileShot | null>(null);
   const [isOwner, setIsOwner] = useState(false);
   const [members, setMembers] = useState<WorldMember[]>([]);
   const [worldSovereignties, setWorldSovereignties] = useState<MemberSovereignty[]>([]);
@@ -846,6 +848,55 @@ export const useGameWorld = () => {
     });
   }, [saveMapData]);
 
+  const shootResource = useCallback((x: number, y: number, resourceId: string) => {
+    const result = fireProjectile(world, { x, y }, resourceId);
+    if (!result.shot) { toast.error(result.message); return; }
+    setWorld(result.world);
+    setProjectileShot(result.shot);
+    void saveMapData(result.world.map);
+    toast.success(result.message);
+  }, [world, saveMapData]);
+
+  const toggleResourceAutoFire = useCallback((x: number, y: number, resourceId: string) => {
+    const tile = world.map.tiles[y]?.[x];
+    const resource = world.resources.find(r => r.id === resourceId);
+    if (tile?.claimedBy !== world.userId || !tile.resources.includes(resourceId) || !resource?.projectile || !resource.canInflictDamage) return;
+    const tiles = [...world.map.tiles];
+    tiles[y] = [...tiles[y]];
+    tiles[y][x] = { ...tile, resourceAutoFire: { ...tile.resourceAutoFire, [resourceId]: !tile.resourceAutoFire?.[resourceId] } };
+    const map = { ...world.map, tiles };
+    setWorld(prev => ({ ...prev, map }));
+    void saveMapData(map);
+  }, [world, saveMapData]);
+
+  const autoFireWorldRef = useRef(world);
+  const autoFireSaveRef = useRef(saveMapData);
+  autoFireWorldRef.current = world;
+  autoFireSaveRef.current = saveMapData;
+  useEffect(() => {
+    if (loading || !dbWorldId) return;
+    const timer = setInterval(() => {
+      if (document.visibilityState === 'hidden') return;
+      let current = autoFireWorldRef.current;
+      let lastShot: ProjectileShot | null = null;
+      current.map.tiles.forEach((row, y) => row.forEach((tile, x) => {
+        if (tile.claimedBy !== current.userId) return;
+        for (const id of tile.resources) {
+          if (!tile.resourceAutoFire?.[id]) continue;
+          const result = fireProjectile(current, { x, y }, id);
+          if (result.shot) { current = result.world; lastShot = result.shot; }
+        }
+      }));
+      if (lastShot) {
+        autoFireWorldRef.current = current;
+        setWorld(current);
+        setProjectileShot(lastShot);
+        void autoFireSaveRef.current(current.map);
+      }
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [loading, dbWorldId]);
+
   const setUserColor = useCallback((color: string) => {
     setWorld(prev => ({ ...prev, userColor: color }));
   }, []);
@@ -1623,6 +1674,9 @@ export const useGameWorld = () => {
     setCapitalArea,
     renameTile,
     rotateResource,
+    shootResource,
+    toggleResourceAutoFire,
+    projectileShot,
     consumeResource,
     placeItem,
     useItemOnFacingTile,

@@ -86,6 +86,8 @@ const ResourceEditorModal = ({
         healthGain: data.health_gain || 0,
         canInflictDamage: data.can_inflict_damage || false,
         damage: data.damage || 0,
+        projectile: data.projectile ?? false,
+        projectileDistance: data.projectile_distance ?? 5,
         recipes: normalizeRecipes(data.recipe),
         isContainer: data.is_container || false,
         containerSpawnsResources: data.container_spawns_resources || false,
@@ -908,7 +910,7 @@ const ResourceEditorModal = ({
                     <div className="mt-3">
                       <label className="text-xs text-muted-foreground mb-1 block">Damage Amount</label>
                       <input
-                        type="number"
+                        type="text"
                         inputMode="decimal"
                         step="0.01"
                         min="0"
@@ -922,6 +924,17 @@ const ResourceEditorModal = ({
                       <p className="text-[10px] text-muted-foreground mt-0.5">
                         Damage dealt when used on destructible items (press E)
                       </p>
+                      <div className="flex items-center gap-2 mt-3">
+                        <Checkbox id="projectile" checked={form.projectile ?? false}
+                          onCheckedChange={checked => setForm({ ...form, projectile: checked === true })} />
+                        <label htmlFor="projectile" className="text-sm font-medium">Projectile</label>
+                      </div>
+                      {form.projectile && <div className="mt-3">
+                        <label htmlFor="projectile-distance" className="text-xs text-muted-foreground mb-1 block">Projectile Distance (tiles)</label>
+                        <input id="projectile-distance" type="text" inputMode="numeric" className="input-field w-full"
+                          value={form.projectileDistance ?? 5}
+                          onChange={event => setForm({ ...form, projectileDistance: Math.max(1, Math.floor(Number(event.target.value) || 1)) })} />
+                      </div>}
                     </div>
                   )}
                 </div>

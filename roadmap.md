@@ -10,3 +10,8 @@
 - [x] Add capital selection to sovereignty areas, persist home coordinates, and verify selection, reload, and world table.
 - [x] Grant Stg shared-resource editor access; verified creating, editing another creator's resource, reload persistence, and preserved attribution.
 - [x] Add saved Holds People controls and territory-bound per-building capacity; verified saved controls, live occupancy details, and capacity/territory tests.- [x] Add sovereignty Policies tab: free-text edicts + gameplay toggles (open borders, outsider gathering); verified tab, toggles, edict persistence after reload.
+
+- [x] Add saved Projectile controls and distance under Inflict Damage.
+- [x] Fire rotated placed resources, apply damage along their range, and display shots.
+- [x] Test direction, range, damage, and saved controls; verified signed-in manual/automatic fire, rotation, and reload persistence in a temporary world; removed test data.
+- [x] Support both manual Fire and saved per-item automatic firing switches.

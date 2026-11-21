@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { MapTile, Resource, Stranger, RARITY_COLORS, TILE_TYPES, TileType, calculateTileValue } from '@/types/game';
-import { X, Flag, Package, Coins, Pencil, Check, RotateCw, Paintbrush, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, Flag, Package, Coins, Pencil, Check, RotateCw, Paintbrush, ChevronDown, ChevronUp, Crosshair } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ResourceIcon from './ResourceIcon';
 import { WorldMember } from '@/hooks/useGameWorld';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { getTileNegotiationTarget, isValidLandOffer, type TileRequest } from '@/lib/tileNegotiations';
 
 interface TileInfoPanelProps {
@@ -22,6 +23,8 @@ interface TileInfoPanelProps {
   onGather: (resourceId: string) => void;
   onRename: (name: string) => void;
   onRotate?: (resourceId: string) => void;
+  onShoot?: (resourceId: string) => void;
+  onToggleAutoFire?: (resourceId: string) => void;
   onViewUser: (member: WorldMember) => void;
   onConvert?: (newType: TileType) => void;
   onOffer?: (amount: number) => void;
@@ -48,6 +51,8 @@ const TileInfoPanel = ({
   onGather,
   onRename,
   onRotate,
+  onShoot,
+  onToggleAutoFire,
   onViewUser,
   onConvert,
   onOffer,
@@ -259,13 +264,13 @@ const TileInfoPanel = ({
               return (
                 <div 
                   key={resource.id}
-                  className="flex items-center justify-between p-2 bg-secondary/50 rounded"
+                  className="flex flex-wrap items-center justify-between gap-2 p-2 bg-secondary/50 rounded"
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 min-w-0 w-full">
                     <ResourceIcon icon={resource.icon} iconType={resource.iconType} size="lg" style={tile.resourceRotation?.[resource.id] ? { transform: `rotate(${tile.resourceRotation[resource.id]}deg)` } : undefined} />
-                    <div>
-                      <p className="text-sm font-medium">{resource.name}</p>
-                      <div className="flex items-center gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium break-words">{resource.name}</p>
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className={cn('text-xs', RARITY_COLORS[resource.rarity])}>{resource.rarity}</span>
                         <span className="text-xs text-amber-400 flex items-center gap-0.5">
                           <Coins className="w-3 h-3" />{resource.coinValue}
@@ -282,9 +287,18 @@ const TileInfoPanel = ({
                           ))}
                         </div>
                       )}
+                      {resource.canInflictDamage && resource.projectile && isOwnClaim && onToggleAutoFire && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <Switch id={`auto-fire-${resource.id}`} aria-label={`Automatic fire ${resource.name}`} checked={tile.resourceAutoFire?.[resource.id] ?? false} onCheckedChange={() => onToggleAutoFire(resource.id)} />
+                          <label htmlFor={`auto-fire-${resource.id}`} className="text-xs text-muted-foreground">Automatic fire</label>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 shrink-0">
+                  {resource.canInflictDamage && resource.projectile && onShoot && isOwnClaim && (
+                    <Button variant="outline" size="icon" className="h-8 w-8" title={`Fire ${resource.name}`} aria-label={`Fire ${resource.name}`} onClick={() => onShoot(resource.id)}><Crosshair className="w-4 h-4" /></Button>
+                  )}
                   {resource.rotatable && onRotate && canGather && (
                     <Button
                       variant="outline"

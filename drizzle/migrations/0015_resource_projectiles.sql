@@ -1,0 +1,1 @@
+ALTER TABLE public.resource_marketplace ADD COLUMN IF NOT EXISTS projectile boolean NOT NULL DEFAULT false, ADD COLUMN IF NOT EXISTS projectile_distance integer NOT NULL DEFAULT 5;
