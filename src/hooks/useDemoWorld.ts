@@ -80,6 +80,7 @@ export const useDemoWorld = () => {
   const gatherManyFromTiles = useCallback(() => 0, []);
   const addResource = useCallback(async () => {}, []);
   const addExistingResource = useCallback(async () => {}, []);
+  const addExistingResources = useCallback(async (_resources: Resource[]) => {}, []);
   const updateResource = useCallback(async () => {}, []);
   const deleteResource = useCallback(async () => {}, []);
   const respawnResources = useCallback(() => {}, []);
@@ -131,6 +132,7 @@ export const useDemoWorld = () => {
     isOutsiderGatheringAllowed: () => false,
     addResource,
     addExistingResource,
+    addExistingResources,
     updateResource,
     deleteResource,
     respawnResources,

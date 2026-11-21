@@ -94,6 +94,7 @@ const Index = () => {
     isOutsiderGatheringAllowed,
     addResource,
     addExistingResource,
+    addExistingResources,
     updateResource,
     deleteResource,
     respawnResources,
@@ -860,6 +861,7 @@ const Index = () => {
             onUpdateWorldName={updateWorldName}
             onAddResource={addResource}
             onAddExistingResource={addExistingResource}
+            onAddExistingResources={addExistingResources}
             onUpdateResource={updateResource}
             onDeleteResource={deleteResource}
             onRespawnResources={respawnResources}

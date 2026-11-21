@@ -33,6 +33,7 @@ interface WorldConfigProps {
   onUpdateWorldName: (name: string) => void;
   onAddResource: (resource: Resource) => void;
   onAddExistingResource: (resource: Resource) => void;
+  onAddExistingResources: (resources: Resource[]) => Promise<void>;
   onUpdateResource: (resource: Resource) => void;
   onDeleteResource: (id: string) => void;
   onRespawnResources: () => void;
@@ -63,6 +64,7 @@ const WorldConfig = ({
   onUpdateWorldName,
   onAddResource,
   onAddExistingResource,
+  onAddExistingResources,
   onUpdateResource,
   onDeleteResource,
   onRespawnResources,
@@ -157,10 +159,7 @@ const WorldConfig = ({
         return;
       }
 
-      for (const repoResource of missingResources) {
-        const newResource = repositoryToGameResource(repoResource);
-        onAddExistingResource(newResource);
-      }
+      await onAddExistingResources(missingResources.map(repositoryToGameResource));
 
       toast.success(`Added ${missingResources.length} missing resource(s) to your world`);
     } catch (err: any) {

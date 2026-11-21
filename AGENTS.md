@@ -1,3 +1,4 @@
+- World resource reference changes use a serialized read/merge/save writer; bulk additions await persistence before updating the UI, and name saves never write resource IDs, preventing stale-render overwrites.
 - Inventory drag placement uses a typed slot payload and validates ownership and inventory in the page before calling the existing placement action; this keeps drag-and-drop within presentation code and preserves placement limits and persistence.
 - NPC aggression uses the shared action-interval helper and a persisted world setting; changing cadence preserves action probabilities and existing claim rules.
 - Citizens use a dedicated world snapshot with membership-checked, revision-guarded saves and fixed-cadence exit flushing; world-size generation seeds only unsaved worlds, preventing population resets and stale session overwrites.

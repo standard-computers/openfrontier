@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { GameWorld, Resource, Sovereignty, Market, NPC, Area, Position, TileType, generateMap, createEmptyInventory, addToInventory, USER_COLORS, STARTING_COINS, calculateTileValue, WorldMap, TILE_TYPES, generateNPCs, generateStrangers, calculateStrangerCount, Stranger, canAddResourceToTile, isLargeResource, isAdjacentToOwnedLand, ownsAnyTile } from '@/types/game';
 import type { Json } from '@/integrations/supabase/types';
@@ -7,6 +7,7 @@ import { normalizeNpcAggression, type NpcAggression } from '@/lib/npcAggression'
 import { readCitizenSnapshot } from '@/lib/citizenPersistence';
 import { makeAreaCapital } from '@/lib/sovereigntyCapital';
 import { useCitizenPersistence } from './useCitizenPersistence';
+import { createWorldResourceWriter } from '@/lib/worldResourcePersistence';
 import { fetchWorldResources, addResourceToRepository, updateResourceInRepository, deleteResourceFromRepository } from '@/utils/resourceConverter';
 
 // Hook version marker for HMR compatibility
@@ -378,21 +379,28 @@ export const useGameWorld = () => {
     }
   }, [dbWorldId, world.map, flushMapSave]);
 
-  // Save world data (name, resource_ids) - only for owners
+  const resourceWriter = useMemo(() => createWorldResourceWriter(async () => {
+    if (!dbWorldId || !isOwner) throw new Error('Only the world owner can add resources');
+    const { data, error } = await supabase.from('worlds').select('resource_ids').eq('id', dbWorldId).single();
+    if (error) throw error;
+    return data.resource_ids;
+  }, async ids => {
+    if (!dbWorldId || !isOwner) throw new Error('Only the world owner can add resources');
+    const { error } = await supabase.from('worlds').update({ resource_ids: ids }).eq('id', dbWorldId).select('id').single();
+    if (error) throw error;
+  }), [dbWorldId, isOwner]);
+
+  // Name saves must not overwrite resource references from an earlier render.
   const saveWorldData = useCallback(async (overrideName?: string) => {
     if (!dbWorldId || !isOwner) return;
-
-    // Get the resource IDs from the current resources
-    const resourceIds = world.resources.map(r => r.id);
 
     await supabase
       .from('worlds')
       .update({
         name: overrideName ?? world.name,
-        resource_ids: resourceIds,
       })
       .eq('id', dbWorldId);
-  }, [dbWorldId, isOwner, world.name, world.resources]);
+  }, [dbWorldId, isOwner, world.name]);
 
   const movePlayer = useCallback((dx: number, dy: number) => {
     setWorld(prev => {
@@ -706,6 +714,18 @@ export const useGameWorld = () => {
     return picked.length;
   }, [world, saveMapData, isOutsiderGatheringAllowed]);
 
+  const addExistingResources = useCallback(async (resources: Resource[]) => {
+    await resourceWriter.add(resources.map(resource => resource.id));
+    setWorld(prev => {
+      const ids = new Set(prev.resources.map(resource => resource.id));
+      return { ...prev, resources: [...prev.resources, ...resources.filter(resource => {
+        if (ids.has(resource.id)) return false;
+        ids.add(resource.id);
+        return true;
+      })] };
+    });
+  }, [resourceWriter]);
+
   const addResource = useCallback(async (resource: Resource) => {
     if (!isOwner) return;
     
@@ -713,23 +733,12 @@ export const useGameWorld = () => {
     const newId = await addResourceToRepository(resource, world.userId);
     if (newId) {
       const resourceWithId = { ...resource, id: newId };
-      setWorld(prev => ({ ...prev, resources: [...prev.resources, resourceWithId] }));
-      setTimeout(saveWorldData, 500);
+      await addExistingResources([resourceWithId]);
     }
-  }, [isOwner, world.userId, saveWorldData]);
+  }, [isOwner, world.userId, addExistingResources]);
 
   // Add an existing repository resource to this world (doesn't create new in repository)
-  const addExistingResource = useCallback((resource: Resource) => {
-    if (!isOwner) return;
-    
-    // Check if already exists
-    if (world.resources.some(r => r.id === resource.id)) {
-      return;
-    }
-    
-    setWorld(prev => ({ ...prev, resources: [...prev.resources, resource] }));
-    setTimeout(saveWorldData, 500);
-  }, [isOwner, world.resources, saveWorldData]);
+  const addExistingResource = useCallback((resource: Resource) => addExistingResources([resource]), [addExistingResources]);
 
   const updateResource = useCallback(async (resource: Resource) => {
     if (!isOwner) return;
@@ -746,6 +755,7 @@ export const useGameWorld = () => {
 
   const deleteResource = useCallback(async (id: string) => {
     if (!isOwner) return;
+    await resourceWriter.remove(id);
     
     // Note: We don't delete from repository since other worlds might use it
     // We just remove the reference from this world
@@ -753,8 +763,7 @@ export const useGameWorld = () => {
       ...prev,
       resources: prev.resources.filter(r => r.id !== id),
     }));
-    setTimeout(saveWorldData, 500);
-  }, [isOwner, saveWorldData]);
+  }, [isOwner, resourceWriter]);
 
   const respawnResources = useCallback(() => {
     if (!isOwner) return;
@@ -1599,6 +1608,7 @@ export const useGameWorld = () => {
     isOutsiderGatheringAllowed,
     addResource,
     addExistingResource,
+    addExistingResources,
     updateResource,
     deleteResource,
     respawnResources,
