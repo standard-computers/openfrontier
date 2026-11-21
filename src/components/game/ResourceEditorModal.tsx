@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import ResourceIcon from './ResourceIcon';
 import { normalizeRecipes } from '@/utils/resourceConverter';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { normalizePeopleCapacity } from '@/lib/citizenBuildings';
 
@@ -32,7 +33,7 @@ const ResourceEditorModal = ({
   onClose,
   categories = [],
 }: ResourceEditorModalProps) => {
-  const [activeTab, setActiveTab] = useState<'general' | 'controls' | 'recipes'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'controls' | 'properties' | 'recipes'>('general');
   const [form, setForm] = useState<Resource>({ ...resource, iconType: 'image' });
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [isNewRecipe, setIsNewRecipe] = useState(false);
@@ -290,6 +291,28 @@ const ResourceEditorModal = ({
     });
   };
 
+  const propertyToggle = (id: string, label: string, enabled: boolean | undefined, update: (enabled: boolean) => void, disabled = false) => (
+    <div className="grid grid-cols-[minmax(0,1fr)_minmax(100px,160px)] items-center gap-3 border-b border-border py-3">
+      <label htmlFor={id} className={cn('text-sm', disabled && 'text-muted-foreground')}>{label}</label>
+      <select id={id} className="input-field w-full" value={enabled ? 'enabled' : 'disabled'} disabled={disabled}
+        onChange={event => update(event.target.value === 'enabled')}>
+        <option value="disabled">Disabled</option>
+        <option value="enabled">Enabled</option>
+      </select>
+    </div>
+  );
+  const propertyNumber = (id: string, label: string, value: number, update: (value: number) => void, whole = false) => (
+    <div className="grid grid-cols-[minmax(0,1fr)_minmax(100px,160px)] items-center gap-3 border-b border-border py-3">
+      <label htmlFor={id} className="text-sm">{label}</label>
+      <input id={id} type="text" inputMode={whole ? 'numeric' : 'decimal'} className="input-field w-full" value={value}
+        onChange={event => {
+          const parsed = whole ? parseInt(event.target.value, 10) : parseFloat(event.target.value);
+          if (event.target.value === '') update(0);
+          else if (Number.isFinite(parsed)) update(parsed);
+        }} />
+    </div>
+  );
+
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
       <div className="game-panel w-full max-w-xl max-h-[85vh] overflow-hidden flex flex-col">
@@ -316,40 +339,15 @@ const ResourceEditorModal = ({
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-border">
-          <button
-            onClick={() => setActiveTab('general')}
-            className={cn(
-              'flex-1 px-4 py-2 text-sm font-medium transition-colors',
-              activeTab === 'general' 
-                ? 'border-b-2 border-primary text-foreground' 
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            General
-          </button>
-          <button
-            onClick={() => setActiveTab('controls')}
-            className={cn(
-              'flex-1 px-4 py-2 text-sm font-medium transition-colors',
-              activeTab === 'controls' 
-                ? 'border-b-2 border-primary text-foreground' 
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            Controls
-          </button>
-          <button
-            onClick={() => setActiveTab('recipes')}
-            className={cn(
-              'flex-1 px-4 py-2 text-sm font-medium transition-colors',
-              activeTab === 'recipes' 
-                ? 'border-b-2 border-primary text-foreground' 
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            Recipes {form.recipes?.length ? `(${form.recipes.length})` : ''}
-          </button>
+        <div className="flex border-b border-border" role="tablist" aria-label="Resource settings">
+          {(['general', 'controls', 'properties', 'recipes'] as const).map(tab => (
+            <Button key={tab} variant="ghost" role="tab" aria-selected={activeTab === tab}
+              onClick={() => setActiveTab(tab)}
+              className={cn('flex-1 min-w-0 rounded-none px-2 py-2 text-sm font-medium capitalize',
+                activeTab === tab ? 'border-b-2 border-primary text-foreground' : 'text-muted-foreground')}>
+              {tab}{tab === 'recipes' && form.recipes?.length ? ` (${form.recipes.length})` : ''}
+            </Button>
+          ))}
         </div>
 
         {/* Content */}
@@ -546,6 +544,37 @@ const ResourceEditorModal = ({
             </div>
           )}
 
+          {activeTab === 'properties' && (
+            <div>
+              {propertyNumber('tile-width', 'Tile Width', form.tileWidth ?? 1, value => setForm({ ...form, tileWidth: Math.max(0, Math.min(form.isFloating ? 1 : 99, value)) }), true)}
+              {propertyNumber('tile-height', 'Tile Height', form.tileHeight ?? 1, value => setForm({ ...form, tileHeight: Math.max(0, Math.min(form.isFloating ? 1 : 99, value)) }), true)}
+              {propertyToggle('rotatable', 'Rotatable', form.rotatable, rotatable => setForm({ ...form, rotatable }))}
+              {propertyToggle('holds-people', 'Holds People', form.holdsPeople, holdsPeople => setForm({ ...form, holdsPeople, peopleCapacity: normalizePeopleCapacity(form.peopleCapacity) }))}
+              {form.holdsPeople && propertyNumber('people-capacity', 'People Capacity', form.peopleCapacity ?? 1, value => setForm({ ...form, peopleCapacity: normalizePeopleCapacity(value) }), true)}
+              {propertyToggle('isFloating', 'Hovers Above Tile', form.isFloating, isFloating => setForm({ ...form, isFloating, tileWidth: isFloating ? Math.min(form.tileWidth ?? 1, 1) : form.tileWidth, tileHeight: isFloating ? Math.min(form.tileHeight ?? 1, 1) : form.tileHeight }))}
+              {propertyToggle('canFloatOnWater', 'Can Float on Water', form.canFloatOnWater, canFloatOnWater => setForm({ ...form, canFloatOnWater }))}
+              {propertyToggle('holdsPlayer', 'Holds Player (Vehicle/Boat)', form.holdsPlayer, holdsPlayer => setForm({ ...form, holdsPlayer }))}
+              {propertyToggle('display', 'Display on Tile', form.display, display => setForm({ ...form, display }))}
+              {propertyToggle('emitsLight', 'Emits Light (at night)', form.emitsLight, emitsLight => setForm({ ...form, emitsLight }))}
+              {propertyToggle('placeable', 'Placeable', form.placeable, placeable => setForm({ ...form, placeable, passable: placeable ? form.passable : false }))}
+              {propertyToggle('passable', 'Passable', form.passable, passable => setForm({ ...form, passable }), !form.placeable)}
+              {propertyToggle('hasLimitedLifetime', 'Limited Lifetime', form.hasLimitedLifetime, hasLimitedLifetime => setForm({ ...form, hasLimitedLifetime, lifetimeHours: hasLimitedLifetime ? (form.lifetimeHours || 24) : undefined }))}
+              {form.hasLimitedLifetime && propertyNumber('lifetime-hours', 'Lifetime (game hours)', form.lifetimeHours || 24, value => setForm({ ...form, lifetimeHours: Math.max(0.01, Math.round(value * 100) / 100) }))}
+              {propertyToggle('useLife', 'Use Life', form.useLife, useLife => setForm({ ...form, useLife, lifeDecreasePerUse: useLife ? (form.lifeDecreasePerUse || 100) : undefined }))}
+              {form.useLife && propertyNumber('life-per-use', 'Life Decrease Per Use', form.lifeDecreasePerUse || 100, value => setForm({ ...form, lifeDecreasePerUse: Math.max(0.01, Math.round(value * 100) / 100) }))}
+              {propertyToggle('consumable', 'Consumable', form.consumable, consumable => setForm({ ...form, consumable, healthGain: consumable ? (form.healthGain || 0) : 0 }))}
+              {form.consumable && propertyNumber('health-gain', 'Health Gain', form.healthGain || 0, value => setForm({ ...form, healthGain: Math.max(0, Math.round(value * 100) / 100) }))}
+              {propertyToggle('canInflictDamage', 'Inflict Damage', form.canInflictDamage, canInflictDamage => setForm({ ...form, canInflictDamage, damage: canInflictDamage ? (form.damage || 1) : 0 }))}
+              {form.canInflictDamage && <>
+                {propertyNumber('damage-amount', 'Damage Amount', form.damage || 0, value => setForm({ ...form, damage: Math.max(0, Math.round(value * 100) / 100) }))}
+                {propertyToggle('projectile', 'Projectile', form.projectile, projectile => setForm({ ...form, projectile }))}
+                {form.projectile && propertyNumber('projectile-distance', 'Projectile Distance (tiles)', form.projectileDistance ?? 5, value => setForm({ ...form, projectileDistance: Math.max(1, value) }), true)}
+              </>}
+              {propertyToggle('givesXp', 'Gives XP', form.givesXp, givesXp => setForm({ ...form, givesXp, xpAmount: givesXp ? (form.xpAmount || 1) : 0 }))}
+              {form.givesXp && propertyNumber('xp-amount', 'XP Amount', form.xpAmount || 0, value => setForm({ ...form, xpAmount: Math.max(0, value) }), true)}
+            </div>
+          )}
+
           {activeTab === 'controls' && (
             <div className="space-y-4">
               {/* Gather Time */}
@@ -603,374 +632,6 @@ const ResourceEditorModal = ({
                       ))}
                     </div>
                   </div>
-                </div>
-              </div>
-
-              {/* Tile Dimensions */}
-              <div className="border-t border-border pt-4">
-                <h4 className="text-sm font-medium mb-3">Tile Dimensions</h4>
-                <p className="text-[10px] text-muted-foreground mb-3">
-                  Size in tiles. 0 = smaller than tile, 1 = full tile (default), 2+ = multi-tile. Placement anchor is bottom-left.
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Width (tiles)</label>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      step="1"
-                      min="0"
-                      max={form.isFloating ? 1 : 99}
-                      value={form.tileWidth ?? 1}
-                      onChange={(e) => {
-                        const rawVal = e.target.value;
-                        if (rawVal === '') {
-                          setForm({ ...form, tileWidth: 0 });
-                          return;
-                        }
-                        const val = parseInt(rawVal, 10);
-                        if (!isNaN(val)) {
-                          const maxVal = form.isFloating ? 1 : 99;
-                          setForm({ ...form, tileWidth: Math.max(0, Math.min(maxVal, val)) });
-                        }
-                      }}
-                      className="input-field w-full"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Height (tiles)</label>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      step="1"
-                      min="0"
-                      max={form.isFloating ? 1 : 99}
-                      value={form.tileHeight ?? 1}
-                      onChange={(e) => {
-                        const rawVal = e.target.value;
-                        if (rawVal === '') {
-                          setForm({ ...form, tileHeight: 0 });
-                          return;
-                        }
-                        const val = parseInt(rawVal, 10);
-                        if (!isNaN(val)) {
-                          const maxVal = form.isFloating ? 1 : 99;
-                          setForm({ ...form, tileHeight: Math.max(0, Math.min(maxVal, val)) });
-                        }
-                      }}
-                      className="input-field w-full"
-                    />
-                  </div>
-                </div>
-                {form.isFloating && (
-                  <p className="text-[10px] text-amber-500 mt-2">
-                    Floating items are limited to 1x1 or smaller
-                  </p>
-                )}
-              </div>
-
-              {/* Optional Properties */}
-              <div className="border-t border-border pt-4 space-y-3">
-                <div className="flex items-center gap-2">
-                  <Checkbox id="rotatable" checked={form.rotatable ?? false}
-                    onCheckedChange={checked => setForm({ ...form, rotatable: checked === true })} />
-                  <label htmlFor="rotatable" className="text-sm font-medium">Rotatable</label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox id="holds-people" checked={form.holdsPeople ?? false}
-                    onCheckedChange={checked => setForm({ ...form, holdsPeople: checked === true, peopleCapacity: normalizePeopleCapacity(form.peopleCapacity) })} />
-                  <label htmlFor="holds-people" className="text-sm font-medium">Holds People</label>
-                </div>
-                {form.holdsPeople && (
-                  <div>
-                    <label htmlFor="people-capacity" className="text-xs text-muted-foreground mb-1 block">People Capacity</label>
-                    <input id="people-capacity" type="text" inputMode="numeric" value={form.peopleCapacity ?? 1}
-                      onChange={event => setForm({ ...form, peopleCapacity: normalizePeopleCapacity(Number(event.target.value)) })}
-                      className="input-field w-full" />
-                  </div>
-                )}
-              </div>
-              <div className="border-t border-border pt-4">
-                <h4 className="text-sm font-medium mb-3">Optional Properties</h4>
-                
-                {/* Checkboxes Grid */}
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="isFloating"
-                      checked={form.isFloating || false}
-                      onChange={(e) => {
-                        const isFloating = e.target.checked;
-                        // Floating items must be 1x1 or less
-                        const newForm = { ...form, isFloating };
-                        if (isFloating) {
-                          newForm.tileWidth = Math.min(form.tileWidth ?? 1, 1);
-                          newForm.tileHeight = Math.min(form.tileHeight ?? 1, 1);
-                        }
-                        setForm(newForm);
-                      }}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="isFloating" className="text-sm">Hovers Above Tile</label>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="canFloatOnWater"
-                      checked={form.canFloatOnWater || false}
-                      onChange={(e) => setForm({ ...form, canFloatOnWater: e.target.checked })}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="canFloatOnWater" className="text-sm">Can Float on Water</label>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="holdsPlayer"
-                      checked={form.holdsPlayer || false}
-                      onChange={(e) => setForm({ ...form, holdsPlayer: e.target.checked })}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="holdsPlayer" className="text-sm">Holds Player (Vehicle/Boat)</label>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="display"
-                      checked={form.display || false}
-                      onChange={(e) => setForm({ ...form, display: e.target.checked })}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="display" className="text-sm">Display on Tile</label>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="emitsLight"
-                      checked={form.emitsLight || false}
-                      onChange={(e) => setForm({ ...form, emitsLight: e.target.checked })}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="emitsLight" className="text-sm">Emits Light (at night)</label>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="placeable"
-                      checked={form.placeable || false}
-                      onChange={(e) => setForm({ ...form, placeable: e.target.checked, passable: e.target.checked ? form.passable : false })}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="placeable" className="text-sm">Placeable</label>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="passable"
-                      checked={form.passable || false}
-                      onChange={(e) => setForm({ ...form, passable: e.target.checked })}
-                      className="w-4 h-4"
-                      disabled={!form.placeable}
-                    />
-                    <label htmlFor="passable" className={cn("text-sm", !form.placeable && "text-muted-foreground")}>Passable</label>
-                  </div>
-                  
-                </div>
-
-                {/* Limited Lifetime Section */}
-                <div className="bg-secondary/30 rounded-lg p-3 mt-4">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="hasLimitedLifetime"
-                      checked={form.hasLimitedLifetime || false}
-                      onChange={(e) => setForm({ ...form, hasLimitedLifetime: e.target.checked, lifetimeHours: e.target.checked ? (form.lifetimeHours || 24) : undefined })}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="hasLimitedLifetime" className="text-sm font-medium">⏳ Limited Lifetime</label>
-                  </div>
-                  
-                  {form.hasLimitedLifetime && (
-                    <div className="mt-3">
-                      <label className="text-xs text-muted-foreground mb-1 block">Lifetime (game hours)</label>
-                      <input
-                        type="number"
-                        inputMode="decimal"
-                        step="0.01"
-                        min="0.01"
-                        value={form.lifetimeHours || 24}
-                        onChange={(e) => {
-                          const val = parseFloat(e.target.value) || 1;
-                          setForm({ ...form, lifetimeHours: Math.max(0.01, Math.round(val * 100) / 100) });
-                        }}
-                        className="input-field w-full"
-                      />
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                        Hours before resource expires
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Use Life Section */}
-                <div className="bg-secondary/30 rounded-lg p-3 mt-4">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="useLife"
-                      checked={form.useLife || false}
-                      onChange={(e) => setForm({ ...form, useLife: e.target.checked, lifeDecreasePerUse: e.target.checked ? (form.lifeDecreasePerUse || 100) : undefined })}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="useLife" className="text-sm font-medium">🔋 Use Life</label>
-                  </div>
-                  
-                  {form.useLife && (
-                    <div className="mt-3">
-                      <p className="text-[10px] text-muted-foreground mb-3">
-                        Using this item decreases its life/durability (press 'E' to use)
-                      </p>
-                      <label className="text-xs text-muted-foreground mb-1 block">Life Decrease Per Use</label>
-                      <input
-                        type="number"
-                        inputMode="decimal"
-                        step="0.01"
-                        min="0.01"
-                        value={form.lifeDecreasePerUse || 100}
-                        onChange={(e) => {
-                          const val = parseFloat(e.target.value) || 100;
-                          setForm({ ...form, lifeDecreasePerUse: Math.max(0.01, Math.round(val * 100) / 100) });
-                        }}
-                        className="input-field w-full"
-                      />
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                        Default 100 = full consumption in one use
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-
-                {/* Consumable Section */}
-                <div className="bg-secondary/30 rounded-lg p-3 mt-3">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="consumable"
-                      checked={form.consumable || false}
-                      onChange={(e) => setForm({ ...form, consumable: e.target.checked, healthGain: e.target.checked ? (form.healthGain || 0) : 0 })}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="consumable" className="text-sm font-medium">🍎 Consumable</label>
-                  </div>
-                  
-                  {form.consumable && (
-                    <div className="mt-3">
-                      <label className="text-xs text-muted-foreground mb-1 block">Health Gain</label>
-                      <input
-                        type="number"
-                        inputMode="decimal"
-                        step="0.01"
-                        min="0"
-                        value={form.healthGain || 0}
-                        onChange={(e) => {
-                          const val = parseFloat(e.target.value) || 0;
-                          setForm({ ...form, healthGain: Math.max(0, Math.round(val * 100) / 100) });
-                        }}
-                        className="input-field w-full"
-                      />
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                        Health gained when item is consumed
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Inflict Damage Section */}
-                <div className="bg-secondary/30 rounded-lg p-3 mt-3">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="canInflictDamage"
-                      checked={form.canInflictDamage || false}
-                      onChange={(e) => setForm({ ...form, canInflictDamage: e.target.checked, damage: e.target.checked ? (form.damage || 1) : 0 })}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="canInflictDamage" className="text-sm font-medium">⚔️ Inflict Damage</label>
-                  </div>
-                  
-                  {form.canInflictDamage && (
-                    <div className="mt-3">
-                      <label className="text-xs text-muted-foreground mb-1 block">Damage Amount</label>
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        step="0.01"
-                        min="0"
-                        value={form.damage || 0}
-                        onChange={(e) => {
-                          const val = parseFloat(e.target.value) || 0;
-                          setForm({ ...form, damage: Math.max(0, Math.round(val * 100) / 100) });
-                        }}
-                        className="input-field w-full"
-                      />
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                        Damage dealt when used on destructible items (press E)
-                      </p>
-                      <div className="flex items-center gap-2 mt-3">
-                        <Checkbox id="projectile" checked={form.projectile ?? false}
-                          onCheckedChange={checked => setForm({ ...form, projectile: checked === true })} />
-                        <label htmlFor="projectile" className="text-sm font-medium">Projectile</label>
-                      </div>
-                      {form.projectile && <div className="mt-3">
-                        <label htmlFor="projectile-distance" className="text-xs text-muted-foreground mb-1 block">Projectile Distance (tiles)</label>
-                        <input id="projectile-distance" type="text" inputMode="numeric" className="input-field w-full"
-                          value={form.projectileDistance ?? 5}
-                          onChange={event => setForm({ ...form, projectileDistance: Math.max(1, Math.floor(Number(event.target.value) || 1)) })} />
-                      </div>}
-                    </div>
-                  )}
-                </div>
-
-                {/* XP Gain Section */}
-                <div className="bg-secondary/30 rounded-lg p-3 mt-3">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="givesXp"
-                      checked={form.givesXp || false}
-                      onChange={(e) => setForm({ ...form, givesXp: e.target.checked, xpAmount: e.target.checked ? (form.xpAmount || 1) : 0 })}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="givesXp" className="text-sm font-medium">⭐ Gives XP</label>
-                  </div>
-                  
-                  {form.givesXp && (
-                    <div className="mt-3">
-                      <label className="text-xs text-muted-foreground mb-1 block">XP Amount</label>
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        min="0"
-                        value={form.xpAmount || 0}
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value) || 0;
-                          setForm({ ...form, xpAmount: Math.max(0, val) });
-                        }}
-                        className="input-field w-full"
-                      />
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                        XP earned each time the player uses this item
-                      </p>
-                    </div>
-                  )}
                 </div>
               </div>
 
