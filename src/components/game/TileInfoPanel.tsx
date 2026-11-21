@@ -286,8 +286,15 @@ const TileInfoPanel = ({
                   </div>
                   <div className="flex items-center gap-1">
                   {resource.rotatable && onRotate && canGather && (
-                    <Button variant="outline" size="sm" className="text-xs" onClick={() => onRotate(resource.id)}>
-                      <RotateCw className="w-3 h-3" />Rotate
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      title={`Rotate ${resource.name}`}
+                      aria-label={`Rotate ${resource.name}`}
+                      onClick={() => onRotate(resource.id)}
+                    >
+                      <RotateCw className="w-4 h-4" />
                     </Button>
                   )}
                   {canGather && (!isPlaced || isOwnClaim) ? (
