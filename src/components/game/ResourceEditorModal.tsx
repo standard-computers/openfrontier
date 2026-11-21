@@ -10,6 +10,7 @@ import ResourceIcon from './ResourceIcon';
 import { normalizeRecipes } from '@/utils/resourceConverter';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { normalizePeopleCapacity } from '@/lib/citizenBuildings';
 
 interface ResourceEditorModalProps {
@@ -294,11 +295,9 @@ const ResourceEditorModal = ({
   const propertyToggle = (id: string, label: string, enabled: boolean | undefined, update: (enabled: boolean) => void, disabled = false) => (
     <div className="grid grid-cols-[minmax(0,1fr)_minmax(100px,160px)] items-center gap-3 border-b border-border py-3">
       <label htmlFor={id} className={cn('text-sm', disabled && 'text-muted-foreground')}>{label}</label>
-      <select id={id} className="input-field w-full" value={enabled ? 'enabled' : 'disabled'} disabled={disabled}
-        onChange={event => update(event.target.value === 'enabled')}>
-        <option value="disabled">Disabled</option>
-        <option value="enabled">Enabled</option>
-      </select>
+      <div className="flex justify-end">
+        <Switch id={id} checked={Boolean(enabled)} disabled={disabled} onCheckedChange={update} />
+      </div>
     </div>
   );
   const propertyNumber = (id: string, label: string, value: number, update: (value: number) => void, whole = false) => (
