@@ -268,8 +268,7 @@ const GameHUD = ({
       {/* Inventory bar with tiles, xp, coins */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 game-panel pointer-events-auto z-50 w-max max-w-[calc(100%-16px)]">
         {inventoryOpen && (
-          <section aria-label="Full inventory" className="mb-2 border-b border-border pb-3">
-            <h2 className="text-sm font-semibold px-1 pb-2">Inventory</h2>
+          <section aria-label="Full inventory" className="border-b">
             <div className="max-h-[min(45vh,360px)] overflow-y-auto p-1">
               <InventorySlots
                 inventory={world.inventory}
