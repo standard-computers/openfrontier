@@ -63,6 +63,36 @@ export function buildCitizenBuildingIndex(map: WorldMap, resources: Resource[]):
   return { buildings, byTile, capacityByOwner };
 }
 
+// Citizens are out and about too: occupants sometimes leave home, and
+// passers-by only sometimes step inside, so streets stay lively.
+export const CITIZEN_EXIT_BUILDING_CHANCE = 0.4;
+export const CITIZEN_ENTER_BUILDING_CHANCE = 0.5;
+
+// Returns the occupant's turn when they are inside a building: either they
+// stay home, or they step out to an adjacent outdoor tile in their realm.
+// Returns null for citizens who are already outside.
+export function maybeExitBuilding(
+  stranger: Stranger, adjacentTiles: Position[], map: WorldMap, index: CitizenBuildingIndex, random: number,
+): Stranger | null {
+  if (!stranger.buildingKey) return null;
+  if (random >= CITIZEN_EXIT_BUILDING_CHANCE) return stranger;
+  const outdoor = adjacentTiles.filter(p => !index.byTile.has(tileKey(p)));
+  const exits = stranger.allegiance
+    ? outdoor.filter(p => map.tiles[p.y]?.[p.x]?.claimedBy === stranger.allegiance!.userId)
+    : outdoor.filter(p => !map.tiles[p.y]?.[p.x]?.claimedBy);
+  if (!exits.length) return stranger;
+  const newPos = exits[Math.floor((random / CITIZEN_EXIT_BUILDING_CHANCE) * exits.length) % exits.length];
+  return { ...stranger, position: newPos, buildingKey: undefined };
+}
+
+// Outdoor citizens only head inside some of the time; otherwise they keep
+// to outdoor tiles when there are any.
+export function preferOutdoorTargets(targets: Position[], index: CitizenBuildingIndex, random: number): Position[] {
+  if (random < CITIZEN_ENTER_BUILDING_CHANCE) return targets;
+  const outdoor = targets.filter(p => !index.byTile.has(tileKey(p)));
+  return outdoor.length ? outdoor : targets;
+}
+
 export function countBuildingOccupants(strangers: Stranger[]): Map<string, number> {
   const counts = new Map<string, number>();
   for (const s of strangers) {

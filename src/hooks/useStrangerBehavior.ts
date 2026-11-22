@@ -2,7 +2,7 @@ import { useEffect, useCallback, useRef } from 'react';
 import { GameWorld, Stranger, WorldMap, Resource, TILE_TYPES, MAX_HEALTH, calculateTileValue, StrangerAllegiance, Sovereignty } from '@/types/game';
 import { generateCitizenName } from '@/lib/citizenNames';
 import { getCitizenGatherEarnings, getCitizenTerritoryAttraction, returnUnpledgedToUnclaimed } from '@/lib/citizenEconomy';
-import { buildCitizenBuildingIndex, countBuildingOccupants, moveCitizenIntoBuilding, reconcileCitizenBuildings, type CitizenBuildingIndex } from '@/lib/citizenBuildings';
+import { buildCitizenBuildingIndex, countBuildingOccupants, maybeExitBuilding, moveCitizenIntoBuilding, preferOutdoorTargets, reconcileCitizenBuildings, type CitizenBuildingIndex } from '@/lib/citizenBuildings';
 import { countPledgedCitizens, getSovereigntyPopulationLimits, hasPledgeRoom, reconcilePledgePopulation, updatePledgeCounts } from '@/lib/citizenPopulation';
 
 const STRANGER_ACTION_INTERVAL = 3000; // Strangers act every 3 seconds (slower than NPCs)
@@ -237,7 +237,11 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
   const strangerMove = useCallback((stranger: Stranger, map: WorldMap, buildings: CitizenBuildingIndex, occupants: Map<string, number>): Stranger => {
     let adjacentTiles = getAdjacentTiles(stranger.position.x, stranger.position.y, map);
     if (adjacentTiles.length === 0) return stranger;
-    
+
+    // Citizens at home sometimes head out; otherwise they stay in this turn.
+    const exit = maybeExitBuilding(stranger, adjacentTiles, map, buildings, Math.random());
+    if (exit) return exit;
+
     if (stranger.allegiance) {
       // Pledged strangers must stay inside their sovereignty's territory
       const currentTile = map.tiles[stranger.position.y]?.[stranger.position.x];
@@ -276,7 +280,8 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     
     adjacentTiles = adjacentTiles.filter(pos => moveCitizenIntoBuilding(stranger, pos, buildings, occupants) !== null);
     const availablePreferred = preferredTiles.filter(pos => adjacentTiles.some(p => p.x === pos.x && p.y === pos.y));
-    const targetTiles = availablePreferred.length > 0 ? availablePreferred : adjacentTiles;
+    // Outdoor citizens only head inside some of the time.
+    const targetTiles = preferOutdoorTargets(availablePreferred.length > 0 ? availablePreferred : adjacentTiles, buildings, Math.random());
     if (!targetTiles.length) return stranger;
     const newPos = targetTiles[Math.floor(Math.random() * targetTiles.length)];
     
