@@ -735,6 +735,7 @@ const Index = () => {
         {!isDemoMode && (
           <GameHUD
             world={world}
+            tileSize={tileSize}
             resources={world.resources}
             selectedSlot={selectedSlot}
             cameraOffset={cameraPosition !== null}

@@ -13,9 +13,10 @@ interface InventorySlotsProps {
   onSelect: (index: number) => void;
   onInspect: (slot: InventorySlot) => void;
   onMove: (source: number, destination: number) => void;
+  tileSize?: number;
 }
 
-export default function InventorySlots({ inventory, resources, selectedSlot, expanded = false, onSelect, onInspect, onMove }: InventorySlotsProps) {
+export default function InventorySlots({ inventory, resources, selectedSlot, expanded = false, onSelect, onInspect, onMove, tileSize = 39 }: InventorySlotsProps) {
   const suppressClickUntil = useRef(0);
   const [dropTarget, setDropTarget] = useState<number | null>(null);
   return (
@@ -35,6 +36,7 @@ export default function InventorySlots({ inventory, resources, selectedSlot, exp
               if (!occupied) { event.preventDefault(); return; }
               event.dataTransfer.setData(INVENTORY_DRAG_TYPE, String(index));
               event.dataTransfer.effectAllowed = 'move';
+              if (resource) setRealSizeDragImage(event.dataTransfer, resource, tileSize);
               suppressClickUntil.current = Date.now() + 500;
               onSelect(index);
             }}
@@ -74,4 +76,32 @@ export default function InventorySlots({ inventory, resources, selectedSlot, exp
       })}
     </div>
   );
+}
+/** Use a drag preview matching the item's on-map footprint at the current zoom. */
+function setRealSizeDragImage(dataTransfer: DataTransfer, resource: Resource, tileSize: number) {
+  const w = Math.max(1, resource.tileWidth ?? 1);
+  const h = Math.max(1, resource.tileHeight ?? 1);
+  const scale = (resource.tileWidth ?? 1) === 0 || (resource.tileHeight ?? 1) === 0 ? 0.6 : 1;
+  const el = document.createElement('div');
+  Object.assign(el.style, {
+    position: 'fixed', top: '-10000px', left: '-10000px',
+    width: `${w * tileSize}px`, height: `${h * tileSize}px`,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    opacity: '0.85', pointerEvents: 'none',
+  });
+  const box = Math.min(w, h) * tileSize * scale;
+  if (resource.iconType === 'image' && resource.icon.startsWith('http')) {
+    const img = document.createElement('img');
+    img.src = resource.icon;
+    Object.assign(img.style, { width: `${w * tileSize * scale}px`, height: `${h * tileSize * scale}px`, objectFit: 'contain', imageRendering: 'pixelated' });
+    el.appendChild(img);
+  } else {
+    el.textContent = resource.icon;
+    el.style.fontSize = `${box * 0.8}px`;
+    el.style.lineHeight = '1';
+  }
+  document.body.appendChild(el);
+  // Hotspot at the anchor (bottom-left) tile centre, since footprints extend up and right.
+  dataTransfer.setDragImage(el, tileSize / 2, (h - 0.5) * tileSize);
+  setTimeout(() => el.remove(), 0);
 }

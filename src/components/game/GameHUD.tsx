@@ -192,12 +192,13 @@ interface GameHUDProps {
   cameraOffset: boolean;
   onSelectSlot: (slot: number) => void;
   onMoveSlot: (source: number, destination: number) => void;
+  tileSize?: number;
   onOpenClaimedTiles: () => void;
   onConsumeResource: (resourceId: string) => { success: boolean; message: string };
   onReturnToPlayer: () => void;
 }
 
-const GameHUD = ({ world, resources, selectedSlot, cameraOffset, onSelectSlot, onMoveSlot, onOpenClaimedTiles, onConsumeResource, onReturnToPlayer }: GameHUDProps) => {
+const GameHUD = ({ world, resources, selectedSlot, cameraOffset, onSelectSlot, onMoveSlot, tileSize, onOpenClaimedTiles, onConsumeResource, onReturnToPlayer }: GameHUDProps) => {
 
   const getResource = (id: string | null) => resources.find(r => r.id === id);
   const [selectedItem, setSelectedItem] = useState<{ resourceId: string; quantity: number; life?: number } | null>(null);
@@ -226,7 +227,7 @@ const GameHUD = ({ world, resources, selectedSlot, cameraOffset, onSelectSlot, o
           <section aria-label="Full inventory" className="mb-2 border-b border-border pb-3">
             <h2 className="text-sm font-semibold px-1 pb-2">Inventory</h2>
             <div className="max-h-[min(45vh,360px)] overflow-y-auto p-1">
-              <InventorySlots inventory={world.inventory} resources={resources} selectedSlot={selectedSlot} expanded onSelect={onSelectSlot} onInspect={slot => slot.resourceId && setSelectedItem({ ...slot, resourceId: slot.resourceId })} onMove={onMoveSlot} />
+              <InventorySlots inventory={world.inventory} resources={resources} selectedSlot={selectedSlot} expanded onSelect={onSelectSlot} onInspect={slot => slot.resourceId && setSelectedItem({ ...slot, resourceId: slot.resourceId })} onMove={onMoveSlot} tileSize={tileSize} />
             </div>
           </section>
         )}
@@ -262,7 +263,7 @@ const GameHUD = ({ world, resources, selectedSlot, cameraOffset, onSelectSlot, o
           {/* Inventory slots and full inventory toggle */}
           <div className="flex items-center gap-1 max-w-full min-w-0 p-1">
             <div className="min-w-0 overflow-x-auto p-0.5">
-              <InventorySlots inventory={world.inventory} resources={resources} selectedSlot={selectedSlot} onSelect={onSelectSlot} onInspect={slot => slot.resourceId && setSelectedItem({ ...slot, resourceId: slot.resourceId })} onMove={onMoveSlot} />
+              <InventorySlots inventory={world.inventory} resources={resources} selectedSlot={selectedSlot} onSelect={onSelectSlot} onInspect={slot => slot.resourceId && setSelectedItem({ ...slot, resourceId: slot.resourceId })} onMove={onMoveSlot} tileSize={tileSize} />
             </div>
             <Button variant="ghost" size="icon" className="w-11 h-11 shrink-0 rounded bg-input hover:bg-muted" aria-label={inventoryOpen ? 'Close full inventory' : 'Open full inventory'} title={inventoryOpen ? 'Close full inventory' : 'Open full inventory'} aria-expanded={inventoryOpen} onClick={() => setInventoryOpen(open => !open)}>
               {inventoryOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
