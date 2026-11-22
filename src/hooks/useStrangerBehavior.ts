@@ -4,6 +4,8 @@ import { generateCitizenName } from '@/lib/citizenNames';
 import { getCitizenGatherEarnings, getCitizenTerritoryAttraction, returnUnpledgedToUnclaimed } from '@/lib/citizenEconomy';
 import { buildCitizenBuildingIndex, countBuildingOccupants, maybeExitBuilding, moveCitizenIntoBuilding, preferOutdoorTargets, reconcileCitizenBuildings, type CitizenBuildingIndex } from '@/lib/citizenBuildings';
 import { countPledgedCitizens, getSovereigntyPopulationLimits, hasPledgeRoom, reconcilePledgePopulation, updatePledgeCounts } from '@/lib/citizenPopulation';
+import { gatherTileResource } from '@/lib/resourceProduction';
+import { addToInventory } from '@/types/game';
 
 const STRANGER_ACTION_INTERVAL = 3000; // Strangers act every 3 seconds (slower than NPCs)
 const STRANGER_GATHER_CHANCE = 0.4; // 40% chance to gather resources
@@ -183,25 +185,16 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     // Copy only the affected row instead of cloning the entire map
     const newTiles = [...map.tiles];
     const newRow = [...newTiles[y]];
-    newRow[x] = { ...currentTile, resources: currentTile.resources.filter(r => r !== resourceToGather) };
+    const gathered = gatherTileResource(currentTile, resourceToGather);
+    newRow[x] = gathered.tile;
     newTiles[y] = newRow;
     
     // Add to inventory
-    let newInventory = [...stranger.inventory];
-    let slotIndex = newInventory.findIndex(s => s.resourceId === resourceToGather && s.quantity < 99);
-    if (slotIndex === -1) {
-      slotIndex = newInventory.findIndex(s => !s.resourceId);
-    }
-    if (slotIndex !== -1) {
-      if (newInventory[slotIndex].resourceId === resourceToGather) {
-        newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
-      } else {
-        newInventory[slotIndex] = { resourceId: resourceToGather, quantity: 1 };
-      }
-    }
+    const newInventory = [...stranger.inventory];
+    addToInventory(newInventory, resourceToGather, gathered.quantity);
     
     return {
-      newStranger: { ...stranger, inventory: newInventory, coins: (stranger.coins ?? 0) + getCitizenGatherEarnings(resources.find(r => r.id === resourceToGather)?.coinValue ?? 0) },
+      newStranger: { ...stranger, inventory: newInventory, coins: (stranger.coins ?? 0) + gathered.quantity * getCitizenGatherEarnings(resources.find(r => r.id === resourceToGather)?.coinValue ?? 0) },
       newTiles,
     };
   }, []);

@@ -63,7 +63,7 @@ const TileInfoPanel = ({
   onViewCitizen,
 }: TileInfoPanelProps) => {
   const tileInfo = TILE_TYPES.find(t => t.type === tile.type);
-  const tileResources = tile.resources.map(id => resources.find(r => r.id === id)).filter(Boolean) as Resource[];
+  const tileResources = [...new Set(tile.resources)].map(id => resources.find(r => r.id === id)).filter(Boolean) as Resource[];
   const isClaimed = !!tile.claimedBy;
   const isOwnClaim = tile.claimedBy === userId;
   const canGather = !isClaimed || isOwnClaim;
@@ -269,7 +269,7 @@ const TileInfoPanel = ({
                   <div className="flex items-center gap-2 min-w-0 w-full">
                     <ResourceIcon icon={resource.icon} iconType={resource.iconType} size="lg" style={tile.resourceRotation?.[resource.id] ? { transform: `rotate(${tile.resourceRotation[resource.id]}deg)` } : undefined} />
                     <div className="min-w-0">
-                      <p className="text-sm font-medium break-words">{resource.name}</p>
+                      <p className="text-sm font-medium break-words">{resource.name}{tile.resources.filter(id => id === resource.id).length > 1 && ` ×${tile.resources.filter(id => id === resource.id).length}`}</p>
                       <div className="flex flex-wrap items-center gap-2">
                         <span className={cn('text-xs', RARITY_COLORS[resource.rarity])}>{resource.rarity}</span>
                         <span className="text-xs text-amber-400 flex items-center gap-0.5">

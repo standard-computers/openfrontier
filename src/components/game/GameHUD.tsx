@@ -8,6 +8,7 @@ import { WorldMember } from '@/hooks/useGameWorld';
 import { getTopPlayer } from './PlayerRankingPanel';
 import { Button } from '@/components/ui/button';
 import { Mail } from 'lucide-react';
+import { getWorldGameHour } from '@/lib/resourceProduction';
 
 interface GameTopBarProps {
   world: GameWorld;
@@ -36,17 +37,14 @@ export const GameTopBar = ({ world, resources, zoomPercent, username, multiSelec
   // Calculate world time: 1 real hour = 1 game day
   useEffect(() => {
     const calculateWorldTime = () => {
-      const createdAt = new Date(world.createdAt).getTime();
-      const now = Date.now();
-      const elapsedMs = now - createdAt;
-      const totalGameHours = (elapsedMs / 3600000) * 24;
+      const totalGameHours = getWorldGameHour(world.createdAt);
       const days = Math.floor(totalGameHours / 24);
       const hours = Math.floor(totalGameHours % 24);
       setWorldTime({ days, hours });
     };
 
     calculateWorldTime();
-    const interval = setInterval(calculateWorldTime, 60000);
+    const interval = setInterval(calculateWorldTime, 1000);
     return () => clearInterval(interval);
   }, [world.createdAt]);
 

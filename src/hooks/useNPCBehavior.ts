@@ -2,6 +2,8 @@ import { useEffect, useCallback, useRef } from 'react';
 import { GameWorld, NPC, WorldMap, Resource, InventorySlot, calculateTileValue, TILE_TYPES, isAdjacentToOwnedLand, ownsAnyTile } from '@/types/game';
 
 import { getNpcActionInterval } from '@/lib/npcAggression';
+import { gatherTileResource } from '@/lib/resourceProduction';
+import { addToInventory } from '@/types/game';
 const NPC_CLAIM_CHANCE = 0.3; // 30% chance to claim a tile when possible
 const NPC_GATHER_CHANCE = 0.5; // 50% chance to gather resources
 const NPC_MOVE_CHANCE = 0.7; // 70% chance to move
@@ -148,22 +150,13 @@ export const useNPCBehavior = ({ world, setWorld, saveMapData }: UseNPCBehaviorP
     const newTiles = [...map.tiles];
     const gatherRow = [...newTiles[targetTile.y]];
     const gatherTile = gatherRow[targetTile.x];
-    gatherRow[targetTile.x] = { ...gatherTile, resources: gatherTile.resources.filter(r => r !== resourceToGather) };
+    const gathered = gatherTileResource(gatherTile, resourceToGather);
+    gatherRow[targetTile.x] = gathered.tile;
     newTiles[targetTile.y] = gatherRow;
     
     // Add to inventory
-    let newInventory = [...npc.inventory];
-    let slotIndex = newInventory.findIndex(s => s.resourceId === resourceToGather && s.quantity < 99);
-    if (slotIndex === -1) {
-      slotIndex = newInventory.findIndex(s => !s.resourceId);
-    }
-    if (slotIndex !== -1) {
-      if (newInventory[slotIndex].resourceId === resourceToGather) {
-        newInventory[slotIndex] = { ...newInventory[slotIndex], quantity: newInventory[slotIndex].quantity + 1 };
-      } else {
-        newInventory[slotIndex] = { resourceId: resourceToGather, quantity: 1 };
-      }
-    }
+    const newInventory = [...npc.inventory];
+    addToInventory(newInventory, resourceToGather, gathered.quantity);
     
     return {
       newNpc: { ...npc, inventory: newInventory },

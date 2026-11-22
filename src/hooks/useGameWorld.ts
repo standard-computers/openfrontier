@@ -9,6 +9,8 @@ import { makeAreaCapital } from '@/lib/sovereigntyCapital';
 import { useCitizenPersistence } from './useCitizenPersistence';
 import { createWorldResourceWriter } from '@/lib/worldResourcePersistence';
 import { fireProjectile, type ProjectileShot } from '@/lib/projectiles';
+import { getWorldGameHour, gatherTileResource } from '@/lib/resourceProduction';
+import { useResourceProduction } from './useResourceProduction';
 import { fetchWorldResources, addResourceToRepository, updateResourceInRepository, deleteResourceFromRepository } from '@/utils/resourceConverter';
 
 // Hook version marker for HMR compatibility
@@ -401,6 +403,8 @@ export const useGameWorld = () => {
     if (error) throw error;
   }), [dbWorldId, isOwner]);
 
+  useResourceProduction(world, setWorld, saveMapData, !loading && !!dbWorldId);
+
   // Name saves must not overwrite resource references from an earlier render.
   const saveWorldData = useCallback(async (overrideName?: string) => {
     if (!dbWorldId || !isOwner) return;
@@ -655,15 +659,11 @@ export const useGameWorld = () => {
       return;
     }
     
+    const gathered = gatherTileResource(tile, resourceId);
     const newTiles = currentWorld.map.tiles.map((row, ry) =>
       row.map((t, rx) =>
         rx === x && ry === y
-          ? {
-              ...t,
-              resources: t.resources.filter(r => r !== resourceId),
-              placedResources: t.placedResources?.filter(r => r !== resourceId),
-              resourceLife: t.resourceLife ? Object.fromEntries(Object.entries(t.resourceLife).filter(([id]) => id !== resourceId)) : undefined,
-            }
+          ? gathered.tile
           : t
       )
     );
@@ -672,7 +672,7 @@ export const useGameWorld = () => {
     // Compute inventory inside setWorld for accurate prev state
     setWorld(prev => {
       const newInventory = [...prev.inventory];
-      addToInventory(newInventory, resourceId);
+      addToInventory(newInventory, resourceId, gathered.quantity);
 
       return {
         ...prev,
@@ -690,39 +690,39 @@ export const useGameWorld = () => {
     const currentWorld = world;
     const inventory = [...currentWorld.inventory];
     const picked: { x: number; y: number; resourceId: string }[] = [];
+    const gatheredTiles = new Map<string, import('@/types/game').MapTile>();
+    const seenTargets = new Set<string>();
+    let gatheredCount = 0;
 
     for (const target of targets) {
-      const tile = currentWorld.map.tiles[target.y]?.[target.x];
+      const tileKey = `${target.x},${target.y}`;
+      const targetKey = `${tileKey},${target.resourceId}`;
+      if (seenTargets.has(targetKey)) continue;
+      seenTargets.add(targetKey);
+      const tile = gatheredTiles.get(tileKey) ?? currentWorld.map.tiles[target.y]?.[target.x];
       if (!tile) continue;
       if (!tile.resources.includes(target.resourceId)) continue;
       if (tile.claimedBy && tile.claimedBy !== currentWorld.userId && !isOutsiderGatheringAllowed(tile.claimedBy)) continue;
       if (tile.placedResources?.includes(target.resourceId) && tile.claimedBy !== currentWorld.userId) continue;
 
-      addToInventory(inventory, target.resourceId);
+      const gathered = gatherTileResource(tile, target.resourceId);
+      addToInventory(inventory, target.resourceId, gathered.quantity);
+      gatheredCount += gathered.quantity;
+      gatheredTiles.set(tileKey, gathered.tile);
       picked.push(target);
     }
 
     if (picked.length === 0) return 0;
 
-    const removeKeys = new Set(picked.map(t => `${t.x},${t.y},${t.resourceId}`));
     const newTiles = currentWorld.map.tiles.map((row, ry) =>
-      row.map((t, rx) => {
-        if (t.resources.length === 0) return t;
-        const resources = t.resources.filter(rid => !removeKeys.has(`${rx},${ry},${rid}`));
-        return resources.length === t.resources.length ? t : {
-          ...t,
-          resources,
-          placedResources: t.placedResources?.filter(rid => !removeKeys.has(`${rx},${ry},${rid}`)),
-          resourceLife: t.resourceLife ? Object.fromEntries(Object.entries(t.resourceLife).filter(([rid]) => !removeKeys.has(`${rx},${ry},${rid}`))) : undefined,
-        };
-      })
+      row.map((t, rx) => gatheredTiles.get(`${rx},${ry}`) ?? t)
     );
     const newMapData: WorldMap = { ...currentWorld.map, tiles: newTiles };
 
     setWorld(prev => ({ ...prev, inventory, map: newMapData }));
     setTimeout(() => saveMapData(newMapData), 500);
 
-    return picked.length;
+    return gatheredCount;
   }, [world, saveMapData, isOutsiderGatheringAllowed]);
 
   const addExistingResources = useCallback(async (resources: Resource[]) => {
@@ -789,8 +789,8 @@ export const useGameWorld = () => {
         const placedResources = t.placedResources || [];
         return { 
           ...t, 
-          // Claimed land keeps only player-placed resources — never wild spawns
-          resources: t.claimedBy ? [...placedResources] : [...t.resources],
+          // Do not erase gathered or produced stock when refreshing wild spawns.
+          resources: [...t.resources],
           placedResources: [...placedResources]
         };
       })
@@ -1169,7 +1169,8 @@ export const useGameWorld = () => {
             ? { 
                 ...t, 
                 resources: [...t.resources, resourceId],
-                placedResources: [...(t.placedResources || []), resourceId]
+                placedResources: [...(t.placedResources || []), resourceId],
+                resourceProductionHour: { ...t.resourceProductionHour, [resourceId]: getWorldGameHour(prev.createdAt) },
               }
             : t
         )

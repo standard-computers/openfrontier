@@ -95,6 +95,7 @@ export interface MapTile {
   placedResources?: string[]; // Resources placed by players (cannot be gathered, must be destroyed)
   resourceRotation?: Record<string, number>; // Rotation in degrees (0/90/180/270) per resourceId
   resourceAutoFire?: Record<string, boolean>;
+  resourceProductionHour?: Record<string, number>; // Last completed production checkpoint in absolute game hours
   resourceLife?: Record<string, number>; // Track current life of each resource on tile by resourceId
   walkable: boolean;
   claimedBy?: string;

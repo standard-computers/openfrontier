@@ -35,7 +35,7 @@ export function getSelectionGatherPlan(
       continue;
     }
     const placed = tile.placedResources ?? [];
-    for (const resourceId of tile.resources) {
+    for (const resourceId of new Set(tile.resources)) {
       if (placed.includes(resourceId) && tile.claimedBy !== userId) continue;
       gatherable.push({ x: position.x, y: position.y, resourceId });
     }

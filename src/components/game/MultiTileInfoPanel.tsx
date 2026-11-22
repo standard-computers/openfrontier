@@ -294,7 +294,7 @@ const MultiTileInfoPanel = ({
         <Accordion type="multiple" className="w-full">
           {tiles.map(({ tile, position }, index) => {
             const tileInfo = TILE_TYPES.find(t => t.type === tile.type);
-            const tileResources = tile.resources
+            const tileResources = [...new Set(tile.resources)]
               .map(id => resources.find(r => r.id === id))
               .filter(Boolean) as Resource[];
             const tileValue = calculateTileValue(tile, resources);
@@ -352,7 +352,7 @@ const MultiTileInfoPanel = ({
                           >
                             <div className="flex items-center gap-2">
                               <ResourceIcon icon={resource.icon} iconType={resource.iconType} size="sm" />
-                              <span className="text-xs">{resource.name}</span>
+                              <span className="text-xs">{resource.name}{tile.resources.filter(id => id === resource.id).length > 1 && ` ×${tile.resources.filter(id => id === resource.id).length}`}</span>
                             </div>
                             {canGather && (!tile.placedResources?.includes(resource.id) || isOwnClaim) ? (
                               <button
