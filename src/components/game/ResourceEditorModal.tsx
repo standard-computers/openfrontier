@@ -335,7 +335,9 @@ const ResourceEditorModal = ({
     // Add 10% markup and round up
     const newPrice = Math.ceil(totalCost * 1.1);
     setForm({ ...form, coinValue: newPrice });
-    toast.success(`Price set to ${newPrice.toLocaleString()} coins (ingredients: ${totalCost.toLocaleString()} + 10% markup)`);
+    toast.success(
+      `Price set to ${newPrice.toLocaleString()} coins (ingredients: ${totalCost.toLocaleString()} + 10% markup)`,
+    );
   };
 
   const handleDuplicateRecipe = (recipe: Recipe) => {
@@ -393,7 +395,7 @@ const ResourceEditorModal = ({
     </div>
   );
   const propertyNumber = (id: string, label: string, value: number, update: (value: number) => void, whole = false) => (
-    <div className="grid grid-cols-[minmax(0,1fr)_minmax(100px,160px)] items-center gap-3 border-b border-border py-3">
+    <div className="grid grid-cols-[minmax(0,1fr)_minmax(100px,160px)] items-center gap-3 border-b border-border py-1">
       <label htmlFor={id} className="text-sm">
         {label}
       </label>
