@@ -727,9 +727,12 @@ export const useGameWorld = () => {
 
   const addExistingResources = useCallback(async (resources: Resource[]) => {
     await resourceWriter.add(resources.map(resource => resource.id));
+    // Incoming definitions replace existing ones with the same ID; new IDs are appended.
     setWorld(prev => {
+      const incoming = new Map(resources.map(resource => [resource.id, resource]));
+      const updated = prev.resources.map(resource => incoming.get(resource.id) ?? resource);
       const ids = new Set(prev.resources.map(resource => resource.id));
-      return { ...prev, resources: [...prev.resources, ...resources.filter(resource => {
+      return { ...prev, resources: [...updated, ...resources.filter(resource => {
         if (ids.has(resource.id)) return false;
         ids.add(resource.id);
         return true;

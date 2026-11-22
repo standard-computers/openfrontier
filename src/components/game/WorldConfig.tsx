@@ -152,18 +152,15 @@ const WorldConfig = ({
       if (error) throw error;
 
       const existingIds = new Set(resources.map(r => r.id));
-      const missingResources = (data as RepositoryResource[]).filter(r => !existingIds.has(r.id));
+      const repo = data as RepositoryResource[];
+      const added = repo.filter(r => !existingIds.has(r.id)).length;
+      const updated = repo.length - added;
 
-      if (missingResources.length === 0) {
-        toast.info('All repository resources are already in your world');
-        return;
-      }
+      await onAddExistingResources(repo.map(repositoryToGameResource));
 
-      await onAddExistingResources(missingResources.map(repositoryToGameResource));
-
-      toast.success(`Added ${missingResources.length} missing resource(s) to your world`);
+      toast.success(`Updated ${updated} and added ${added} resource(s) from the repository`);
     } catch (err: any) {
-      toast.error('Failed to add missing resources: ' + err.message);
+      toast.error('Failed to update resources: ' + err.message);
     } finally {
       setAddingMissing(false);
     }
@@ -378,7 +375,7 @@ const WorldConfig = ({
                           disabled={addingMissing}
                           className="btn text-xs"
                         >
-                          <Download className="w-3 h-3 mr-1" /> {addingMissing ? 'Adding...' : '+ Missing'}
+                          <RefreshCw className="w-3 h-3 mr-1" /> {addingMissing ? 'Updating...' : 'Update'}
                         </button>
                         <button onClick={() => setRepositoryOpen(true)} className="btn text-xs">
                           <Database className="w-3 h-3 mr-1" /> Repository
