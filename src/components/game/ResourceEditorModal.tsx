@@ -385,7 +385,7 @@ const ResourceEditorModal = ({
     update: (enabled: boolean) => void,
     disabled = false,
   ) => (
-    <div className="grid grid-cols-[minmax(0,1fr)_minmax(100px,160px)] items-center gap-3 border-b border-border py-3">
+    <div className="grid grid-cols-[minmax(0,1fr)_minmax(100px,160px)] items-center gap-3 border-b border-border py-1">
       <label htmlFor={id} className={cn("text-sm", disabled && "text-muted-foreground")}>
         {label}
       </label>
