@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Resource, Recipe, RecipeIngredient, TileType, TILE_TYPES, RARITY_COLORS } from '@/types/game';
 import { X, Save, Trash2, Plus, ChevronRight, Upload, Image, ChevronDown, Tag, Copy, ClipboardPaste, Search } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -190,6 +190,22 @@ const ResourceEditorModal = ({
     }
     onSave(form);
   };
+
+  const handleSaveRef = useRef(handleSave);
+  handleSaveRef.current = handleSave;
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        handleSaveRef.current();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
+  const saveShortcutHint = typeof navigator !== 'undefined' && /mac/i.test(navigator.platform) ? '⌘S' : 'Ctrl+S';
 
   const handleDelete = () => {
     if (onDelete && confirm('Delete this resource? This cannot be undone.')) {
@@ -1204,8 +1220,9 @@ const ResourceEditorModal = ({
 
         {/* Footer */}
         <div className="p-4 border-t border-border flex gap-2">
-          <button onClick={handleSave} className="btn btn-primary flex-1">
+          <button onClick={handleSave} className="btn btn-primary flex-1" title={`${isNew ? 'Create' : 'Save'} (${saveShortcutHint})`}>
             <Save className="w-4 h-4 mr-2" /> {isNew ? 'Create Resource' : 'Save Changes'}
+            <kbd className="ml-2 px-1.5 py-0.5 rounded bg-black/20 text-[10px] font-mono">{saveShortcutHint}</kbd>
           </button>
           {!isNew && onDelete && (
             <button onClick={handleDelete} className="btn bg-destructive text-destructive-foreground">
