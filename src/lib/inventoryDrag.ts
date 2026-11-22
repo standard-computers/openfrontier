@@ -2,6 +2,11 @@ import type { GameWorld, InventorySlot, Position } from '@/types/game';
 
 export const INVENTORY_DRAG_TYPE = 'application/x-frontier-inventory-slot';
 
+/** Resource currently being dragged from the inventory (dataTransfer is unreadable during dragover). */
+let activeDragResourceId: string | null = null;
+export const setActiveDragResourceId = (id: string | null) => { activeDragResourceId = id; };
+export const getActiveDragResourceId = () => activeDragResourceId;
+
 export function rearrangeInventory(inventory: InventorySlot[], source: number, destination: number): InventorySlot[] {
   if (!Number.isInteger(source) || !Number.isInteger(destination) || source < 0 || destination < 0 ||
     source >= inventory.length || destination >= inventory.length || source === destination ||

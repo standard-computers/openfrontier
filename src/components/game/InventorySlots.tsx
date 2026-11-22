@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import type { InventorySlot, Resource } from '@/types/game';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { INVENTORY_DRAG_TYPE } from '@/lib/inventoryDrag';
+import { INVENTORY_DRAG_TYPE, setActiveDragResourceId } from '@/lib/inventoryDrag';
 import ResourceIcon from './ResourceIcon';
 
 interface InventorySlotsProps {
@@ -36,11 +36,13 @@ export default function InventorySlots({ inventory, resources, selectedSlot, exp
               if (!occupied) { event.preventDefault(); return; }
               event.dataTransfer.setData(INVENTORY_DRAG_TYPE, String(index));
               event.dataTransfer.effectAllowed = 'move';
+              setActiveDragResourceId(slot.resourceId ?? null);
               if (resource) setRealSizeDragImage(event.dataTransfer, resource, tileSize);
+              // The map draws the exact footprint preview; hide the browser ghost once over the map.
               suppressClickUntil.current = Date.now() + 500;
               onSelect(index);
             }}
-            onDragEnd={() => { suppressClickUntil.current = Date.now() + 300; setDropTarget(null); }}
+            onDragEnd={() => { setActiveDragResourceId(null); suppressClickUntil.current = Date.now() + 300; setDropTarget(null); }}
             onDragOver={event => {
               if (!event.dataTransfer.types.includes(INVENTORY_DRAG_TYPE)) return;
               event.preventDefault();

@@ -5,7 +5,7 @@ import ResourceIcon from './ResourceIcon';
 import PixelCharacter from './PixelCharacter';
 import CanvasTileRenderer from './CanvasTileRenderer';
 import CanvasOverlayRenderer from './CanvasOverlayRenderer';
-import { INVENTORY_DRAG_TYPE } from '@/lib/inventoryDrag';
+import { INVENTORY_DRAG_TYPE, getActiveDragResourceId } from '@/lib/inventoryDrag';
 import ProjectileCanvas from './ProjectileCanvas';
 import type { ProjectileShot } from '@/lib/projectiles';
 
@@ -281,6 +281,13 @@ const GameMap = ({
   const [isDragging, setIsDragging] = useState(false);
   const [hoveredStranger, setHoveredStranger] = useState<Stranger | null>(null);
   const [inventoryDropTile, setInventoryDropTile] = useState<Position | null>(null);
+  const [inventoryDropPos, setInventoryDropPos] = useState<(Position & { owned: boolean }) | null>(null);
+  useEffect(() => {
+    const clear = () => setInventoryDropPos(null);
+    window.addEventListener('dragend', clear);
+    window.addEventListener('drop', clear);
+    return () => { window.removeEventListener('dragend', clear); window.removeEventListener('drop', clear); };
+  }, []);
   
   // Calculate game hour based on world creation time
   const [gameHour, setGameHour] = useState(() => {
@@ -736,18 +743,20 @@ const GameMap = ({
         const position = tileFromEvent(event);
         const owned = !!position && map.tiles[position.y]?.[position.x]?.claimedBy === userId;
         event.dataTransfer.dropEffect = owned ? 'move' : 'none';
+        setInventoryDropPos(previous => previous?.x === position?.x && previous?.y === position?.y && previous?.owned === owned ? previous : (position ? { ...position, owned } : null));
         setInventoryDropTile(previous => {
           const next = owned ? position : null;
           return previous?.x === next?.x && previous?.y === next?.y ? previous : next;
         });
       }}
       onDragLeave={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setInventoryDropTile(null);
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) { setInventoryDropTile(null); setInventoryDropPos(null); }
       }}
       onDrop={(event) => {
         if (!event.dataTransfer.types.includes(INVENTORY_DRAG_TYPE)) return;
         event.preventDefault();
         setInventoryDropTile(null);
+        setInventoryDropPos(null);
         const position = tileFromEvent(event);
         const payload = event.dataTransfer.getData(INVENTORY_DRAG_TYPE);
         if (position && /^\d+$/.test(payload)) onInventoryDrop?.(Number(payload), position);
@@ -777,6 +786,31 @@ const GameMap = ({
         selectedTilesSet={selectedTilesSet}
         dragRect={dragRect}
       />
+      {inventoryDropPos && (() => {
+        const resource = resourceMap.get(getActiveDragResourceId() ?? '');
+        if (!resource) return null;
+        const w = Math.max(1, resource.tileWidth ?? 1);
+        const h = Math.max(1, resource.tileHeight ?? 1);
+        const small = (resource.tileWidth ?? 1) === 0 || (resource.tileHeight ?? 1) === 0;
+        const isImage = resource.iconType === 'image' && resource.icon.startsWith('http');
+        return (
+          <div
+            aria-hidden
+            className={cn('absolute pointer-events-none z-20 flex items-center justify-center rounded-sm border-2 border-dashed',
+              inventoryDropPos.owned ? 'border-primary bg-primary/15' : 'border-destructive bg-destructive/15')}
+            style={{
+              left: (inventoryDropPos.x - viewportOffset.x) * tileSize,
+              top: (inventoryDropPos.y - (h - 1) - viewportOffset.y) * tileSize,
+              width: w * tileSize,
+              height: h * tileSize,
+            }}
+          >
+            {isImage
+              ? <img src={resource.icon} alt="" className="object-contain opacity-80" style={{ width: (small ? 0.6 : 1) * w * tileSize, height: (small ? 0.6 : 1) * h * tileSize, imageRendering: 'pixelated' }} />
+              : <span className="opacity-80 leading-none" style={{ fontSize: Math.min(w, h) * tileSize * (small ? 0.5 : 0.8) }}>{resource.icon}</span>}
+          </div>
+        );
+      })()}
       <ProjectileCanvas shot={projectileShot} offset={viewportOffset} width={viewportSize.tilesX * tileSize} height={viewportSize.tilesY * tileSize} tileSize={tileSize} />
       <div className="absolute inset-0 pointer-events-none">
         {visibleTilesData.map((data) => (
