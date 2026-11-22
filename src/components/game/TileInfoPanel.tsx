@@ -184,7 +184,7 @@ const TileInfoPanel = ({
             )}
           >
             <Flag className="w-4 h-4" />
-            {canAfford ? `Claim for ${tileValue} coins` : `Need ${tileValue} coins`}
+            {canAfford ? `Claim for ${tileValue.toLocaleString()} coins` : `Need ${tileValue.toLocaleString()} coins`}
           </button>
         )}
 
@@ -235,7 +235,7 @@ const TileInfoPanel = ({
             <Button size="sm" variant="secondary" disabled={requestBusy} onClick={() => { setContestConfirm(v => !v); setOfferOpen(false); }}><Flag />Contest</Button>
           </div>
           {offerOpen && <div className="space-y-2">
-            <label htmlFor="land-offer" className="text-xs text-muted-foreground">Minimum {tileValue} coins</label>
+            <label htmlFor="land-offer" className="text-xs text-muted-foreground">Minimum {tileValue.toLocaleString()} coins</label>
             <Input id="land-offer" aria-label="Offer amount" type="text" inputMode="numeric" value={offerAmount} onChange={e => setOfferAmount(e.target.value)} />
             <Button size="sm" className="w-full" disabled={requestBusy || !isValidLandOffer(Number(offerAmount), tileValue) || Number(offerAmount) > userCoins} onClick={() => onOffer(Number(offerAmount))}>Send offer</Button>
           </div>}

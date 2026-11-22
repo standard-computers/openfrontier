@@ -335,7 +335,7 @@ const ResourceEditorModal = ({
     // Add 10% markup and round up
     const newPrice = Math.ceil(totalCost * 1.1);
     setForm({ ...form, coinValue: newPrice });
-    toast.success(`Price set to ${newPrice} coins (ingredients: ${totalCost} + 10% markup)`);
+    toast.success(`Price set to ${newPrice.toLocaleString()} coins (ingredients: ${totalCost.toLocaleString()} + 10% markup)`);
   };
 
   const handleDuplicateRecipe = (recipe: Recipe) => {

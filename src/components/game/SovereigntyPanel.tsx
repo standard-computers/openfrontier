@@ -177,8 +177,8 @@ const SovereigntyPanel = ({
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-secondary/50 rounded-lg p-3 text-center">
                 <div className="flex items-center justify-center gap-1 text-amber-400 text-xl font-bold">
-                  <Coins className="w-5 h-5" />
-                  {coins}
+                   <Coins className="w-5 h-5" />
+                  {coins.toLocaleString()}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">Coins</p>
               </div>
@@ -316,7 +316,7 @@ const SovereigntyPanel = ({
                 <div className="bg-secondary/50 rounded-lg p-3 text-center">
                   <div className="flex items-center justify-center gap-1 text-amber-400 text-xl font-bold">
                     <Coins className="w-5 h-5" />
-                    {coins}
+                    {coins.toLocaleString()}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">Treasury</p>
                 </div>

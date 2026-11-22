@@ -305,7 +305,7 @@ const GameHUD = ({
           {/* Coins */}
           <div className="flex items-center gap-1 px-3 py-1 bg-amber-400/20 rounded">
             <Coins className="w-4 h-4 text-amber-400" />
-            <span className="font-bold text-amber-400 text-sm">{world.coins}</span>
+            <span className="font-bold text-amber-400 text-sm">{world.coins.toLocaleString()}</span>
           </div>
 
           <div className="w-px h-8 bg-border" />

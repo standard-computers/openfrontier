@@ -424,7 +424,7 @@ const WorldConfig = ({
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <span className={RARITY_COLORS[resource.rarity]}>{resource.rarity}</span>
                             <span>•</span>
-                            <span>{resource.coinValue} coins</span>
+                            <span>{resource.coinValue.toLocaleString()} coins</span>
                             {resource.recipes && resource.recipes.length > 0 && (
                               <>
                                 <span>•</span>

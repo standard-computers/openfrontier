@@ -468,7 +468,7 @@ export const useGameWorld = () => {
     const tileValue = calculateTileValue(tile, currentWorld.resources);
     
     if (currentWorld.coins < tileValue) {
-      return { success: false, message: `Not enough coins! Need ${tileValue} coins` };
+      return { success: false, message: `Not enough coins! Need ${tileValue.toLocaleString()} coins` };
     }
     
     const tileResources = [...tile.resources];
@@ -498,7 +498,7 @@ export const useGameWorld = () => {
     // Save map changes
     setTimeout(() => saveMapData(newMapData), 500);
     
-    return { success: true, message: `Claimed for ${tileValue} coins!` };
+    return { success: true, message: `Claimed for ${tileValue.toLocaleString()} coins!` };
   }, [world, saveMapData]);
 
   const claimMultipleTiles = useCallback((positions: { x: number; y: number }[]): { success: boolean; message: string; claimedCount: number; totalCost: number } => {
@@ -544,7 +544,7 @@ export const useGameWorld = () => {
     }
     
     if (world.coins < totalCost) {
-      return { success: false, message: `Not enough coins! Need ${totalCost} coins`, claimedCount: 0, totalCost };
+      return { success: false, message: `Not enough coins! Need ${totalCost.toLocaleString()} coins`, claimedCount: 0, totalCost };
     }
     
     // Build new map with all tiles claimed at once
@@ -584,7 +584,7 @@ export const useGameWorld = () => {
     
     return { 
       success: true, 
-      message: `Claimed ${validPositions.length} tiles for ${totalCost} coins!`,
+      message: `Claimed ${validPositions.length} tiles for ${totalCost.toLocaleString()} coins!`,
       claimedCount: validPositions.length,
       totalCost
     };
@@ -611,7 +611,7 @@ export const useGameWorld = () => {
 
     const totalCost = eligible.length * typeInfo.baseValue;
     if (world.coins < totalCost) {
-      return { success: false, message: `Not enough coins! Need ${totalCost} coins`, convertedCount: 0, totalCost };
+      return { success: false, message: `Not enough coins! Need ${totalCost.toLocaleString()} coins`, convertedCount: 0, totalCost };
     }
 
     const targetSet = new Set(eligible.map(p => `${p.x},${p.y}`));
@@ -634,8 +634,8 @@ export const useGameWorld = () => {
     return {
       success: true,
       message: eligible.length === 1
-        ? `Converted tile to ${typeInfo.label} for ${totalCost} coins!`
-        : `Converted ${eligible.length} tiles to ${typeInfo.label} for ${totalCost} coins!`,
+        ? `Converted tile to ${typeInfo.label} for ${totalCost.toLocaleString()} coins!`
+        : `Converted ${eligible.length} tiles to ${typeInfo.label} for ${totalCost.toLocaleString()} coins!`,
       convertedCount: eligible.length,
       totalCost,
     };

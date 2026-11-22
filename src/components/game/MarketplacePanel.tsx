@@ -92,7 +92,7 @@ const MarketplacePanel = ({
     const { total: cost, quantity } = purchase;
     
     if (playerCoins < cost) {
-      toast.error(`Not enough coins! Need ${cost} coins`);
+      toast.error(`Not enough coins! Need ${cost.toLocaleString()} coins`);
       return;
     }
 
@@ -150,7 +150,7 @@ const MarketplacePanel = ({
 
     const result = onBuyResource(resource, cost, quantity);
     if (result.success) {
-      toast.success(`Purchased ${quantity} × ${item.name} for ${cost} coins!`);
+      toast.success(`Purchased ${quantity} × ${item.name} for ${cost.toLocaleString()} coins!`);
     } else {
       toast.error(result.message);
     }
@@ -169,7 +169,7 @@ const MarketplacePanel = ({
     
     const result = onSellResource(resourceId, value);
     if (result.success) {
-      toast.success(`Sold ${resource.name} for ${value} coins!`);
+      toast.success(`Sold ${resource.name} for ${value.toLocaleString()} coins!`);
     } else {
       toast.error(result.message);
     }
@@ -191,7 +191,7 @@ const MarketplacePanel = ({
     
     const result = onSellResource(resourceId, value, totalQuantity);
     if (result.success && result.soldCount) {
-      toast.success(`Sold ${result.soldCount}x ${resource.name} for ${value * result.soldCount} coins!`);
+      toast.success(`Sold ${result.soldCount}x ${resource.name} for ${(value * result.soldCount).toLocaleString()} coins!`);
     } else if (!result.success) {
       toast.error(result.message);
     }
@@ -220,7 +220,7 @@ const MarketplacePanel = ({
             <Store className="w-6 h-6 text-primary" />
             <div>
               <h2 className="text-lg font-semibold text-foreground">{marketName}</h2>
-              <p className="text-sm text-muted-foreground">Your coins: {playerCoins}</p>
+              <p className="text-sm text-muted-foreground">Your coins: {playerCoins.toLocaleString()}</p>
             </div>
           </div>
           <button onClick={onClose} className="btn btn-ghost p-2">
@@ -304,7 +304,7 @@ const MarketplacePanel = ({
                               {item.rarity}
                             </span>
                             <span>•</span>
-                            <span>{cost} coins</span>
+                            <span>{cost.toLocaleString()} coins</span>
                           </div>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
@@ -367,7 +367,7 @@ const MarketplacePanel = ({
                               {slot.resource!.rarity}
                             </span>
                             <span>•</span>
-                            <span>{value} coins each</span>
+                            <span>{value.toLocaleString()} coins each</span>
                           </div>
                         </div>
                         <div className="flex gap-2">

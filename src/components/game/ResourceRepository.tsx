@@ -487,7 +487,7 @@ const ResourceRepository = ({
                             {resource.rarity}
                           </span>
                           <span className="text-muted-foreground">•</span>
-                          <span className="text-muted-foreground">{resource.base_value} coins</span>
+                          <span className="text-muted-foreground">{resource.base_value.toLocaleString()} coins</span>
                           {resource.category && (
                             <>
                               <span className="text-muted-foreground">•</span>

@@ -55,7 +55,7 @@ const RequestRow = ({ request, ...props }: Omit<Props, 'open' | 'onClose' | 'req
         </>}
       </div>}
       {counterOpen && canRespond && <div className="space-y-2">
-        <label className="text-xs text-muted-foreground" htmlFor={`counter-${request.id}`}>Minimum {minimum} coins</label>
+        <label className="text-xs text-muted-foreground" htmlFor={`counter-${request.id}`}>Minimum {minimum.toLocaleString()} coins</label>
         <div className="flex gap-2"><Input id={`counter-${request.id}`} aria-label="Counteroffer amount" type="text" inputMode="numeric" value={counter} onChange={e => setCounter(e.target.value)} /><Button disabled={busy || !isValidLandOffer(Number(counter), minimum)} onClick={async () => { await onRespond(request.id, 'counter', Number(counter)); setCounterOpen(false); }}>Send counter</Button></div>
       </div>}
     </div>

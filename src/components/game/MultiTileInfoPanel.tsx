@@ -101,7 +101,7 @@ const MultiTileInfoPanel = ({
       return `Selection includes ${analysis.alreadyClaimedTiles.length} already claimed tile(s)`;
     }
     if (!canAfford) {
-      return `Not enough coins (need ${analysis.totalValue}, have ${userCoins})`;
+      return `Not enough coins (need ${analysis.totalValue.toLocaleString()}, have ${userCoins.toLocaleString()})`;
     }
     if (analysis.claimableTiles.length === 0 && !analysis.allOwnedByUser) {
       return 'No claimable tiles in selection';
@@ -176,7 +176,7 @@ const MultiTileInfoPanel = ({
           >
             <Flag className="w-4 h-4" />
             {canClaim 
-              ? `Claim ${analysis.claimableTiles.length} tiles for ${analysis.totalValue} coins`
+              ? `Claim ${analysis.claimableTiles.length} tiles for ${analysis.totalValue.toLocaleString()} coins`
               : getDisabledReason()
             }
           </button>
