@@ -13,6 +13,7 @@ export interface CitizenBuilding {
 export interface CitizenBuildingIndex {
   buildings: Map<string, CitizenBuilding>;
   byTile: Map<string, CitizenBuilding[]>;
+  capacityByOwner: Map<string, number>;
 }
 
 const tileKey = (p: Position) => `${p.x},${p.y}`;
@@ -24,14 +25,18 @@ export function buildCitizenBuildingIndex(map: WorldMap, resources: Resource[]):
   const definitions = new Map(resources.filter(r => r.holdsPeople).map(r => [r.id, r]));
   const buildings = new Map<string, CitizenBuilding>();
   const byTile = new Map<string, CitizenBuilding[]>();
-  if (!definitions.size) return { buildings, byTile };
+  const capacityByOwner = new Map<string, number>();
+  if (!definitions.size) return { buildings, byTile, capacityByOwner };
   for (let y = 0; y < map.height; y++) {
     for (let x = 0; x < map.width; x++) {
       const anchor = map.tiles[y]?.[x];
       if (!anchor?.claimedBy) continue;
       for (const id of new Set(anchor.resources)) {
         const resource = definitions.get(id);
-        if (!resource || resource.isFloating) continue;
+        if (!resource) continue;
+        // Pledge capacity counts every owned Holds People resource once at its anchor.
+        capacityByOwner.set(anchor.claimedBy, (capacityByOwner.get(anchor.claimedBy) ?? 0) + normalizePeopleCapacity(resource.peopleCapacity));
+        if (resource.isFloating) continue;
         const tiles: Position[] = [];
         for (let dy = 0; dy < Math.max(1, resource.tileHeight ?? 1); dy++) {
           for (let dx = 0; dx < Math.max(1, resource.tileWidth ?? 1); dx++) {
@@ -55,7 +60,7 @@ export function buildCitizenBuildingIndex(map: WorldMap, resources: Resource[]):
       }
     }
   }
-  return { buildings, byTile };
+  return { buildings, byTile, capacityByOwner };
 }
 
 export function countBuildingOccupants(strangers: Stranger[]): Map<string, number> {

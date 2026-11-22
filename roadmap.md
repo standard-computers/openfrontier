@@ -21,3 +21,4 @@
 - [x] Earn citizen money from gathered resource value (no daily income); make resource-rich territory attract pledges.
 - [x] Add Policies tax rate and citizen money display; apply happiness pressure and excessive-tax departures.
 - [x] Test cycle timing, transfers, NPC taxes, departure and persistence; verified signed-in rate/reload and isolated human/NPC payments, stale-save protection, and unpledging; removed temporary world.
+- [x] Enforce building-derived pledge limits for players and NPCs, including births and capacity reductions; 21 tests pass; verified 56 building places allow 78 saved pledges with 56 occupants, reload persistence, and excess citizen retained unpledged; temporary world deleted.

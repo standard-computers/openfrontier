@@ -3,6 +3,7 @@ import { GameWorld, Stranger, WorldMap, Resource, TILE_TYPES, MAX_HEALTH, calcul
 import { generateCitizenName } from '@/lib/citizenNames';
 import { getCitizenGatherEarnings, getCitizenTerritoryAttraction, returnUnpledgedToUnclaimed } from '@/lib/citizenEconomy';
 import { buildCitizenBuildingIndex, countBuildingOccupants, moveCitizenIntoBuilding, reconcileCitizenBuildings, type CitizenBuildingIndex } from '@/lib/citizenBuildings';
+import { countPledgedCitizens, getSovereigntyPopulationLimits, hasPledgeRoom, reconcilePledgePopulation, updatePledgeCounts } from '@/lib/citizenPopulation';
 
 const STRANGER_ACTION_INTERVAL = 3000; // Strangers act every 3 seconds (slower than NPCs)
 const STRANGER_GATHER_CHANCE = 0.4; // 40% chance to gather resources
@@ -94,7 +95,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
   }, [memberSovereignties]);
 
   // Evaluate if stranger should pledge allegiance
-  const evaluateAllegiance = useCallback((stranger: Stranger, sovereignties: SovereigntyInfo[], gameDay: number): Stranger => {
+  const evaluateAllegiance = useCallback((stranger: Stranger, sovereignties: SovereigntyInfo[], gameDay: number, limits: Map<string, number>, pledgedCounts: Map<string, number>): Stranger => {
     if ((stranger.taxExileUntilDay ?? 0) > gameDay) return stranger;
     // Only evaluate sometimes
     if (Math.random() > STRANGER_ALLEGIANCE_CHANCE) return stranger;
@@ -102,10 +103,13 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     if (sovereignties.length === 0) return stranger;
     
     // Find the most valuable sovereignty that meets threshold
-    const topSovereignty = [...sovereignties].sort((a, b) => {
+    const topSovereignty = sovereignties.filter(s =>
+      s.userId === stranger.allegiance?.userId || hasPledgeRoom(s.userId, limits, pledgedCounts)
+    ).sort((a, b) => {
       const score = (s: SovereigntyInfo) => getCitizenTerritoryAttraction(s.totalValue, s.resourceTiles, s.tileCount);
       return score(b) - score(a);
     })[0];
+    if (!topSovereignty) return stranger;
     if (topSovereignty.totalValue < ALLEGIANCE_VALUE_THRESHOLD || topSovereignty.tileCount < ALLEGIANCE_MIN_TILES) {
       // No sovereignty is valuable enough, possibly remove allegiance
       if (stranger.allegiance && Math.random() < 0.1) {
@@ -313,7 +317,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
   }, []);
 
   // Process one stranger's turn
-  const processStrangerTurn = useCallback((stranger: Stranger, currentMap: WorldMap, resources: Resource[], sovereignties: SovereigntyInfo[], buildings: CitizenBuildingIndex, occupants: Map<string, number>, gameDay: number): {
+  const processStrangerTurn = useCallback((stranger: Stranger, currentMap: WorldMap, resources: Resource[], sovereignties: SovereigntyInfo[], buildings: CitizenBuildingIndex, occupants: Map<string, number>, gameDay: number, limits: Map<string, number>, pledgedCounts: Map<string, number>): {
     stranger: Stranger;
     mapTiles?: WorldMap['tiles'];
   } => {
@@ -369,7 +373,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     }
     
     // Priority 4: Evaluate allegiance to sovereignties
-    updatedStranger = evaluateAllegiance(updatedStranger, sovereignties, gameDay);
+    updatedStranger = evaluateAllegiance(updatedStranger, sovereignties, gameDay, limits, pledgedCounts);
 
     // Finally: recompute the happy index
     updatedStranger = updateHappiness(updatedStranger, currentMap, resources);
@@ -378,7 +382,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
   }, [strangerGatherFromTile, strangerConsumeResource, strangerMove, evaluateAllegiance, updateHappiness]);
 
   // Pair up happy pledged strangers and let couples have children
-  const processRomance = useCallback((strangers: Stranger[], map: WorldMap): Stranger[] => {
+  const processRomance = useCallback((strangers: Stranger[], map: WorldMap, limits: Map<string, number>): Stranger[] => {
     const now = Date.now();
     const byId = new Map(strangers.map(s => [s.id, s]));
     const result = strangers.map(s => ({ ...s }));
@@ -427,6 +431,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     // Couples may have a child
     if (result.length >= MAX_POPULATION) return result;
     const babies: Stranger[] = [];
+    const pledgedCounts = countPledgedCitizens(strangers);
     const handled = new Set<string>();
     for (const s of result) {
       if (!s.partnerId || handled.has(s.id)) continue;
@@ -443,6 +448,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
       // Born on the parents' land
       const tile = map.tiles[s.position.y]?.[s.position.x];
       if (!s.allegiance || !isStrangerWalkable(tile) || tile?.claimedBy !== s.allegiance.userId) continue;
+      if (!hasPledgeRoom(s.allegiance.userId, limits, pledgedCounts)) continue;
 
       s.lastBirthTime = now;
       partner.lastBirthTime = now;
@@ -456,6 +462,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
         happiness: 60,
         allegiance: { ...s.allegiance },
       });
+      pledgedCounts.set(s.allegiance.userId, (pledgedCounts.get(s.allegiance.userId) ?? 0) + 1);
     }
 
     return babies.length > 0 ? [...result, ...babies] : result;
@@ -478,7 +485,9 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
         const buildings = buildingCache?.tiles === prev.map.tiles && buildingCache.resources === prev.resources
           ? buildingCache.index : buildCitizenBuildingIndex(prev.map, prev.resources);
         buildingCacheRef.current = { tiles: prev.map.tiles, resources: prev.resources, index: buildings };
-        const citizens = reconcileCitizenBuildings(returnUnpledgedToUnclaimed(prev.strangers, currentMap), currentMap, buildings);
+        const limits = getSovereigntyPopulationLimits(buildings);
+        const citizens = reconcileCitizenBuildings(returnUnpledgedToUnclaimed(reconcilePledgePopulation(prev.strangers, limits), currentMap), currentMap, buildings);
+        const pledgedCounts = countPledgedCitizens(citizens);
         const gameDay = Math.max(0, Math.floor((now - new Date(prev.createdAt).getTime()) / 3600000));
         const occupants = countBuildingOccupants(citizens);
         const updatedStrangers: Stranger[] = [];
@@ -503,7 +512,8 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
           
           // Only process a subset each tick
           if (i >= startIndex && i < startIndex + maxStrangersPerTick) {
-            const result = processStrangerTurn(stranger, currentMap, prev.resources, sovereignties, buildings, occupants, gameDay);
+            const result = processStrangerTurn(stranger, currentMap, prev.resources, sovereignties, buildings, occupants, gameDay, limits, pledgedCounts);
+            updatePledgeCounts(stranger, result.stranger, pledgedCounts);
             if (stranger.buildingKey) occupants.set(stranger.buildingKey, Math.max(0, (occupants.get(stranger.buildingKey) ?? 0) - 1));
             if (result.stranger.buildingKey) occupants.set(result.stranger.buildingKey, (occupants.get(result.stranger.buildingKey) ?? 0) + 1);
             updatedStrangers.push(result.stranger);
@@ -527,9 +537,13 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
           }, 5000); // Longer delay for strangers to reduce DB writes
         }
         
+        // Gathering can remove a natural building during this tick.
+        const finalBuildings = mapChanged ? buildCitizenBuildingIndex(currentMap, prev.resources) : buildings;
+        const finalLimits = mapChanged ? getSovereigntyPopulationLimits(finalBuildings) : limits;
+        const finalCitizens = returnUnpledgedToUnclaimed(reconcilePledgePopulation(updatedStrangers, finalLimits), currentMap);
         return {
           ...prev,
-          strangers: reconcileCitizenBuildings(processRomance(updatedStrangers, currentMap), currentMap, buildings),
+          strangers: reconcileCitizenBuildings(processRomance(finalCitizens, currentMap, finalLimits), currentMap, finalBuildings),
           map: currentMap,
         };
       });

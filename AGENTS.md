@@ -10,3 +10,4 @@
 - Capital selection stores the area ID and an owned representative tile in sovereignty data and the saved home position; shared sovereignty lookup returns this home so all home displays agree.
 - Shared-resource editors use a protected user_roles assignment and server permission lookup; updates omit created_by and a database trigger preserves attribution without expanding deletion rights.
 - Citizen buildings are indexed by resource anchor and bottom-left footprint; sequential occupancy reservations and whole-population reconciliation preserve per-building capacity across movement, births and ownership changes, with occupancy saved in the existing citizen snapshot.
+- Pledge population uses the building index and a shared pure capacity helper; reserve pledges and births sequentially and reconcile all citizens after building changes so simulation ticks cannot oversubscribe a sovereignty or delete displaced citizens.
