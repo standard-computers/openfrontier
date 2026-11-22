@@ -4,33 +4,33 @@
 
 @layer base {
   :root {
-    --background: 220 20% 10%;
-    --foreground: 60 30% 96%;
+    --background: 0 0% 6%;
+    --foreground: 0 0% 94%;
 
-    --card: 220 18% 14%;
-    --card-foreground: 60 30% 96%;
+    --card: 0 0% 9%;
+    --card-foreground: 0 0% 94%;
 
-    --popover: 220 18% 12%;
-    --popover-foreground: 60 30% 96%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 94%;
 
-    --primary: 220 10% 25%;
-    --primary-foreground: 140 50% 55%;
+    --primary: 0 0% 92%;
+    --primary-foreground: 0 0% 7%;
 
-    --secondary: 220 15% 20%;
-    --secondary-foreground: 60 30% 96%;
+    --secondary: 0 0% 16%;
+    --secondary-foreground: 0 0% 94%;
 
-    --muted: 220 15% 18%;
-    --muted-foreground: 220 10% 55%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 65%;
 
-    --accent: 45 85% 55%;
-    --accent-foreground: 220 20% 10%;
+    --accent: 0 0% 20%;
+    --accent-foreground: 0 0% 98%;
 
     --destructive: 0 70% 55%;
-    --destructive-foreground: 60 30% 96%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 220 15% 25%;
-    --input: 220 18% 18%;
-    --ring: 140 50% 45%;
+    --border: 0 0% 24%;
+    --input: 0 0% 12%;
+    --ring: 0 0% 78%;
 
     --radius: 0px;
 
@@ -333,7 +333,7 @@
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded transition-colors;
+    @apply inline-flex items-center justify-center gap-1.5 px-2 py-1 text-sm font-medium rounded transition-colors;
     @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
   }
 
@@ -350,7 +350,7 @@
   }
 
   .input-field {
-    @apply px-3 py-2 text-sm bg-input border border-border rounded;
+    @apply px-2 py-1.5 text-sm bg-input border border-border rounded;
     @apply focus:outline-none focus:ring-2 focus:ring-ring;
   }
 }

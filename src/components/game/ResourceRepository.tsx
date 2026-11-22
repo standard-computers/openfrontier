@@ -343,7 +343,7 @@ const ResourceRepository = ({
           </div>
 
           {/* Search and Filters */}
-          <div className="p-4 border-b border-border space-y-3">
+          <div className="p-2 border-b border-border space-y-2">
             <div className="flex gap-3">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -454,7 +454,7 @@ const ResourceRepository = ({
           </div>
 
           {/* Content */}
-          <div className="flex-1 p-4 overflow-auto">
+          <div className="flex-1 p-2 overflow-auto">
             {loading ? (
               <div className="text-center py-8 text-muted-foreground">Loading repository...</div>
             ) : filteredResources.length === 0 ? (
@@ -464,7 +464,7 @@ const ResourceRepository = ({
                 <p className="text-sm">Be the first to create a resource!</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2">
                 {filteredResources.map((resource) => {
                   const isImageIcon = resource.icon?.startsWith('http');
                   const canEdit = canEditRepositoryResource(userId, resource.created_by, canEditAll);
@@ -472,7 +472,7 @@ const ResourceRepository = ({
                   <div
                     key={resource.id}
                     onClick={() => canEdit && handleEditResource(resource)}
-                    className={`game-panel p-4 space-y-3 transition-colors ${canEdit ? 'hover:bg-muted/50 cursor-pointer' : 'hover:bg-muted/30'}`}
+                    className={`game-panel p-2 space-y-2 transition-colors ${canEdit ? 'hover:bg-muted/50 cursor-pointer' : 'hover:bg-muted/30'}`}
                     title={canEdit ? 'Click to edit' : undefined}
                   >
                     <div className="flex items-start gap-3">

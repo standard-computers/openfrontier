@@ -107,7 +107,7 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, worldSove
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "flex-none flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm transition-colors",
+                "flex-none flex items-center justify-center gap-1.5 px-2 py-2 text-sm transition-colors",
                 activeTab === tab.id
                   ? "bg-primary/10 text-primary border-b-2 border-primary"
                   : "text-muted-foreground hover:bg-muted/50"
@@ -119,7 +119,7 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, worldSove
           ))}
         </div>
 
-        <div className="p-4 overflow-auto flex-1">
+        <div className="p-2 overflow-auto flex-1">
           {/* Overview Tab */}
           {activeTab === 'overview' && (
             <div className="grid grid-cols-2 gap-3">

@@ -120,7 +120,7 @@ export const GameTopBar = ({
           className="px-2 py-1 rounded hover:bg-muted/60 transition-colors flex items-center gap-1.5"
           title="Open Marketplace"
         >
-          <Store className="w-4 h-4 text-emerald-400" />
+          <Store className="w-4 h-4 text-foreground" />
           <span className="text-sm font-medium">Market</span>
         </button>
       )}
@@ -186,7 +186,7 @@ export const GameTopBar = ({
           </>
         )}
         {topPlayer && (
-          <span className="flex items-center gap-1 text-xs text-amber-400" title={`Leader: ${topPlayer.name}`}>
+          <span className="flex items-center gap-1 text-xs text-muted-foreground" title={`Leader: ${topPlayer.name}`}>
             <Trophy className="w-3 h-3" />
             {topPlayer.netWorth.toLocaleString()}
           </span>
@@ -283,11 +283,11 @@ const GameHUD = ({
             </div>
           </section>
         )}
-        <div className="flex items-center gap-2 flex-wrap justify-center">
+        <div className="flex items-center gap-1 flex-wrap justify-center">
           {/* Claimed tiles indicator */}
           <button
             onClick={onOpenClaimedTiles}
-            className="flex items-center gap-1.5 px-3 py-1 bg-muted/50 rounded hover:bg-muted transition-colors"
+            className="flex items-center gap-1.5 px-2 py-1 bg-muted/50 rounded hover:bg-muted transition-colors"
             title="Claimed Tiles"
           >
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: world.userColor }} />
@@ -295,16 +295,16 @@ const GameHUD = ({
           </button>
 
           {/* XP */}
-          <div className="flex items-center gap-1 px-3 py-1 bg-purple-400/20 rounded">
-            <Sparkles className="w-4 h-4 text-purple-400" />
-            <span className="font-bold text-purple-400 text-sm">{world.xp ?? 0}</span>
-            <span className="text-purple-400 text-sm">XP</span>
+          <div className="flex items-center gap-1 px-2 py-1 bg-muted/50 rounded">
+            <Sparkles className="w-4 h-4 text-muted-foreground" />
+            <span className="font-bold text-foreground text-sm">{world.xp ?? 0}</span>
+            <span className="text-muted-foreground text-sm">XP</span>
           </div>
 
           {/* Coins */}
-          <div className="flex items-center gap-1 px-3 py-1 bg-amber-400/20 rounded">
-            <Coins className="w-4 h-4 text-amber-400" />
-            <span className="font-bold text-amber-400 text-sm">{world.coins.toLocaleString()}</span>
+          <div className="flex items-center gap-1 px-2 py-1 bg-muted/50 rounded">
+            <Coins className="w-4 h-4 text-muted-foreground" />
+            <span className="font-bold text-foreground text-sm">{world.coins.toLocaleString()}</span>
           </div>
 
           <div className="w-px h-8 bg-border" />

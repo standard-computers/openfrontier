@@ -308,7 +308,7 @@ const SovereigntyPanel = ({
           </button>
         </div>
 
-        <div className="p-4 flex-1 overflow-y-auto">
+        <div className="p-2 flex-1 overflow-y-auto">
           {activeTab === 'general' && (
             <div className="space-y-4">
               {/* Stats */}
