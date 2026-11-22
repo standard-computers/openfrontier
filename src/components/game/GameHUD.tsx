@@ -225,7 +225,6 @@ interface GameHUDProps {
   onSelectSlot: (slot: number) => void;
   onMoveSlot: (source: number, destination: number) => void;
   tileSize?: number;
-  onOpenClaimedTiles: () => void;
   onConsumeResource: (resourceId: string) => { success: boolean; message: string };
   onReturnToPlayer: () => void;
 }
@@ -238,7 +237,6 @@ const GameHUD = ({
   onSelectSlot,
   onMoveSlot,
   tileSize,
-  onOpenClaimedTiles,
   onConsumeResource,
   onReturnToPlayer,
 }: GameHUDProps) => {
@@ -248,7 +246,6 @@ const GameHUD = ({
   );
   const [inventoryOpen, setInventoryOpen] = useState(false);
 
-  const claimedCount = world.map.tiles.flat().filter((t) => t.claimedBy === world.userId).length;
 
   return (
     <>
@@ -284,16 +281,6 @@ const GameHUD = ({
           </section>
         )}
         <div className="flex items-center gap-1 flex-wrap justify-center">
-          {/* Claimed tiles indicator */}
-          <button
-            onClick={onOpenClaimedTiles}
-            className="flex items-center gap-1.5 px-2 py-1 bg-muted/50 rounded hover:bg-muted transition-colors"
-            title="Claimed Tiles"
-          >
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: world.userColor }} />
-            <span className="text-sm text-muted-foreground">{claimedCount}</span>
-          </button>
-
           {/* XP */}
           <div className="flex items-center gap-1 px-2 py-1 bg-muted/50 rounded">
             <Sparkles className="w-4 h-4 text-muted-foreground" />

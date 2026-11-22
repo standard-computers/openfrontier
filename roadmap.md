@@ -1,3 +1,4 @@
+- [x] Move bottom tiles control into a lazy-loaded, paginated sovereignty tab; 2 tests passed and signed-in 50-row paging, back navigation, and map jumps verified.
 - [x] Persist offers, counters, contests, and secure tile transfers with a game-day deadline.
 - [x] Add tile actions and an inbox for receiving and responding to requests.
 - [x] Test minimum prices, recipient responses, game-day expiry, and conflict blocking; verify the signed-in inbox.

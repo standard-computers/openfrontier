@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Sovereignty, USER_COLORS, Area, AREA_COLORS, NPC } from '@/types/game';
+import { Sovereignty, USER_COLORS, Area, AREA_COLORS, NPC, MapTile } from '@/types/game';
 import { X, Flag, Crown, Palette, Coins, Info, Settings, Plus, MapPin, Trash2, RefreshCw, Check, ScrollText } from 'lucide-react';
 import { generateRandomSovereigntyName } from '@/utils/nameGenerator';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import TaxRateControl from './TaxRateControl';
+import SovereigntyTilesTab from './SovereigntyTilesTab';
 
 const FLAG_OPTIONS = ['🏴', '🏳️', '🚩', '⚔️', '🛡️', '👑', '🦁', '🦅', '🐉', '🌟', '⭐', '🔱', '🏰', '⚜️', '🗡️', '🎭'];
 
@@ -14,6 +15,8 @@ interface SovereigntyPanelProps {
   userColor: string;
   coins: number;
   claimedTiles: number;
+  tiles: MapTile[][];
+  userId: string;
   population?: number;
   username: string | null;
   sovereignty?: Sovereignty;
@@ -34,6 +37,8 @@ const SovereigntyPanel = ({
   userColor,
   coins,
   claimedTiles,
+  tiles,
+  userId,
   population = 0,
   username,
   sovereignty,
@@ -47,7 +52,7 @@ const SovereigntyPanel = ({
   onNavigateToArea,
   npcs,
 }: SovereigntyPanelProps) => {
-  const [activeTab, setActiveTab] = useState<'general' | 'areas' | 'policies' | 'controls'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'tiles' | 'areas' | 'policies' | 'controls'>('general');
   const [newPolicy, setNewPolicy] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [newName, setNewName] = useState('');
@@ -58,6 +63,10 @@ const SovereigntyPanel = ({
   useEffect(() => {
     setNameDraft(sovereignty?.name ?? '');
   }, [sovereignty?.name]);
+
+  useEffect(() => {
+    if (!isOpen) setActiveTab('general');
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -255,7 +264,7 @@ const SovereigntyPanel = ({
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-border">
+        <div className="flex flex-wrap border-b border-border">
           <button
             onClick={() => setActiveTab('general')}
             className={cn(
@@ -267,6 +276,9 @@ const SovereigntyPanel = ({
           >
             <Info className="w-4 h-4" /> General
           </button>
+          <Button variant="ghost" role="tab" aria-selected={activeTab === 'tiles'} onClick={() => setActiveTab('tiles')} className={cn('flex-1 rounded-none px-2 h-10', activeTab === 'tiles' ? 'bg-secondary text-foreground' : 'text-muted-foreground')}>
+            <MapPin /> Tiles
+          </Button>
           <button
             onClick={() => setActiveTab('areas')}
             className={cn(
@@ -309,6 +321,7 @@ const SovereigntyPanel = ({
         </div>
 
         <div className="p-2 flex-1 overflow-y-auto">
+          {activeTab === 'tiles' && <SovereigntyTilesTab tiles={tiles} userId={userId} onNavigate={onNavigateToArea} />}
           {activeTab === 'general' && (
             <div className="space-y-4">
               {/* Stats */}

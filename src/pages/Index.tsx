@@ -18,7 +18,6 @@ import TouchControls from '@/components/game/TouchControls';
 import WorldStatsPanel from '@/components/game/WorldStatsPanel';
 import CraftingPanel from '@/components/game/CraftingPanel';
 import UserProfilePanel from '@/components/game/UserProfilePanel';
-import ClaimedTilesPanel from '@/components/game/ClaimedTilesPanel';
 import MarketplacePanel from '@/components/game/MarketplacePanel';
 
 import StrangerInfoPanel from '@/components/game/StrangerInfoPanel';
@@ -51,7 +50,6 @@ const Index = () => {
   const [statsOpen, setStatsOpen] = useState(false);
   const [craftingOpen, setCraftingOpen] = useState(false);
   const [userProfileOpen, setUserProfileOpen] = useState(false);
-  const [claimedTilesOpen, setClaimedTilesOpen] = useState(false);
   const [marketplaceOpen, setMarketplaceOpen] = useState(false);
   
   const [currentMarket, setCurrentMarket] = useState<Market | null>(null);
@@ -660,7 +658,7 @@ const Index = () => {
     );
   }
 
-  const claimedCount = world.map.tiles.flat().filter(t => t.claimedBy === world.userId).length;
+  const claimedCount = sovereigntyOpen ? world.map.tiles.reduce((count, row) => count + row.reduce((owned, tile) => owned + (tile.claimedBy === world.userId ? 1 : 0), 0), 0) : 0;
 
   // Build tiles with position data for MultiTileInfoPanel
   const selectedTilesWithData = selectedTiles.map(pos => ({
@@ -744,7 +742,6 @@ const Index = () => {
               setWorld(prev => ({ ...prev, inventory: rearrangeInventory(prev.inventory, source, destination) }));
               setSelectedSlot(destination);
             }}
-            onOpenClaimedTiles={() => setClaimedTilesOpen(true)}
             onConsumeResource={consumeResource}
             onReturnToPlayer={handleReturnToPlayer}
           />
@@ -842,6 +839,8 @@ const Index = () => {
             userColor={world.userColor}
             coins={world.coins}
             claimedTiles={claimedCount}
+            tiles={world.map.tiles}
+            userId={world.userId}
             population={(world.strangers || []).filter(s => s.allegiance?.userId === world.userId).length}
             username={username}
             onClose={() => setSovereigntyOpen(false)}
@@ -916,12 +915,6 @@ const Index = () => {
               setUserProfileOpen(false);
               setSelectedMember(null);
             }}
-          />
-
-          <ClaimedTilesPanel
-            isOpen={claimedTilesOpen}
-            world={world}
-            onClose={() => setClaimedTilesOpen(false)}
           />
 
           <MarketplacePanel
