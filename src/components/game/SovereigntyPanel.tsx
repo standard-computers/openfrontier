@@ -236,8 +236,8 @@ const SovereigntyPanel = ({
 
   // Has sovereignty - show tabs
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="game-panel w-full max-w-md overflow-hidden">
+    <div className="fixed inset-0 z-50">
+      <div className="game-panel w-full h-full overflow-hidden flex flex-col rounded-none">
         {/* Header */}
         <div className="flex items-center justify-between px-3 py-2 border-b border-border">
           <div className="flex items-center gap-2">
@@ -308,7 +308,7 @@ const SovereigntyPanel = ({
           </button>
         </div>
 
-        <div className="p-4 max-h-[350px] overflow-y-auto">
+        <div className="p-4 flex-1 overflow-y-auto">
           {activeTab === 'general' && (
             <div className="space-y-4">
               {/* Stats */}

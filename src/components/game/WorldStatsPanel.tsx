@@ -87,11 +87,8 @@ const WorldStatsPanel = ({ isOpen, onClose, world, resources, members, worldSove
   ];
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className={cn(
-        "game-panel w-full max-h-[85vh] overflow-hidden flex flex-col",
-        activeTab === 'sovereignties' ? "max-w-3xl" : "max-w-lg"
-      )}>
+    <div className="fixed inset-0 z-50">
+      <div className="game-panel w-full h-full overflow-hidden flex flex-col rounded-none">
         {/* Header */}
         <div className="flex items-center justify-between px-3 py-2 border-b border-border">
           <div className="flex items-center gap-2">
