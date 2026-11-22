@@ -84,7 +84,7 @@ export const GameTopBar = ({
   }, [world.createdAt]);
 
   return (
-    <div className="w-full bg-card border-b border-border px-2 py-1.5 flex items-center gap-1.5 flex-wrap z-50">
+    <div className="w-full bg-card border-b border-border px-1 flex items-center gap-1.5 flex-wrap z-50">
       {/* World button */}
       <button
         onClick={onOpenStats}
