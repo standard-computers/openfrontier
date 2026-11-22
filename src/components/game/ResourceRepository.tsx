@@ -318,11 +318,11 @@ const ResourceRepository = ({
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-        <div className="game-panel w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
+      <div className="fixed inset-0 bg-black/60 z-50 flex">
+        <div className="game-panel w-full h-full overflow-hidden flex flex-col rounded-none border-0">
           {/* Header */}
-          <div className="flex items-center justify-between px-3 py-2 border-b border-border">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3 py-2 border-b border-border">
+            <div className="flex min-w-0 items-center gap-3">
               <div className="flex items-center gap-2">
                 <Database className="w-5 h-5 text-primary" />
                 <h2 className="text-lg font-semibold text-foreground">Resource Repository</h2>
@@ -464,7 +464,7 @@ const ResourceRepository = ({
                 <p className="text-sm">Be the first to create a resource!</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
                 {filteredResources.map((resource) => {
                   const isImageIcon = resource.icon?.startsWith('http');
                   const canEdit = canEditRepositoryResource(userId, resource.created_by, canEditAll);
