@@ -24,6 +24,7 @@ interface SovereigntyPanelProps {
   onDeleteArea?: (areaId: string) => void;
   onSetCapitalArea?: (areaId: string) => void;
   onUpdateArea?: (areaId: string, updates: Partial<Omit<Area, 'id' | 'createdAt'>>) => void;
+  onNavigateToArea?: (position: { x: number; y: number }) => void;
   npcs?: NPC[];
 }
 
@@ -43,6 +44,7 @@ const SovereigntyPanel = ({
   onDeleteArea,
   onUpdateArea,
   onSetCapitalArea,
+  onNavigateToArea,
   npcs,
 }: SovereigntyPanelProps) => {
   const [activeTab, setActiveTab] = useState<'general' | 'areas' | 'policies' | 'controls'>('general');
@@ -379,8 +381,26 @@ const SovereigntyPanel = ({
                         </button>
                       )}
                     </div>
-                    <div className="text-xs text-muted-foreground flex justify-between">
+                    <div className="text-xs text-muted-foreground flex justify-between items-center">
                       <span>{area.tiles.length} tiles</span>
+                      {area.tiles.length > 0 && (() => {
+                        const center = {
+                          x: Math.round(area.tiles.reduce((sum, t) => sum + t.x, 0) / area.tiles.length),
+                          y: Math.round(area.tiles.reduce((sum, t) => sum + t.y, 0) / area.tiles.length),
+                        };
+                        return onNavigateToArea ? (
+                          <button
+                            type="button"
+                            onClick={() => onNavigateToArea(center)}
+                            className="text-primary hover:underline"
+                            aria-label={`Go to ${area.name}`}
+                          >
+                            {center.x}, {center.y}
+                          </button>
+                        ) : (
+                          <span>{center.x}, {center.y}</span>
+                        );
+                      })()}
                       <span>{new Date(area.createdAt).toLocaleDateString()}</span>
                     </div>
                     {onSetCapitalArea && (

@@ -851,6 +851,7 @@ const Index = () => {
             onDeleteArea={deleteArea}
             onUpdateArea={updateArea}
             onSetCapitalArea={gameWorld.setCapitalArea}
+            onNavigateToArea={(position) => { setSovereigntyOpen(false); setCameraPosition(position); }}
             npcs={world.npcs}
           />
 
