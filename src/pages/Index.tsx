@@ -88,6 +88,7 @@ const Index = () => {
     loading: worldLoading,
     movePlayer,
     selectTile,
+    selectTileAt,
     claimTile,
     claimMultipleTiles,
     gatherFromTile,
@@ -462,9 +463,12 @@ const Index = () => {
     }
     setSelectedSlot(slotIndex);
     const result = placeItem(resource.id, facingDirection, position);
-    if (result.success) toast.success(result.message);
-    else if (result.message) toast.error(result.message);
-  }, [world, isDemoMode, placeItem, facingDirection]);
+    if (result.success) {
+      toast.success(result.message);
+      // Open the tile panel on the tile that just changed so it can be edited.
+      selectTileAt(position.x, position.y);
+    } else if (result.message) toast.error(result.message);
+  }, [world, isDemoMode, placeItem, facingDirection, selectTileAt]);
 
   // Market on the currently selected tile
   const getAdjacentMarket = useCallback((): Market | null => {

@@ -70,6 +70,10 @@ export const useDemoWorld = () => {
     );
   }, []);
 
+  const selectTileAt = useCallback((x: number, y: number) => {
+    setSelectedTile({ x, y });
+  }, []);
+
   // Stub functions that don't do anything in demo mode
   const noopResult = { success: false, message: 'Sign up to use this feature!' };
   const noopResultWithCount = { success: false, message: 'Sign up to use this feature!', claimedCount: 0, totalCost: 0 };
@@ -126,6 +130,7 @@ export const useDemoWorld = () => {
     loading,
     movePlayer,
     selectTile,
+    selectTileAt,
     claimTile,
     claimMultipleTiles,
     gatherFromTile,

@@ -453,6 +453,12 @@ export const useGameWorld = () => {
     );
   }, []);
 
+  // Always selects (never toggles off) - used after placing an item so the tile
+  // panel opens on the tile that just changed.
+  const selectTileAt = useCallback((x: number, y: number) => {
+    setSelectedTile({ x, y });
+  }, []);
+
   const claimTile = useCallback((x: number, y: number): { success: boolean; message: string } => {
     const currentWorld = world;
     const tile = currentWorld.map.tiles[y][x];
@@ -1694,6 +1700,7 @@ export const useGameWorld = () => {
     loading,
     movePlayer,
     selectTile,
+    selectTileAt,
     claimTile,
     claimMultipleTiles,
     convertTiles,
