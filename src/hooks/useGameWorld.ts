@@ -11,6 +11,7 @@ import { createWorldResourceWriter } from '@/lib/worldResourcePersistence';
 import { fireProjectile, type ProjectileShot } from '@/lib/projectiles';
 import { getWorldGameHour, gatherTileResource } from '@/lib/resourceProduction';
 import { useResourceProduction } from './useResourceProduction';
+import { applyDisperse, getDisperseTargets } from '@/lib/inventoryDisperse';
 import { fetchWorldResources, addResourceToRepository, updateResourceInRepository, deleteResourceFromRepository } from '@/utils/resourceConverter';
 
 // Hook version marker for HMR compatibility
@@ -1188,6 +1189,24 @@ export const useGameWorld = () => {
     return result;
   }, [saveMapData]);
 
+  const disperseItem = useCallback((slotIndex: number): { success: boolean; message: string } => {
+    let result = { success: false, message: '' };
+    setWorld(prev => {
+      const slot = prev.inventory[slotIndex];
+      const resource = prev.resources.find(r => r.id === slot?.resourceId);
+      if (!slot || !resource) { result = { success: false, message: 'No item in that slot' }; return prev; }
+      if (!resource.placeable) { result = { success: false, message: 'This item cannot be placed' }; return prev; }
+      const targets = getDisperseTargets(prev.map.tiles, prev.userId, slot.quantity);
+      const applied = applyDisperse(prev.map.tiles, prev.inventory, slotIndex, targets, getWorldGameHour(prev.createdAt));
+      if (!applied) { result = { success: false, message: 'No empty owned tiles' }; return prev; }
+      const newMapData: WorldMap = { ...prev.map, tiles: applied.tiles };
+      result = { success: true, message: `Placed ${applied.placed.toLocaleString()} ${resource.name}` };
+      setTimeout(() => saveMapData(newMapData), 500);
+      return { ...prev, inventory: applied.inventory, map: newMapData };
+    });
+    return result;
+  }, [saveMapData]);
+
   // Use damage-inflicting item on facing tile to destroy destructible resources
   const useItemOnFacingTile = useCallback((
     selectedSlot: number, 
@@ -1703,6 +1722,7 @@ export const useGameWorld = () => {
     projectileShot,
     consumeResource,
     placeItem,
+    disperseItem,
     useItemOnFacingTile,
     toggleEnableMarkets,
     addMarket,

@@ -27,6 +27,8 @@ import { Market, Position, TileType, calculateTileValue, Sovereignty, Stranger, 
 import { toast } from 'sonner';
 import { getInventoryDropResource, rearrangeInventory } from '@/lib/inventoryDrag';
 import { getSelectionGatherPlan } from '@/lib/selectionGather';
+import { getDisperseCount } from '@/lib/inventoryDisperse';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useTileRequests } from '@/hooks/useTileRequests';
 import TileRequestsPanel from '@/components/game/TileRequestsPanel';
 import { buildCitizenBuildingIndex, countBuildingOccupants, moveCitizenIntoBuilding } from '@/lib/citizenBuildings';
@@ -56,6 +58,7 @@ const Index = () => {
   const [selectedMember, setSelectedMember] = useState<WorldMember | null>(null);
   const [tileSize, setTileSize] = useState(DEFAULT_TILE_SIZE);
   const [selectedSlot, setSelectedSlot] = useState(0);
+  const [disperseRequest, setDisperseRequest] = useState<{ slotIndex: number; name: string; count: number } | null>(null);
   const [facingDirection, setFacingDirection] = useState<FacingDirection>('south');
   const [isMoving, setIsMoving] = useState(false);
   const [multiSelectMode, setMultiSelectMode] = useState(false);
@@ -108,6 +111,7 @@ const Index = () => {
     renameTile,
     convertTiles,
     placeItem,
+    disperseItem,
     useItemOnFacingTile,
     toggleEnableMarkets,
     addMarket,
@@ -742,10 +746,38 @@ const Index = () => {
               setWorld(prev => ({ ...prev, inventory: rearrangeInventory(prev.inventory, source, destination) }));
               setSelectedSlot(destination);
             }}
+            onDisperseSlot={(index) => {
+              const slot = world.inventory[index];
+              const resource = world.resources.find(r => r.id === slot?.resourceId);
+              if (!slot || !resource) return;
+              if (!resource.placeable) { toast.error('This item cannot be placed'); return; }
+              const count = getDisperseCount(slot, world.map.tiles, world.userId);
+              if (count === 0) { toast.error('No empty owned tiles to place on'); return; }
+              setDisperseRequest({ slotIndex: index, name: resource.name, count });
+            }}
             onConsumeResource={consumeResource}
             onReturnToPlayer={handleReturnToPlayer}
           />
         )}
+        <AlertDialog open={!!disperseRequest} onOpenChange={open => !open && setDisperseRequest(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Disperse {disperseRequest?.name}?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Place 1 {disperseRequest?.name} on each of {disperseRequest?.count.toLocaleString()} empty owned tiles.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => {
+                if (!disperseRequest) return;
+                const result = disperseItem(disperseRequest.slotIndex);
+                if (result.success) toast.success(result.message); else if (result.message) toast.error(result.message);
+                setDisperseRequest(null);
+              }}>Disperse</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Minimap - show in both modes */}
         <div className="absolute bottom-4 left-4 z-10 pointer-events-auto">

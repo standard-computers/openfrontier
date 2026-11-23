@@ -224,6 +224,7 @@ interface GameHUDProps {
   cameraOffset: boolean;
   onSelectSlot: (slot: number) => void;
   onMoveSlot: (source: number, destination: number) => void;
+  onDisperseSlot?: (index: number) => void;
   tileSize?: number;
   onConsumeResource: (resourceId: string) => { success: boolean; message: string };
   onReturnToPlayer: () => void;
@@ -236,6 +237,7 @@ const GameHUD = ({
   cameraOffset,
   onSelectSlot,
   onMoveSlot,
+  onDisperseSlot,
   tileSize,
   onConsumeResource,
   onReturnToPlayer,
@@ -275,6 +277,7 @@ const GameHUD = ({
                 onSelect={onSelectSlot}
                 onInspect={(slot) => slot.resourceId && setSelectedItem({ ...slot, resourceId: slot.resourceId })}
                 onMove={onMoveSlot}
+                onDisperse={onDisperseSlot}
                 tileSize={tileSize}
               />
             </div>
@@ -306,6 +309,7 @@ const GameHUD = ({
                 onSelect={onSelectSlot}
                 onInspect={(slot) => slot.resourceId && setSelectedItem({ ...slot, resourceId: slot.resourceId })}
                 onMove={onMoveSlot}
+                onDisperse={onDisperseSlot}
                 tileSize={tileSize}
               />
             </div>

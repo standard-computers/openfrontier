@@ -14,9 +14,10 @@ interface InventorySlotsProps {
   onInspect: (slot: InventorySlot) => void;
   onMove: (source: number, destination: number) => void;
   tileSize?: number;
+  onDisperse?: (index: number) => void;
 }
 
-export default function InventorySlots({ inventory, resources, selectedSlot, expanded = false, onSelect, onInspect, onMove, tileSize = 39 }: InventorySlotsProps) {
+export default function InventorySlots({ inventory, resources, selectedSlot, expanded = false, onSelect, onInspect, onMove, tileSize = 39, onDisperse }: InventorySlotsProps) {
   const suppressClickUntil = useRef(0);
   const [dropTarget, setDropTarget] = useState<number | null>(null);
   return (
@@ -59,8 +60,9 @@ export default function InventorySlots({ inventory, resources, selectedSlot, exp
               suppressClickUntil.current = Date.now() + 300;
               onMove(Number(payload), index);
             }}
-            onClick={() => {
+            onClick={event => {
               if (Date.now() < suppressClickUntil.current) return;
+              if ((event.ctrlKey || event.metaKey) && occupied && onDisperse) { onSelect(index); onDisperse(index); return; }
               onSelect(index);
               if (occupied) onInspect(slot);
             }}
