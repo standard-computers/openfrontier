@@ -21,4 +21,10 @@ describe('inventory disperse', () => {
     assert.equal(r.placed, 3);
     assert.equal(r.inventory[0].quantity, 2);
   });
+  test('random sampling can choose later territories without duplicates', () => {
+    assert.deepEqual(getDisperseTargets(tiles, 'me', 1, () => 0), [{ x: 2, y: 1 }]);
+    assert.deepEqual(getDisperseTargets(tiles, 'me', 1, () => 0.999), [{ x: 0, y: 0 }]);
+    const selected = getDisperseTargets(tiles, 'me', 2, () => 0);
+    assert.equal(new Set(selected.map(p => `${p.x},${p.y}`)).size, 2);
+  });
 });

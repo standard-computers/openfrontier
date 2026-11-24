@@ -1,3 +1,4 @@
+- [x] Require food for citizen health, seek and gather free territory food, and randomize item disbursement; 37 focused tests passed; signed-in confirmation and dispersed-food seeking raised saved and displayed citizen health from 60 to 75; temporary worlds deleted.
 - [x] Move bottom tiles control into a lazy-loaded, paginated sovereignty tab; 2 tests passed and signed-in 50-row paging, back navigation, and map jumps verified.
 - [x] Persist offers, counters, contests, and secure tile transfers with a game-day deadline.
 - [x] Add tile actions and an inbox for receiving and responding to requests.

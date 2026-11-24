@@ -6,10 +6,11 @@ import { buildCitizenBuildingIndex, countBuildingOccupants, maybeExitBuilding, m
 import { countPledgedCitizens, getSovereigntyPopulationLimits, hasPledgeRoom, reconcilePledgePopulation, updatePledgeCounts } from '@/lib/citizenPopulation';
 import { gatherTileResource } from '@/lib/resourceProduction';
 import { addToInventory } from '@/types/game';
+import { applyCitizenHunger, canCitizenGatherHere, consumeCitizenFood, findCitizenFoodStep, getFreeFoodId } from '@/lib/citizenFood';
+import { getWorldGameHour } from '@/lib/resourceProduction';
 
 const STRANGER_ACTION_INTERVAL = 3000; // Strangers act every 3 seconds (slower than NPCs)
 const STRANGER_GATHER_CHANCE = 0.4; // 40% chance to gather resources
-const STRANGER_CONSUME_CHANCE = 0.3; // 30% chance to consume food when low health
 const STRANGER_MOVE_CHANCE = 0.8; // 80% chance to move (they wander more)
 const STRANGER_ALLEGIANCE_CHANCE = 0.05; // 5% chance per tick to evaluate allegiance
 const ALLEGIANCE_VALUE_THRESHOLD = 100; // Minimum territory value to attract allegiance
@@ -171,21 +172,29 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     const currentTile = map.tiles[y]?.[x];
     
     if (!currentTile || currentTile.resources.length === 0) return null;
-    if (currentTile.claimedBy && currentTile.claimedBy !== stranger.allegiance?.userId) return null;
+    if (!canCitizenGatherHere(stranger, currentTile)) return null;
     
     // Filter out placed resources - strangers cannot gather them
+    const foodId = getFreeFoodId(currentTile, new Map(resources.map(r => [r.id, r])));
     const gatherableResources = currentTile.resources.filter(
       resId => !currentTile.placedResources?.includes(resId)
     );
     
-    if (gatherableResources.length === 0) return null;
+    if (!foodId && gatherableResources.length === 0) return null;
     
-    const resourceToGather = gatherableResources[0];
+    const resourceToGather = foodId ?? gatherableResources[0];
     
     // Copy only the affected row instead of cloning the entire map
     const newTiles = [...map.tiles];
     const newRow = [...newTiles[y]];
     const gathered = gatherTileResource(currentTile, resourceToGather);
+    // Food is shared stock: take one meal, not an entire tile's supply.
+    if (foodId && gathered.quantity > 1) {
+      const remaining = [...currentTile.resources];
+      remaining.splice(remaining.indexOf(foodId), 1);
+      gathered.tile = { ...currentTile, resources: remaining };
+      gathered.quantity = 1;
+    }
     newRow[x] = gathered.tile;
     newTiles[y] = newRow;
     
@@ -199,35 +208,12 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     };
   }, []);
 
-  // Stranger consumes a resource for health
-  const strangerConsumeResource = useCallback((stranger: Stranger, resources: Resource[]): Stranger | null => {
-    // Find consumable resources in inventory
-    for (let i = 0; i < stranger.inventory.length; i++) {
-      const slot = stranger.inventory[i];
-      if (!slot.resourceId || slot.quantity <= 0) continue;
-      
-      const resource = resources.find(r => r.id === slot.resourceId);
-      if (resource?.consumable && resource.healthGain && resource.healthGain > 0) {
-        // Consume this resource
-        const newInventory = [...stranger.inventory];
-        newInventory[i] = { ...newInventory[i], quantity: newInventory[i].quantity - 1 };
-        if (newInventory[i].quantity === 0) {
-          newInventory[i] = { resourceId: null, quantity: 0 };
-        }
-        
-        return {
-          ...stranger,
-          inventory: newInventory,
-          health: Math.min(MAX_HEALTH, stranger.health + resource.healthGain),
-        };
-      }
-    }
-    
-    return null;
-  }, []);
-
   // Stranger moves to an adjacent tile (wanders around)
-  const strangerMove = useCallback((stranger: Stranger, map: WorldMap, buildings: CitizenBuildingIndex, occupants: Map<string, number>): Stranger => {
+  const strangerMove = useCallback((stranger: Stranger, map: WorldMap, buildings: CitizenBuildingIndex, occupants: Map<string, number>, foods: Map<string, Resource>): Stranger => {
+    if (stranger.health < MAX_HEALTH) {
+      const foodStep = findCitizenFoodStep(stranger, map, foods, pos => moveCitizenIntoBuilding(stranger, pos, buildings, occupants) !== null);
+      if (foodStep) return moveCitizenIntoBuilding(stranger, foodStep, buildings, occupants) ?? stranger;
+    }
     let adjacentTiles = getAdjacentTiles(stranger.position.x, stranger.position.y, map);
     if (adjacentTiles.length === 0) return stranger;
 
@@ -346,28 +332,31 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
       ? standingTile?.claimedBy === updatedStranger.allegiance.userId
       : !standingTile?.claimedBy;
 
-    if (canConsumeHere && updatedStranger.health < 40 && Math.random() < STRANGER_CONSUME_CHANCE) {
-      const consumed = strangerConsumeResource(updatedStranger, resources);
+    const foods = new Map(resources.map(r => [r.id, r]));
+    if (canConsumeHere && updatedStranger.health < MAX_HEALTH) {
+      const consumed = consumeCitizenFood(updatedStranger, foods);
       if (consumed) {
-        updatedStranger = consumed;
+        updatedStranger = updateHappiness(consumed, currentMap, resources);
         return { stranger: updatedStranger };
       }
     }
 
     
     // Priority 2: Gather from current tile (strangers don't claim, just gather)
-    if (Math.random() < STRANGER_GATHER_CHANCE) {
+    const foodHere = standingTile && canConsumeHere && getFreeFoodId(standingTile, foods);
+    if (updatedStranger.health < MAX_HEALTH ? Boolean(foodHere) : Math.random() < STRANGER_GATHER_CHANCE) {
       const gatherResult = strangerGatherFromTile(updatedStranger, currentMap, resources);
       if (gatherResult) {
-        updatedStranger = gatherResult.newStranger;
+        updatedStranger = consumeCitizenFood(gatherResult.newStranger, foods) ?? gatherResult.newStranger;
+        updatedStranger = updateHappiness(updatedStranger, currentMap, resources);
         newMapTiles = gatherResult.newTiles;
         return { stranger: updatedStranger, mapTiles: newMapTiles };
       }
     }
     
     // Priority 3: Move around (wander)
-    if (Math.random() < STRANGER_MOVE_CHANCE) {
-      updatedStranger = strangerMove(updatedStranger, currentMap, buildings, occupants);
+    if (updatedStranger.health < MAX_HEALTH || Math.random() < STRANGER_MOVE_CHANCE) {
+      updatedStranger = strangerMove(updatedStranger, currentMap, buildings, occupants, foods);
     }
     
     // Priority 4: Evaluate allegiance to sovereignties
@@ -377,7 +366,7 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
     updatedStranger = updateHappiness(updatedStranger, currentMap, resources);
     
     return { stranger: updatedStranger, mapTiles: newMapTiles };
-  }, [strangerGatherFromTile, strangerConsumeResource, strangerMove, evaluateAllegiance, updateHappiness]);
+  }, [strangerGatherFromTile, strangerMove, evaluateAllegiance, updateHappiness]);
 
   // Pair up happy pledged strangers and let couples have children
   const processRomance = useCallback((strangers: Stranger[], map: WorldMap, limits: Map<string, number>): Stranger[] => {
@@ -484,7 +473,8 @@ export const useStrangerBehavior = ({ world, setWorld, saveMapData, memberSovere
           ? buildingCache.index : buildCitizenBuildingIndex(prev.map, prev.resources);
         buildingCacheRef.current = { tiles: prev.map.tiles, resources: prev.resources, index: buildings };
         const limits = getSovereigntyPopulationLimits(buildings);
-        const citizens = reconcileCitizenBuildings(returnUnpledgedToUnclaimed(reconcilePledgePopulation(prev.strangers, limits), currentMap), currentMap, buildings);
+        const gameHour = getWorldGameHour(prev.createdAt, now);
+        const citizens = reconcileCitizenBuildings(returnUnpledgedToUnclaimed(reconcilePledgePopulation(prev.strangers.map(s => applyCitizenHunger(s, gameHour)), limits), currentMap), currentMap, buildings);
         const pledgedCounts = countPledgedCitizens(citizens);
         const gameDay = Math.max(0, Math.floor((now - new Date(prev.createdAt).getTime()) / 3600000));
         const occupants = countBuildingOccupants(citizens);

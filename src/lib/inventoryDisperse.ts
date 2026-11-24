@@ -1,8 +1,9 @@
 import { TILE_TYPES, type InventorySlot, type MapTile, type Position } from '@/types/game';
 
-/** Empty, walkable tiles owned by the user, in row order, capped at `limit`. */
-export function getDisperseTargets(tiles: MapTile[][], userId: string, limit: number): Position[] {
+/** Uniform reservoir sample of empty, walkable owned tiles, without duplicates. */
+export function getDisperseTargets(tiles: MapTile[][], userId: string, limit: number, random = Math.random): Position[] {
   const targets: Position[] = [];
+  let eligible = 0;
   if (limit <= 0) return targets;
   for (let y = 0; y < tiles.length; y++) {
     const row = tiles[y];
@@ -11,8 +12,12 @@ export function getDisperseTargets(tiles: MapTile[][], userId: string, limit: nu
       if (tile.claimedBy !== userId || tile.resources.length > 0) continue;
       const walkable = TILE_TYPES.find(t => t.type === tile.type)?.walkable ?? tile.walkable;
       if (!walkable) continue;
-      targets.push({ x, y });
-      if (targets.length >= limit) return targets;
+      eligible++;
+      if (targets.length < limit) targets.push({ x, y });
+      else {
+        const index = Math.floor(random() * eligible);
+        if (index < limit) targets[index] = { x, y };
+      }
     }
   }
   return targets;

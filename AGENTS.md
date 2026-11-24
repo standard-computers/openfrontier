@@ -13,3 +13,5 @@
 - Citizen buildings are indexed by resource anchor and bottom-left footprint; sequential occupancy reservations and whole-population reconciliation preserve per-building capacity across movement, births and ownership changes, with occupancy saved in the existing citizen snapshot.
 - Pledge population uses the building index and a shared pure capacity helper; reserve pledges and births sequentially and reconcile all citizens after building changes so simulation ticks cannot oversubscribe a sovereignty or delete displaced citizens.
 - Placed production uses absolute world-game-hour checkpoints in map snapshots and a fixed visible-page timer; repeated resource IDs represent output units, and gathering transfers complete quantities without replaying saved cycles.
+- Citizen nutrition uses persisted game-hour health checkpoints and bounded territory-only food path searches; dispersed consumables are shared one-meal stock, preserving producer anchors and existing citizen/map saves.
+- Inventory disbursement uses uniform reservoir sampling of eligible tiles to randomize placement without allocating every owned coordinate.

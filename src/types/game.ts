@@ -203,6 +203,7 @@ export interface Stranger {
   position: { x: number; y: number };
   inventory: InventorySlot[];
   health: number;
+  lastNutritionHour?: number; // Persisted game-hour checkpoint for food-dependent health
   lastActionTime?: number;
   allegiance?: StrangerAllegiance;
   happiness?: number; // 0-100 happy index
